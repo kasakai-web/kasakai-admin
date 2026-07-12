@@ -9,6 +9,7 @@ type AdminSession = {
   loggedInAt: string;
 };
 
+
 export function saveAdminSession(data: Omit<AdminSession, "loggedInAt">) {
   const payload: AdminSession = {
     ...data,
