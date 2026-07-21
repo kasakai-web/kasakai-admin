@@ -8,7 +8,6 @@ import { Topbar } from "@/components/admin/dashboard/topbar";
 import { DetailPanel } from "@/components/admin/dashboard/detail-panel";
 import { DashboardContext } from "@/context/dashboard-context";
 import type { DashboardSection } from "@/components/admin/dashboard/constants";
-import styles from "@/components/admin/dashboard/dashboard.module.css";
 
 function pathnameToSection(p: string): DashboardSection | null {
   if (p.startsWith("/dashboard/streaming/carousels")) return "scr-crousels";
@@ -65,7 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onNavigate: handleNavigate,
       }}
     >
-      <div className={styles.root}>
+      <div className="flex min-h-screen bg-[image:radial-gradient(circle_at_8%_6%,rgba(73,148,245,0.16),transparent_30%),radial-gradient(circle_at_92%_92%,rgba(31,197,140,0.12),transparent_32%),linear-gradient(140deg,#060b0f_0%,#0b1318_48%,#101a22_100%)] text-fg antialiased">
         <Sidebar
           activeSection={activeSection}
           onNavigate={handleNavigate}
@@ -74,13 +73,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onLogout={() => { clearAdminSession(); router.replace("/login"); }}
         />
 
-        <main className={styles.main}>
+        <main className="flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden">
           <Topbar
             activeSection={activeSection}
             onVerifyOrganisers={() => handleNavigate("organisers")}
             onOpenSidebar={() => setSidebarOpen(true)}
           />
-          <div className={styles.content}>
+          <div className="min-w-0 flex-1 overflow-y-auto p-7 max-[640px]:p-4">
             {children}
           </div>
         </main>

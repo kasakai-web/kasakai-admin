@@ -52,7 +52,7 @@ export default function ScanPage() {
     <div style={{ paddingBottom: 48 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "8px", flexWrap: "wrap" }}>
-        <button type="button" onClick={() => router.push(`/dashboard/streaming/${id}/manage`)} style={backBtnStyle}>
+        <button type="button" onClick={() => router.push(`/dashboard/streaming/${id}/manage`)} className={backBtnStyle}>
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           Back
         </button>

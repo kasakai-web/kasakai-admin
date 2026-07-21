@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useCallback } from "react";
-import styles from "../dashboard.module.css";
+import { SCR_CARD, SCR_GRID2, SCR_GRID_POC } from "../ui";
 import { backBtnStyle, inp } from "./types";
 import { scrApi } from "@/lib/screening-api";
 import type { CreateScrEventPayload } from "@/lib/screening-api";
@@ -71,28 +71,21 @@ const INIT: Draft = {
 };
 
 /* ── shared styles ── */
-const LBL: React.CSSProperties = {
-  display:"block", fontSize:"11px", fontWeight:700, color:"var(--muted)",
-  letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:"6px",
-};
-const SEC: React.CSSProperties = { margin:"0 0 20px", fontSize:"14px", fontWeight:800, color:"var(--white)" };
+const LBL = "mb-[6px] block text-[11px] font-bold uppercase tracking-[0.1em] text-muted";
+const SEC = "mb-5 text-[14px] font-extrabold text-fg";
 
 /* ── uid counter ── */
 let _n = 0;
 const uid = () => `c${++_n}`;
 
 /* ── Required asterisk ── */
-const Req = () => <span style={{ color:'#ef4444', marginLeft:'2px' }}>*</span>;
+const Req = () => <span className="ml-[2px] text-danger">*</span>;
 
 /* ── reusable atoms ── */
 function Chip({ label, active, onToggle }: { label:string; active:boolean; onToggle:()=>void }) {
   return (
     <button type="button" onClick={onToggle}
-      style={{ padding:"6px 14px", borderRadius:"999px", fontSize:"12px", fontWeight:600, cursor:"pointer",
-        border:"1.5px solid", transition:"all 0.15s",
-        background:active?"rgba(91,230,178,0.12)":"var(--bg)",
-        borderColor:active?"rgba(91,230,178,0.5)":"var(--border)",
-        color:active?"#5be6b2":"var(--muted)" }}>
+      className={`cursor-pointer rounded-full border-[1.5px] px-[14px] py-[6px] text-[12px] font-semibold transition-all duration-150 ${active ? "border-[rgba(91,230,178,0.5)] bg-[rgba(91,230,178,0.12)] text-accent" : "border-border bg-[#0b1114] text-muted"}`}>
       {label}
     </button>
   );
@@ -102,16 +95,12 @@ function TriToggle({ label, value, onChange, yesText="Yes", noText="No" }: {
   label:string; value:boolean|null; onChange:(v:boolean)=>void; yesText?:string; noText?:string;
 }) {
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
-      <span style={LBL}>{label}</span>
-      <div style={{ display:"flex", gap:"8px" }}>
+    <div className="flex flex-col gap-2">
+      <span className={LBL}>{label}</span>
+      <div className="flex gap-2">
         {([true,false] as const).map(v => (
           <button key={String(v)} type="button" onClick={() => onChange(v)}
-            style={{ padding:"7px 18px", borderRadius:"8px", fontSize:"12px", fontWeight:700, cursor:"pointer",
-              border:"1.5px solid", transition:"all 0.15s",
-              background:value===v?(v?"rgba(91,230,178,0.15)":"rgba(239,68,68,0.1)"):"var(--bg)",
-              borderColor:value===v?(v?"rgba(91,230,178,0.5)":"rgba(239,68,68,0.4)"):"var(--border)",
-              color:value===v?(v?"#5be6b2":"#ef4444"):"var(--muted)" }}>
+            className={`cursor-pointer rounded-lg border-[1.5px] px-[18px] py-[7px] text-[12px] font-bold transition-all duration-150 ${value===v ? (v ? "border-[rgba(91,230,178,0.5)] bg-[rgba(91,230,178,0.15)] text-accent" : "border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.1)] text-danger") : "border-border bg-[#0b1114] text-muted"}`}>
             {v ? yesText : noText}
           </button>
         ))}
@@ -145,27 +134,27 @@ function UploadBox({ label, hint, value, onChange }: {
 
   return (
     <div>
-      <span style={LBL}>{label}</span>
-      <label style={{ display:"block", border:"1.5px dashed var(--border2)", borderRadius:"10px",
-        padding:"32px 16px", textAlign:"center", background:"var(--bg)", cursor: uploading ? "wait" : "pointer", transition:"border-color 0.15s" }}
+      <span className={LBL}>{label}</span>
+      <label
+        className={`block rounded-[10px] border-[1.5px] border-dashed border-border-2 bg-[#0b1114] px-4 py-8 text-center transition-[border-color] duration-150 ${uploading ? "cursor-wait" : "cursor-pointer"}`}
         onMouseEnter={e => (e.currentTarget.style.borderColor="rgba(91,230,178,0.4)")}
         onMouseLeave={e => (e.currentTarget.style.borderColor="var(--border2)")}>
-        <input type="file" accept="image/*" style={{ display:"none" }} disabled={uploading}
+        <input type="file" accept="image/*" className="hidden" disabled={uploading}
           onChange={e => { const f=e.target.files?.[0]; if(f) handleFile(f); }} />
         {value
-          ? <img src={value} alt="" style={{ maxHeight:"120px", maxWidth:"100%", objectFit:"cover", borderRadius:"6px" }} />
+          ? <img src={value} alt="" className="max-h-[120px] max-w-full rounded-md object-cover" />
           : uploading
-          ? <p style={{ margin:0, fontSize:"13px", color:"var(--muted)" }}>Uploading…</p>
+          ? <p className="m-0 text-[13px] text-muted">Uploading…</p>
           : <>
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" style={{ margin:"0 auto 10px", display:"block" }}>
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" className="mx-auto mb-[10px] block">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
               </svg>
-              <p style={{ margin:"0 0 4px", fontSize:"13px", fontWeight:600, color:"var(--muted)" }}>Drag &amp; drop or click</p>
-              <p style={{ margin:0, fontSize:"11px", color:"var(--muted)", opacity:0.6 }}>{hint}</p>
+              <p className="mb-1 text-[13px] font-semibold text-muted">Drag &amp; drop or click</p>
+              <p className="m-0 text-[11px] text-muted opacity-60">{hint}</p>
             </>
         }
       </label>
-      {uploadErr && <p style={{ margin:"6px 0 0", fontSize:"11px", color:"#ef4444" }}>{uploadErr}</p>}
+      {uploadErr && <p className="mt-[6px] text-[11px] text-danger">{uploadErr}</p>}
     </div>
   );
 }
@@ -174,31 +163,31 @@ function UploadBox({ label, hint, value, onChange }: {
 function S1({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction<Draft>> }) {
   const subOpts = [...new Set(form.categories.flatMap(c => SUB_CATS[c] ?? []))];
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
+    <div className="flex flex-col gap-5">
 
-      <div className={styles.scrCard}>
-        <p style={SEC}>Event Name</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:"16px" }}>
+      <div className={SCR_CARD}>
+        <p className={SEC}>Event Name</p>
+        <div className="flex flex-col gap-4">
           <div>
-            <span style={LBL}>Event Title <Req /></span>
-            <input style={inp} placeholder="e.g. UCL Final Big Screening"
+            <span className={LBL}>Event Title <Req /></span>
+            <input className={inp} placeholder="e.g. UCL Final Big Screening"
               value={form.name} onChange={e => set(f => ({ ...f, name:e.target.value }))} />
           </div>
           <div>
-            <span style={LBL}>Description</span>
-            <textarea style={{ ...inp, minHeight:"100px", resize:"vertical", fontFamily:"inherit", lineHeight:1.6 } as React.CSSProperties}
+            <span className={LBL}>Description</span>
+            <textarea className={`${inp} min-h-[100px] resize-y leading-[1.6]`}
               placeholder="Tell attendees what to expect…"
               value={form.description} onChange={e => set(f => ({ ...f, description:e.target.value }))} />
           </div>
         </div>
       </div>
 
-      <div className={styles.scrCard}>
-        <p style={SEC}>Event Type</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
+      <div className={SCR_CARD}>
+        <p className={SEC}>Event Type</p>
+        <div className="flex flex-col gap-5">
           <div>
-            <span style={LBL}>Category — choose up to 2 <Req /></span>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", marginTop:"4px" }}>
+            <span className={LBL}>Category — choose up to 2 <Req /></span>
+            <div className="mt-1 flex flex-wrap gap-2">
               {CATEGORIES.map(cat => (
                 <Chip key={cat} label={cat} active={form.categories.includes(cat)} onToggle={() => set(f => {
                   if (f.categories.includes(cat)) return { ...f, categories:f.categories.filter(c => c!==cat), subCategory:"" };
@@ -210,8 +199,8 @@ function S1({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
           </div>
           {subOpts.length > 0 && (
             <div>
-              <span style={LBL}>Sub-category</span>
-              <select style={inp} value={form.subCategory} onChange={e => set(f => ({ ...f, subCategory:e.target.value }))}>
+              <span className={LBL}>Sub-category</span>
+              <select className={inp} value={form.subCategory} onChange={e => set(f => ({ ...f, subCategory:e.target.value }))}>
                 <option value="">Select sub-category</option>
                 {subOpts.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -220,27 +209,27 @@ function S1({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         </div>
       </div>
 
-      <div className={styles.scrCard}>
-        <p style={SEC}>Payout Details</p>
-        <div className={styles.scrGrid2}>
+      <div className={SCR_CARD}>
+        <p className={SEC}>Payout Details</p>
+        <div className={SCR_GRID2}>
           <div>
-            <span style={LBL}>GSTIN (optional)</span>
-            <input style={inp} placeholder="22AAAAA0000A1Z5"
+            <span className={LBL}>GSTIN (optional)</span>
+            <input className={inp} placeholder="22AAAAA0000A1Z5"
               value={form.gstin} onChange={e => set(f => ({ ...f, gstin:e.target.value }))} />
           </div>
           <div>
-            <span style={LBL}>Bank Account Number</span>
-            <input style={inp} placeholder="Account number"
+            <span className={LBL}>Bank Account Number</span>
+            <input className={inp} placeholder="Account number"
               value={form.accountNumber} onChange={e => set(f => ({ ...f, accountNumber:e.target.value }))} />
           </div>
           <div>
-            <span style={LBL}>IFSC Code</span>
-            <input style={inp} placeholder="e.g. HDFC0001234"
+            <span className={LBL}>IFSC Code</span>
+            <input className={inp} placeholder="e.g. HDFC0001234"
               value={form.ifsc} onChange={e => set(f => ({ ...f, ifsc:e.target.value }))} />
           </div>
           <div>
-            <span style={LBL}>Account Type</span>
-            <select style={inp} value={form.accountType} onChange={e => set(f => ({ ...f, accountType:e.target.value as "savings"|"current" }))}>
+            <span className={LBL}>Account Type</span>
+            <select className={inp} value={form.accountType} onChange={e => set(f => ({ ...f, accountType:e.target.value as "savings"|"current" }))}>
               <option value="savings">Savings</option>
               <option value="current">Current</option>
             </select>
@@ -248,38 +237,35 @@ function S1({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         </div>
       </div>
 
-      <div className={styles.scrCard}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px" }}>
-          <p style={{ margin:0, fontSize:"14px", fontWeight:800, color:"var(--white)" }}>Point of Contact</p>
+      <div className={SCR_CARD}>
+        <div className="mb-5 flex items-center justify-between">
+          <p className="m-0 text-[14px] font-extrabold text-fg">Point of Contact</p>
           <button type="button" onClick={() => set(f => ({ ...f, pocs:[...f.pocs, { name:"", email:"", phone:"" }] }))}
-            style={{ display:"inline-flex", alignItems:"center", gap:"6px", padding:"7px 14px",
-              background:"rgba(91,230,178,0.08)", border:"1px solid rgba(91,230,178,0.25)",
-              borderRadius:"8px", color:"#5be6b2", fontSize:"12px", fontWeight:700, cursor:"pointer" }}>
+            className="inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-[rgba(91,230,178,0.25)] bg-[rgba(91,230,178,0.08)] px-[14px] py-[7px] text-[12px] font-bold text-accent">
             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
             Add Contact
           </button>
         </div>
         {form.pocs.map((poc, i) => (
-          <div key={i} className={styles.scrGridPoc} style={{ marginBottom:i < form.pocs.length-1 ? "14px" : 0 }}>
+          <div key={i} className={`${SCR_GRID_POC} ${i < form.pocs.length-1 ? "mb-[14px]" : ""}`}>
             <div>
-              <span style={LBL}>Name {i === 0 && <Req />}</span>
-              <input style={inp} placeholder="Full name" value={poc.name}
+              <span className={LBL}>Name {i === 0 && <Req />}</span>
+              <input className={inp} placeholder="Full name" value={poc.name}
                 onChange={e => { const p=[...form.pocs]; p[i]={...p[i],name:e.target.value}; set(f=>({...f,pocs:p})); }} />
             </div>
             <div>
-              <span style={LBL}>Email</span>
-              <input style={inp} type="email" placeholder="name@example.com" value={poc.email}
+              <span className={LBL}>Email</span>
+              <input className={inp} type="email" placeholder="name@example.com" value={poc.email}
                 onChange={e => { const p=[...form.pocs]; p[i]={...p[i],email:e.target.value}; set(f=>({...f,pocs:p})); }} />
             </div>
             <div>
-              <span style={LBL}>Phone {i === 0 && <Req />}</span>
-              <input style={inp} type="tel" placeholder="+91 98765 43210" value={poc.phone}
+              <span className={LBL}>Phone {i === 0 && <Req />}</span>
+              <input className={inp} type="tel" placeholder="+91 98765 43210" value={poc.phone}
                 onChange={e => { const p=[...form.pocs]; p[i]={...p[i],phone:e.target.value}; set(f=>({...f,pocs:p})); }} />
             </div>
             {form.pocs.length > 1
               ? <button type="button" onClick={() => set(f => ({ ...f, pocs:f.pocs.filter((_,idx) => idx!==i) }))}
-                  style={{ alignSelf:"end", padding:"10px 12px", background:"rgba(239,68,68,0.08)",
-                    border:"1px solid rgba(239,68,68,0.2)", borderRadius:"8px", color:"#ef4444", cursor:"pointer", lineHeight:1 }}>
+                  className="cursor-pointer self-end rounded-lg border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] px-3 py-[10px] leading-none text-danger">
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               : <div />
@@ -288,15 +274,15 @@ function S1({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         ))}
 
         {/* Show organiser on user side toggle */}
-        <div style={{ marginTop:"16px", padding:"14px 16px", background:"rgba(91,230,178,0.04)", border:"1px solid rgba(91,230,178,0.15)", borderRadius:"10px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px" }}>
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-[10px] border border-[rgba(91,230,178,0.15)] bg-[rgba(91,230,178,0.04)] px-4 py-[14px]">
           <div>
-            <p style={{ margin:"0 0 3px", fontSize:"13px", fontWeight:700, color:"var(--white)" }}>Show organiser details to customers</p>
-            <p style={{ margin:0, fontSize:"11px", color:"var(--muted)" }}>If ON, name, email &amp; phone will be visible on the event page</p>
+            <p className="mb-[3px] text-[13px] font-bold text-fg">Show organiser details to customers</p>
+            <p className="m-0 text-[11px] text-muted">If ON, name, email &amp; phone will be visible on the event page</p>
           </div>
           <button type="button" onClick={() => set(f => ({ ...f, showOrganiser: !f.showOrganiser }))}
-            style={{ background:"none", border:"none", cursor:"pointer", padding:0, flexShrink:0 }}>
-            <div style={{ width:40, height:22, borderRadius:"999px", background:form.showOrganiser?"#5be6b2":"var(--surface2)", border:`1.5px solid ${form.showOrganiser?"#5be6b2":"var(--border)"}`, position:"relative", transition:"background 0.2s" }}>
-              <div style={{ position:"absolute", top:"2px", left:form.showOrganiser?"20px":"2px", width:"16px", height:"16px", borderRadius:"50%", background:form.showOrganiser?"#000":"var(--muted)", transition:"left 0.2s" }} />
+            className="shrink-0 cursor-pointer border-none bg-transparent p-0">
+            <div className={`relative h-[22px] w-10 rounded-full border-[1.5px] transition-[background] duration-200 ${form.showOrganiser ? "border-[#5be6b2] bg-accent" : "border-border bg-surface-2"}`}>
+              <div className={`absolute top-[2px] h-4 w-4 rounded-full transition-[left] duration-200 ${form.showOrganiser ? "left-[20px] bg-black" : "left-[2px] bg-muted"}`} />
             </div>
           </button>
         </div>
@@ -318,51 +304,49 @@ function S2({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
   }
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
+    <div className="flex flex-col gap-5">
 
-      <div className={styles.scrCard}>
-        <p style={SEC}>Venue</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:"18px" }}>
-          <div className={styles.scrGrid2}>
+      <div className={SCR_CARD}>
+        <p className={SEC}>Venue</p>
+        <div className="flex flex-col gap-[18px]">
+          <div className={SCR_GRID2}>
             <div>
-              <span style={LBL}>Venue Name <Req /></span>
-              <input style={inp} placeholder="e.g. The Local Cafe"
+              <span className={LBL}>Venue Name <Req /></span>
+              <input className={inp} placeholder="e.g. The Local Cafe"
                 value={form.venueLocation} onChange={e => set(f => ({ ...f, venueLocation:e.target.value }))} />
             </div>
             <div>
-              <span style={LBL}>City / Area <Req /></span>
-              <input style={inp} placeholder="e.g. Koramangala, Bangalore"
+              <span className={LBL}>City / Area <Req /></span>
+              <input className={inp} placeholder="e.g. Koramangala, Bangalore"
                 value={form.venueCity} onChange={e => set(f => ({ ...f, venueCity:e.target.value }))} />
             </div>
           </div>
           <TriToggle label="Hosting at own restaurant?" value={form.ownRestaurant} onChange={v => set(f => ({ ...f, ownRestaurant:v }))} />
           <div>
-            <span style={LBL}>Google Maps URL (optional)</span>
-            <input style={inp} type="url" placeholder="https://maps.google.com/?q=..."
+            <span className={LBL}>Google Maps URL (optional)</span>
+            <input className={inp} type="url" placeholder="https://maps.google.com/?q=..."
               value={form.venueMapUrl} onChange={e => set(f => ({ ...f, venueMapUrl:e.target.value }))} />
-            <p style={{ margin:"4px 0 0", fontSize:"11px", color:"var(--muted2)" }}>Customers can tap this to navigate to the venue</p>
+            <p className="mt-1 text-[11px] text-muted-2">Customers can tap this to navigate to the venue</p>
           </div>
           <div>
-            <span style={LBL}>Venue Instagram (optional)</span>
-            <input style={inp} placeholder="https://instagram.com/venuename"
+            <span className={LBL}>Venue Instagram (optional)</span>
+            <input className={inp} placeholder="https://instagram.com/venuename"
               value={form.instagramLink} onChange={e => set(f => ({ ...f, instagramLink:e.target.value }))} />
           </div>
           <div>
-            <span style={LBL}>Gates Open Before Event (mins)</span>
-            <input style={inp} type="number" placeholder="e.g. 30" min="0"
+            <span className={LBL}>Gates Open Before Event (mins)</span>
+            <input className={inp} type="number" placeholder="e.g. 30" min="0"
               value={form.gatesOpenBefore} onChange={e => set(f => ({ ...f, gatesOpenBefore:e.target.value }))} />
           </div>
         </div>
       </div>
 
-      <div className={styles.scrCard}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px" }}>
-          <p style={{ margin:0, fontSize:"14px", fontWeight:800, color:"var(--white)" }}>Shows <Req /></p>
+      <div className={SCR_CARD}>
+        <div className="mb-5 flex items-center justify-between">
+          <p className="m-0 text-[14px] font-extrabold text-fg">Shows <Req /></p>
           {!addOpen && (
             <button type="button" onClick={() => setAddOpen(true)}
-              style={{ display:"inline-flex", alignItems:"center", gap:"6px", padding:"7px 14px",
-                background:"rgba(91,230,178,0.08)", border:"1px solid rgba(91,230,178,0.25)",
-                borderRadius:"8px", color:"#5be6b2", fontSize:"12px", fontWeight:700, cursor:"pointer" }}>
+              className="inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-[rgba(91,230,178,0.25)] bg-[rgba(91,230,178,0.08)] px-[14px] py-[7px] text-[12px] font-bold text-accent">
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               Add Show
             </button>
@@ -370,33 +354,31 @@ function S2({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         </div>
 
         {addOpen && (
-          <div style={{ background:"var(--bg)", border:"1px solid var(--border)", borderRadius:"10px", padding:"16px", marginBottom:"16px" }}>
-            <div className={styles.scrGrid2}>
-              <div style={{ gridColumn:"1 / -1" }}>
-                <span style={LBL}>Date <Req /></span>
-                <input style={inp} type="date" value={newShow.date}
+          <div className="mb-4 rounded-[10px] border border-border bg-[#0b1114] p-4">
+            <div className={SCR_GRID2}>
+              <div className="col-span-full">
+                <span className={LBL}>Date <Req /></span>
+                <input className={inp} type="date" value={newShow.date}
                   onChange={e => setNewShow(s => ({ ...s, date:e.target.value }))} />
               </div>
               <div>
-                <span style={LBL}>Start Time <Req /></span>
-                <input style={inp} type="time" value={newShow.startTime}
+                <span className={LBL}>Start Time <Req /></span>
+                <input className={inp} type="time" value={newShow.startTime}
                   onChange={e => setNewShow(s => ({ ...s, startTime:e.target.value }))} />
               </div>
               <div>
-                <span style={LBL}>End Time <Req /></span>
-                <input style={inp} type="time" value={newShow.endTime}
+                <span className={LBL}>End Time <Req /></span>
+                <input className={inp} type="time" value={newShow.endTime}
                   onChange={e => setNewShow(s => ({ ...s, endTime:e.target.value }))} />
               </div>
             </div>
-            <div style={{ display:"flex", gap:"8px", marginTop:"14px", justifyContent:"flex-end" }}>
+            <div className="mt-[14px] flex justify-end gap-2">
               <button type="button" onClick={() => { setAddOpen(false); setNewShow({ date:"", startTime:"", endTime:"" }); }}
-                style={{ padding:"8px 16px", background:"var(--bg)", border:"1px solid var(--border)",
-                  borderRadius:"8px", color:"var(--muted)", fontSize:"12px", fontWeight:700, cursor:"pointer" }}>
+                className="cursor-pointer rounded-lg border border-border bg-[#0b1114] px-4 py-2 text-[12px] font-bold text-muted">
                 Cancel
               </button>
               <button type="button" onClick={saveShow}
-                style={{ padding:"8px 18px", background:"rgba(91,230,178,0.12)", border:"1.5px solid rgba(91,230,178,0.4)",
-                  borderRadius:"8px", color:"#5be6b2", fontSize:"12px", fontWeight:700, cursor:"pointer" }}>
+                className="cursor-pointer rounded-lg border-[1.5px] border-[rgba(91,230,178,0.4)] bg-[rgba(91,230,178,0.12)] px-[18px] py-2 text-[12px] font-bold text-accent">
                 Add
               </button>
             </div>
@@ -404,9 +386,9 @@ function S2({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         )}
 
         {form.shows.length === 0 && !addOpen && (
-          <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)", fontSize:"13px" }}>
+          <div className="px-0 py-10 text-center text-[13px] text-muted">
             <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="var(--border2)" strokeWidth="1.5" strokeLinecap="round"
-              style={{ display:"block", margin:"0 auto 12px" }}>
+              className="mx-auto mb-3 block">
               <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
             </svg>
             No shows yet. Click "Add Show" to schedule one.
@@ -414,20 +396,17 @@ function S2({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         )}
 
         {form.shows.map(sh => (
-          <div key={sh.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
-            padding:"12px 14px", background:"var(--bg)", border:"1px solid var(--border)",
-            borderRadius:"8px", marginBottom:"8px" }}>
+          <div key={sh.id} className="mb-2 flex items-center justify-between rounded-lg border border-border bg-[#0b1114] px-[14px] py-3">
             <div>
-              <span style={{ fontSize:"13px", fontWeight:700, color:"var(--white)" }}>
+              <span className="text-[13px] font-bold text-fg">
                 {new Date(sh.date + "T12:00:00").toLocaleDateString("en-IN", { weekday:"short", day:"numeric", month:"short" })}
               </span>
-              <span style={{ fontSize:"12px", color:"var(--muted)", marginLeft:"12px" }}>
+              <span className="ml-3 text-[12px] text-muted">
                 {sh.startTime} – {sh.endTime}
               </span>
             </div>
             <button type="button" onClick={() => set(f => ({ ...f, shows:f.shows.filter(s => s.id!==sh.id) }))}
-              style={{ padding:"6px 10px", background:"rgba(239,68,68,0.07)", border:"1px solid rgba(239,68,68,0.2)",
-                borderRadius:"6px", color:"#ef4444", cursor:"pointer", lineHeight:1 }}>
+              className="cursor-pointer rounded-md border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.07)] px-[10px] py-[6px] leading-none text-danger">
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -452,15 +431,13 @@ function S3({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
   }
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
-      <div className={styles.scrCard}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px" }}>
-          <p style={{ margin:0, fontSize:"14px", fontWeight:800, color:"var(--white)" }}>Ticket Tiers <Req /></p>
+    <div className="flex flex-col gap-5">
+      <div className={SCR_CARD}>
+        <div className="mb-5 flex items-center justify-between">
+          <p className="m-0 text-[14px] font-extrabold text-fg">Ticket Tiers <Req /></p>
           {!addOpen && (
             <button type="button" onClick={() => setAddOpen(true)}
-              style={{ display:"inline-flex", alignItems:"center", gap:"6px", padding:"7px 14px",
-                background:"rgba(91,230,178,0.08)", border:"1px solid rgba(91,230,178,0.25)",
-                borderRadius:"8px", color:"#5be6b2", fontSize:"12px", fontWeight:700, cursor:"pointer" }}>
+              className="inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-[rgba(91,230,178,0.25)] bg-[rgba(91,230,178,0.08)] px-[14px] py-[7px] text-[12px] font-bold text-accent">
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               Add Tier
             </button>
@@ -468,38 +445,36 @@ function S3({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         </div>
 
         {addOpen && (
-          <div style={{ background:"var(--bg)", border:"1px solid var(--border)", borderRadius:"10px", padding:"16px", marginBottom:"16px" }}>
-            <div className={styles.scrGrid2}>
+          <div className="mb-4 rounded-[10px] border border-border bg-[#0b1114] p-4">
+            <div className={SCR_GRID2}>
               <div>
-                <span style={LBL}>Tier Name <Req /></span>
-                <input style={inp} placeholder="e.g. General, VIP" value={newTier.name}
+                <span className={LBL}>Tier Name <Req /></span>
+                <input className={inp} placeholder="e.g. General, VIP" value={newTier.name}
                   onChange={e => setNewTier(t => ({ ...t, name:e.target.value }))} />
               </div>
               <div>
-                <span style={LBL}>Price (₹) <Req /></span>
-                <input style={inp} type="number" placeholder="0 for free" min="0" value={newTier.price}
+                <span className={LBL}>Price (₹) <Req /></span>
+                <input className={inp} type="number" placeholder="0 for free" min="0" value={newTier.price}
                   onChange={e => setNewTier(t => ({ ...t, price:e.target.value }))} />
               </div>
               <div>
-                <span style={LBL}>Capacity <Req /></span>
-                <input style={inp} type="number" placeholder="Max slots" min="1" value={newTier.capacity}
+                <span className={LBL}>Capacity <Req /></span>
+                <input className={inp} type="number" placeholder="Max slots" min="1" value={newTier.capacity}
                   onChange={e => setNewTier(t => ({ ...t, capacity:e.target.value }))} />
               </div>
               <div>
-                <span style={LBL}>Description (optional)</span>
-                <input style={inp} placeholder="e.g. Includes free drinks" value={newTier.desc}
+                <span className={LBL}>Description (optional)</span>
+                <input className={inp} placeholder="e.g. Includes free drinks" value={newTier.desc}
                   onChange={e => setNewTier(t => ({ ...t, desc:e.target.value }))} />
               </div>
             </div>
-            <div style={{ display:"flex", gap:"8px", marginTop:"14px", justifyContent:"flex-end" }}>
+            <div className="mt-[14px] flex justify-end gap-2">
               <button type="button" onClick={() => { setAddOpen(false); setNewTier({ name:"", price:"", capacity:"", desc:"" }); }}
-                style={{ padding:"8px 16px", background:"var(--bg)", border:"1px solid var(--border)",
-                  borderRadius:"8px", color:"var(--muted)", fontSize:"12px", fontWeight:700, cursor:"pointer" }}>
+                className="cursor-pointer rounded-lg border border-border bg-[#0b1114] px-4 py-2 text-[12px] font-bold text-muted">
                 Cancel
               </button>
               <button type="button" onClick={saveTier}
-                style={{ padding:"8px 18px", background:"rgba(91,230,178,0.12)", border:"1.5px solid rgba(91,230,178,0.4)",
-                  borderRadius:"8px", color:"#5be6b2", fontSize:"12px", fontWeight:700, cursor:"pointer" }}>
+                className="cursor-pointer rounded-lg border-[1.5px] border-[rgba(91,230,178,0.4)] bg-[rgba(91,230,178,0.12)] px-[18px] py-2 text-[12px] font-bold text-accent">
                 Add Tier
               </button>
             </div>
@@ -507,9 +482,9 @@ function S3({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         )}
 
         {form.tiers.length === 0 && !addOpen && (
-          <div style={{ textAlign:"center", padding:"40px 0", color:"var(--muted)", fontSize:"13px" }}>
+          <div className="px-0 py-10 text-center text-[13px] text-muted">
             <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="var(--border2)" strokeWidth="1.5" strokeLinecap="round"
-              style={{ display:"block", margin:"0 auto 12px" }}>
+              className="mx-auto mb-3 block">
               <rect x="2" y="7" width="20" height="10" rx="1"/>
               <circle cx="7.5" cy="12" r="1.5" fill="var(--border2)" stroke="none"/>
             </svg>
@@ -518,20 +493,17 @@ function S3({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         )}
 
         {form.tiers.map(tier => (
-          <div key={tier.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
-            padding:"14px 16px", background:"var(--bg)", border:"1px solid var(--border)",
-            borderRadius:"8px", marginBottom:"8px" }}>
+          <div key={tier.id} className="mb-2 flex items-center justify-between rounded-lg border border-border bg-[#0b1114] px-4 py-[14px]">
             <div>
-              <span style={{ fontSize:"13px", fontWeight:800, color:"var(--white)" }}>{tier.name}</span>
-              {tier.desc && <span style={{ fontSize:"11px", color:"var(--muted)", marginLeft:"10px" }}>{tier.desc}</span>}
-              <div style={{ marginTop:"4px", display:"flex", gap:"12px" }}>
-                <span style={{ fontSize:"12px", fontWeight:700, color:"#5be6b2" }}>₹{Number(tier.price).toLocaleString()}</span>
-                <span style={{ fontSize:"12px", color:"var(--muted)" }}>{tier.capacity} slots</span>
+              <span className="text-[13px] font-extrabold text-fg">{tier.name}</span>
+              {tier.desc && <span className="ml-[10px] text-[11px] text-muted">{tier.desc}</span>}
+              <div className="mt-1 flex gap-3">
+                <span className="text-[12px] font-bold text-accent">₹{Number(tier.price).toLocaleString()}</span>
+                <span className="text-[12px] text-muted">{tier.capacity} slots</span>
               </div>
             </div>
             <button type="button" onClick={() => set(f => ({ ...f, tiers:f.tiers.filter(t => t.id!==tier.id) }))}
-              style={{ padding:"6px 10px", background:"rgba(239,68,68,0.07)", border:"1px solid rgba(239,68,68,0.2)",
-                borderRadius:"6px", color:"#ef4444", cursor:"pointer", lineHeight:1 }}>
+              className="cursor-pointer rounded-md border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.07)] px-[10px] py-[6px] leading-none text-danger">
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -544,11 +516,11 @@ function S3({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
 /* ── Step 4: Media ── */
 function S4({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction<Draft>> }) {
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
+    <div className="flex flex-col gap-5">
 
-      <div className={styles.scrCard}>
-        <p style={SEC}>Creatives</p>
-        <div className={styles.scrGrid2}>
+      <div className={SCR_CARD}>
+        <p className={SEC}>Creatives</p>
+        <div className={SCR_GRID2}>
           <UploadBox label="Landscape Banner (16:9) ★" hint="PNG / JPG / WebP · max 2 MB · Required"
             value={form.image}  onChange={url => set(f => ({ ...f, image: url }))} />
           <UploadBox label="Portrait Poster (3:4)"   hint="PNG / JPG / WebP · max 2 MB"
@@ -556,19 +528,19 @@ function S4({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         </div>
       </div>
 
-      <div className={styles.scrCard}>
-        <p style={SEC}>Video Sneak Peek</p>
+      <div className={SCR_CARD}>
+        <p className={SEC}>Video Sneak Peek</p>
         <div>
-          <span style={LBL}>Paste YouTube / Vimeo URL</span>
-          <input style={inp} placeholder="https://youtube.com/watch?v=…"
+          <span className={LBL}>Paste YouTube / Vimeo URL</span>
+          <input className={inp} placeholder="https://youtube.com/watch?v=…"
             value={form.videoUrl} onChange={e => set(f => ({ ...f, videoUrl: e.target.value }))} />
         </div>
       </div>
 
-      <div className={styles.scrCard}>
-        <p style={SEC}>Gallery</p>
-        <p style={{ margin:"-12px 0 16px", fontSize:"12px", color:"var(--muted)" }}>Up to 8 images</p>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(110px, 1fr))", gap:"12px" }}>
+      <div className={SCR_CARD}>
+        <p className={SEC}>Gallery</p>
+        <p className="mb-4 mt-[-12px] text-[12px] text-muted">Up to 8 images</p>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
           {Array.from({ length:8 }).map((_, i) => (
             <GallerySlot key={i} value={form.galleryImages[i] || ""}
               onChange={url => set(f => {
@@ -599,19 +571,17 @@ function GallerySlot({ value, onChange }: { value:string; onChange:(url:string)=
   }
 
   return (
-    <label style={{ aspectRatio:"1", border:`1.5px dashed ${tooBig ? "rgba(239,68,68,0.6)" : "var(--border2)"}`, borderRadius:"8px",
-      display:"flex", alignItems:"center", justifyContent:"center", cursor: uploading ? "wait" : "pointer",
-      background: tooBig ? "rgba(239,68,68,0.05)" : "var(--bg)", overflow:"hidden", transition:"border-color 0.15s, background 0.15s" }}
+    <label className={`flex aspect-square items-center justify-center overflow-hidden rounded-lg border-[1.5px] border-dashed transition-[border-color,background] duration-150 ${tooBig ? "border-[rgba(239,68,68,0.6)] bg-[rgba(239,68,68,0.05)]" : "border-border-2 bg-[#0b1114]"} ${uploading ? "cursor-wait" : "cursor-pointer"}`}
       onMouseEnter={e => { if (!tooBig) e.currentTarget.style.borderColor="rgba(91,230,178,0.4)"; }}
       onMouseLeave={e => { if (!tooBig) e.currentTarget.style.borderColor="var(--border2)"; }}>
-      <input type="file" accept="image/*" style={{ display:"none" }} disabled={uploading}
+      <input type="file" accept="image/*" className="hidden" disabled={uploading}
         onChange={e => { const f=e.target.files?.[0]; if(f) handleFile(f); }} />
       {value
-        ? <img src={value} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+        ? <img src={value} alt="" className="h-full w-full object-cover" />
         : uploading
-        ? <span style={{ fontSize:"10px", color:"var(--muted)" }}>…</span>
+        ? <span className="text-[10px] text-muted">…</span>
         : tooBig
-        ? <span style={{ fontSize:"9px", color:"#ef4444", textAlign:"center", padding:"4px", lineHeight:1.3 }}>Max 2 MB</span>
+        ? <span className="p-1 text-center text-[9px] leading-[1.3] text-danger">Max 2 MB</span>
         : <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
       }
     </label>
@@ -621,14 +591,14 @@ function GallerySlot({ value, onChange }: { value:string; onChange:(url:string)=
 /* ── Step 5: Publish ── */
 function S5({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction<Draft>> }) {
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
+    <div className="flex flex-col gap-5">
 
-      <div className={styles.scrCard}>
-        <p style={SEC}>Event Guide</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:"22px" }}>
+      <div className={SCR_CARD}>
+        <p className={SEC}>Event Guide</p>
+        <div className="flex flex-col gap-[22px]">
           <div>
-            <span style={LBL}>Languages Supported</span>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", marginTop:"4px" }}>
+            <span className={LBL}>Languages Supported</span>
+            <div className="mt-1 flex flex-wrap gap-2">
               {LANGUAGES.map(lang => (
                 <Chip key={lang} label={lang} active={form.languages.includes(lang)} onToggle={() =>
                   set(f => ({ ...f, languages:f.languages.includes(lang)
@@ -638,15 +608,15 @@ function S5({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
               ))}
             </div>
           </div>
-          <div className={styles.scrGrid2}>
+          <div className={SCR_GRID2}>
             <div>
-              <span style={LBL}>Minimum Age (Entry)</span>
-              <input style={inp} type="number" placeholder="0 = no restriction" min="0"
+              <span className={LBL}>Minimum Age (Entry)</span>
+              <input className={inp} type="number" placeholder="0 = no restriction" min="0"
                 value={form.minAgeEntry} onChange={e => set(f => ({ ...f, minAgeEntry:e.target.value }))} />
             </div>
             <div>
-              <span style={LBL}>Minimum Age (Paid Ticket)</span>
-              <input style={inp} type="number" placeholder="0 = no restriction" min="0"
+              <span className={LBL}>Minimum Age (Paid Ticket)</span>
+              <input className={inp} type="number" placeholder="0 = no restriction" min="0"
                 value={form.minAgePaid} onChange={e => set(f => ({ ...f, minAgePaid:e.target.value }))} />
             </div>
             <TriToggle label="Indoor or Outdoor?"  value={form.isIndoor}    onChange={v => set(f => ({ ...f, isIndoor:v }))}    yesText="Indoor"  noText="Outdoor"  />
@@ -657,9 +627,9 @@ function S5({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
         </div>
       </div>
 
-      <div className={styles.scrCard}>
-        <p style={SEC}>Add More Sections</p>
-        <div style={{ display:"flex", flexWrap:"wrap", gap:"10px" }}>
+      <div className={SCR_CARD}>
+        <p className={SEC}>Add More Sections</p>
+        <div className="flex flex-wrap gap-[10px]">
           {EXTRA_SECS.map(sec => {
             const active = form.extraSections.includes(sec);
             return (
@@ -667,11 +637,7 @@ function S5({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
                 onClick={() => set(f => ({ ...f, extraSections:active
                   ? f.extraSections.filter(s => s!==sec)
                   : [...f.extraSections, sec] }))}
-                style={{ display:"inline-flex", alignItems:"center", gap:"6px", padding:"8px 16px",
-                  borderRadius:"999px", fontSize:"12px", fontWeight:700, cursor:"pointer", border:"1.5px solid", transition:"all 0.15s",
-                  background:active?"rgba(91,230,178,0.12)":"var(--bg)",
-                  borderColor:active?"rgba(91,230,178,0.5)":"var(--border)",
-                  color:active?"#5be6b2":"var(--muted)" }}>
+                className={`inline-flex cursor-pointer items-center gap-[6px] rounded-full border-[1.5px] px-4 py-2 text-[12px] font-bold transition-all duration-150 ${active ? "border-[rgba(91,230,178,0.5)] bg-[rgba(91,230,178,0.12)] text-accent" : "border-border bg-[#0b1114] text-muted"}`}>
                 <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
                   {active ? <path d="M5 13l4 4L19 7"/> : <path d="M12 5v14M5 12h14"/>}
                 </svg>
@@ -683,9 +649,9 @@ function S5({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
       </div>
 
       {/* Review summary */}
-      <div className={styles.scrCard} style={{ border:"1px solid rgba(91,230,178,0.15)", background:"rgba(91,230,178,0.03)" }}>
-        <p style={SEC}>Review</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
+      <div className={`${SCR_CARD} border-[rgba(91,230,178,0.15)]! bg-[rgba(91,230,178,0.03)]!`}>
+        <p className={SEC}>Review</p>
+        <div className="flex flex-col gap-[10px]">
           {[
             { label:"Event",        value:form.name || "—" },
             { label:"Categories",   value:form.categories.join(", ") || "—" },
@@ -695,9 +661,9 @@ function S5({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
               ? form.tiers.map(t => `${t.name} (₹${Number(t.price).toLocaleString()})`).join(", ")
               : "None" },
           ].map(({ label, value }) => (
-            <div key={label} style={{ display:"flex", gap:"16px" }}>
-              <span style={{ width:"110px", flexShrink:0, fontSize:"11px", fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</span>
-              <span style={{ fontSize:"13px", fontWeight:600, color:"var(--white)" }}>{value}</span>
+            <div key={label} className="flex gap-4">
+              <span className="w-[110px] shrink-0 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">{label}</span>
+              <span className="text-[13px] font-semibold text-fg">{value}</span>
             </div>
           ))}
         </div>
@@ -822,45 +788,38 @@ export function ScrCreateEventForm({
   return (
     <div>
       {/* Header */}
-      <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"20px", flexWrap:"wrap" }}>
-        <button type="button" onClick={step === 1 ? onBack : goPrev} style={backBtnStyle}>
+      <div className="mb-5 flex flex-wrap items-center gap-[14px]">
+        <button type="button" onClick={step === 1 ? onBack : goPrev} className={backBtnStyle}>
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           {step === 1 ? "Back" : `← ${STEPS[step - 2].label}`}
         </button>
         <div>
-          <p style={{ margin:"0 0 2px", fontSize:"10px", fontWeight:800, color:"#5be6b2", letterSpacing:"0.15em", textTransform:"uppercase" }}>Streaming Events</p>
-          <h2 style={{ margin:0, fontSize:"20px", fontWeight:800, color:"var(--white)" }}>Create New Event</h2>
+          <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent">Streaming Events</p>
+          <h2 className="m-0 text-[20px] font-extrabold text-fg">Create New Event</h2>
         </div>
       </div>
 
       {/* Step indicator */}
-      <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"14px", padding:"20px 24px", marginBottom:"24px" }}>
-        <div style={{ display:"flex", alignItems:"center", position:"relative" }}>
+      <div className="mb-6 rounded-[14px] border border-border bg-surface px-6 py-5">
+        <div className="relative flex items-center">
           {STEPS.map((s, i) => {
             const isDone   = s.num < step;
             const isActive = s.num === step;
             return (
               <React.Fragment key={s.num}>
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"8px",
-                  flex:i === STEPS.length-1 ? "0 0 auto" : "1", position:"relative", zIndex:1 }}>
+                <div className={`relative z-[1] flex flex-col items-center gap-2 ${i === STEPS.length-1 ? "flex-[0_0_auto]" : "flex-1"}`}>
                   <button type="button"
                     onClick={() => { if (s.num <= step) { setStep(s.num); setStepError(null); } }}
-                    style={{ width:32, height:32, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:"13px", fontWeight:800, transition:"all 0.2s", border:"2px solid",
-                      cursor:s.num <= step ? "pointer" : "default",
-                      background:isActive?"rgba(91,230,178,0.15)":isDone?"rgba(91,230,178,0.08)":"var(--bg)",
-                      borderColor:isActive?"#5be6b2":isDone?"rgba(91,230,178,0.4)":"var(--border)",
-                      color:isActive?"#5be6b2":isDone?"rgba(91,230,178,0.7)":"var(--muted2)" }}>
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-[13px] font-extrabold transition-all duration-200 ${s.num <= step ? "cursor-pointer" : "cursor-default"} ${isActive ? "border-[#5be6b2] bg-[rgba(91,230,178,0.15)] text-accent" : isDone ? "border-[rgba(91,230,178,0.4)] bg-[rgba(91,230,178,0.08)] text-[rgba(91,230,178,0.7)]" : "border-border bg-[#0b1114] text-muted-2"}`}>
                     {isDone
                       ? <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>
                       : s.num
                     }
                   </button>
-                  <span style={{ fontSize:"11px", fontWeight:isActive?700:500, color:isActive?"#5be6b2":"var(--muted)", whiteSpace:"nowrap" }}>{s.label}</span>
+                  <span className={`whitespace-nowrap text-[11px] ${isActive ? "font-bold text-accent" : "font-medium text-muted"}`}>{s.label}</span>
                 </div>
                 {i < STEPS.length-1 && (
-                  <div style={{ flex:1, height:"2px", margin:"0 4px", marginBottom:"20px", borderRadius:"999px",
-                    background:isDone?"rgba(91,230,178,0.4)":"var(--border)", transition:"background 0.2s" }} />
+                  <div className={`mx-1 mb-5 h-[2px] flex-1 rounded-full transition-[background] duration-200 ${isDone ? "bg-[rgba(91,230,178,0.4)]" : "bg-border"}`} />
                 )}
               </React.Fragment>
             );
@@ -877,42 +836,33 @@ export function ScrCreateEventForm({
 
       {/* Step error */}
       {stepError && (
-        <div style={{ margin:"16px 0 0", padding:"12px 16px", background:"rgba(239,68,68,0.08)",
-          border:"1px solid rgba(239,68,68,0.3)", borderRadius:"10px",
-          display:"flex", alignItems:"center", gap:"10px" }}>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" style={{flexShrink:0}}>
+        <div className="mt-4 flex items-center gap-[10px] rounded-[10px] border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.08)] px-4 py-3">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" className="shrink-0">
             <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
           </svg>
-          <span style={{ fontSize:"13px", fontWeight:600, color:"#ef4444" }}>{stepError}</span>
+          <span className="text-[13px] font-semibold text-danger">{stepError}</span>
         </div>
       )}
 
       {/* Navigation */}
-      <div style={{ display:"flex", justifyContent:"space-between", gap:"12px", padding:"24px 0 48px" }}>
+      <div className="flex justify-between gap-3 pt-6 pb-12">
         <button type="button" onClick={step === 1 ? onBack : goPrev}
-          style={{ padding:"11px 24px", background:"var(--surface)", border:"1px solid var(--border)",
-            borderRadius:"10px", color:"var(--muted)", fontSize:"13px", fontWeight:700, cursor:"pointer" }}>
+          className="cursor-pointer rounded-[10px] border border-border bg-surface px-6 py-[11px] text-[13px] font-bold text-muted">
           {step === 1 ? "Cancel" : "← Back"}
         </button>
         {step < 5 ? (
           <button type="button" onClick={goNext}
-            style={{ padding:"11px 28px", background:"rgba(91,230,178,0.12)", border:"1.5px solid rgba(91,230,178,0.4)",
-              borderRadius:"10px", color:"#5be6b2", fontSize:"13px", fontWeight:800, cursor:"pointer", letterSpacing:"0.03em" }}>
+            className="cursor-pointer rounded-[10px] border-[1.5px] border-[rgba(91,230,178,0.4)] bg-[rgba(91,230,178,0.12)] px-7 py-[11px] text-[13px] font-extrabold tracking-[0.03em] text-accent">
             Next →
           </button>
         ) : (
-          <div style={{ display:"flex", gap:"10px" }}>
+          <div className="flex gap-[10px]">
             <button type="button" disabled={submitting} onClick={() => handlePublish('draft')}
-              style={{ padding:"11px 24px", background:"var(--surface)", border:"1px solid var(--border)",
-                borderRadius:"10px", color:"var(--muted)", fontSize:"13px", fontWeight:700,
-                cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.6 : 1 }}>
+              className={`rounded-[10px] border border-border bg-surface px-6 py-[11px] text-[13px] font-bold text-muted ${submitting ? "cursor-not-allowed opacity-60" : "cursor-pointer opacity-100"}`}>
               {submitting ? "Saving…" : "Save as Draft"}
             </button>
             <button type="button" disabled={submitting} onClick={() => handlePublish('published')}
-              style={{ padding:"11px 28px", background:"rgba(91,230,178,0.12)", border:"1.5px solid rgba(91,230,178,0.4)",
-                borderRadius:"10px", color:"#5be6b2", fontSize:"13px", fontWeight:800,
-                cursor: submitting ? "not-allowed" : "pointer", letterSpacing:"0.03em",
-                opacity: submitting ? 0.6 : 1 }}>
+              className={`rounded-[10px] border-[1.5px] border-[rgba(91,230,178,0.4)] bg-[rgba(91,230,178,0.12)] px-7 py-[11px] text-[13px] font-extrabold tracking-[0.03em] text-accent ${submitting ? "cursor-not-allowed opacity-60" : "cursor-pointer opacity-100"}`}>
               {submitting ? "Publishing…" : "Publish Now"}
             </button>
           </div>

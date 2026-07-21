@@ -24,7 +24,7 @@ const STATUS_COLORS: Record<string, { color: string; bg: string; border: string;
 function StatusBadge({ status }: { status: string }) {
   const s = STATUS_COLORS[status] ?? { color: "var(--muted)", bg: "var(--surface2)", border: "var(--border)", label: status };
   return (
-    <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: s.bg, border: `1px solid ${s.border}`, color: s.color, whiteSpace: "nowrap" }}>
+    <span className="whitespace-nowrap rounded-full border px-[10px] py-[3px] text-[11px] font-bold" style={{ background: s.bg, borderColor: s.border, color: s.color }}>
       {s.label}
     </span>
   );
@@ -86,7 +86,7 @@ function ExportCsvBtn({ event, statusFilter, search, total }: {
     <button
       onClick={handleExport}
       disabled={total === 0 || exporting}
-      style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "9px 16px", background: "rgba(91,230,178,0.08)", border: "1px solid rgba(91,230,178,0.25)", borderRadius: "9px", color: "#5be6b2", fontSize: "12px", fontWeight: 700, cursor: (total === 0 || exporting) ? "not-allowed" : "pointer", opacity: (total === 0 || exporting) ? 0.5 : 1, whiteSpace: "nowrap" }}>
+      className={`inline-flex items-center gap-[7px] whitespace-nowrap rounded-[9px] border border-[rgba(91,230,178,0.25)] bg-[rgba(91,230,178,0.08)] px-4 py-[9px] text-[12px] font-bold text-accent ${(total === 0 || exporting) ? "cursor-not-allowed opacity-50" : "cursor-pointer opacity-100"}`}>
       {exporting ? (
         <svg className="animate-spin" width="13" height="13" fill="none" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" stroke="#5be6b2" strokeWidth="3" strokeOpacity="0.25" />
@@ -136,105 +136,101 @@ export function ScrAttendeesPage({ event, onBack }: { event: ApiScrEvent; onBack
   const totalPages = Math.ceil(total / LIMIT);
 
   return (
-    <div style={{ paddingBottom: 48 }}>
+    <div className="pb-12">
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "8px", flexWrap: "wrap" }}>
-        <button type="button" onClick={onBack} style={backBtnStyle}>
+      <div className="mb-2 flex flex-wrap items-start gap-[14px]">
+        <button type="button" onClick={onBack} className={backBtnStyle}>
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           Back
         </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 800, color: "#a78bfa", letterSpacing: "0.15em", textTransform: "uppercase" }}>Attendees</p>
-          <h2 style={{ margin: "0 0 2px", fontSize: "20px", fontWeight: 800, color: "var(--white)" }}>Ticket Holders</h2>
-          <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</p>
+        <div className="min-w-0 flex-1">
+          <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#a78bfa]">Attendees</p>
+          <h2 className="mb-[2px] text-[20px] font-extrabold text-fg">Ticket Holders</h2>
+          <p className="m-0 overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-muted">{event.title}</p>
         </div>
-        <span style={{ flexShrink: 0, marginTop: "4px", padding: "5px 14px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>{badge.label}</span>
+        <span className="mt-1 shrink-0 rounded-full border px-[14px] py-[5px] text-[11px] font-bold" style={{ background: badge.bg, borderColor: badge.border, color: badge.color }}>{badge.label}</span>
       </div>
 
-      <div style={{ height: "1px", background: "var(--border)", margin: "16px 0 20px" }} />
+      <div className="mx-0 mb-5 mt-4 h-px bg-border" />
 
       {/* Toolbar */}
-      <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", marginBottom: "20px" }}>
-        <div style={{ flex: 1, minWidth: "220px", position: "relative" }}>
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[220px] flex-1">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" className="pointer-events-none absolute left-[12px] top-1/2 -translate-y-1/2">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
           </svg>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name, email, entry code…"
-            style={{ width: "100%", padding: "9px 12px 9px 34px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "9px", color: "var(--white)", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+            className="box-border w-full rounded-[9px] border border-border bg-[#0b1114] py-[9px] pl-[34px] pr-3 text-[13px] text-fg outline-none"
           />
         </div>
         <ExportCsvBtn event={event} statusFilter={statusFilter} search={debouncedSearch} total={total} />
       </div>
 
       {/* Status tabs */}
-      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "20px" }}>
+      <div className="mb-5 flex flex-wrap gap-[6px]">
         {STATUS_TABS.map(t => (
           <button key={t.key} type="button" onClick={() => { setStatusFilter(t.key); setPage(1); }}
-            style={{ padding: "6px 14px", borderRadius: "999px", fontSize: "12px", fontWeight: 700, cursor: "pointer", border: "1px solid", transition: "all 0.15s",
-              background:   statusFilter === t.key ? "rgba(167,139,250,0.12)" : "none",
-              borderColor:  statusFilter === t.key ? "rgba(167,139,250,0.4)"  : "var(--border)",
-              color:        statusFilter === t.key ? "#a78bfa"                : "var(--muted)",
-            }}>
+            className={`cursor-pointer rounded-full border px-[14px] py-[6px] text-[12px] font-bold transition-all duration-150 ${statusFilter === t.key ? "border-[rgba(167,139,250,0.4)] bg-[rgba(167,139,250,0.12)] text-[#a78bfa]" : "border-border bg-transparent text-muted"}`}>
             {t.label}
           </button>
         ))}
-        <span style={{ marginLeft: "auto", fontSize: "12px", color: "var(--muted)", alignSelf: "center", whiteSpace: "nowrap" }}>
+        <span className="ml-auto self-center whitespace-nowrap text-[12px] text-muted">
           {loading ? "Loading…" : `${total} ticket${total !== 1 ? "s" : ""}`}
         </span>
       </div>
 
       {/* Table */}
       {error ? (
-        <div style={{ padding: "32px", textAlign: "center", color: "#ef4444", fontSize: "13px" }}>{error}</div>
+        <div className="p-8 text-center text-[13px] text-danger">{error}</div>
       ) : loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
+        <div className="flex justify-center px-0 py-[60px]">
           <svg className="animate-spin" width="26" height="26" fill="none" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke="#a78bfa" strokeWidth="3" strokeOpacity="0.2" />
             <path d="M12 2a10 10 0 0110 10" stroke="#a78bfa" strokeWidth="3" strokeLinecap="round" />
           </svg>
         </div>
       ) : tickets.length === 0 ? (
-        <div style={{ padding: "60px 0", textAlign: "center" }}>
-          <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="1.2" strokeLinecap="round" style={{ display: "block", margin: "0 auto 12px" }}>
+        <div className="px-0 py-[60px] text-center">
+          <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="1.2" strokeLinecap="round" className="mx-auto mb-3 block">
             <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 011-.01c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 011.52 0C14.51 4.81 17 6 19 6a1 1 0 011 1z"/>
           </svg>
-          <p style={{ margin: 0, fontSize: "14px", color: "var(--muted)" }}>No tickets found</p>
+          <p className="m-0 text-[14px] text-muted">No tickets found</p>
           {(search || statusFilter !== "all") && (
-            <button onClick={() => { setSearch(""); setStatusFilter("all"); }} style={{ marginTop: "12px", padding: "7px 16px", background: "none", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--muted)", fontSize: "12px", cursor: "pointer" }}>
+            <button onClick={() => { setSearch(""); setStatusFilter("all"); }} className="mt-3 cursor-pointer rounded-lg border border-border bg-transparent px-4 py-[7px] text-[12px] text-muted">
               Clear filters
             </button>
           )}
         </div>
       ) : (
         <>
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", overflow: "hidden" }}>
+          <div className="overflow-hidden rounded-xl border border-border bg-surface">
             {/* Table header */}
-            <div style={{ display: "grid", gridTemplateColumns: "160px 1fr 1fr 130px 80px 110px", gap: "0", padding: "10px 18px", borderBottom: "1px solid var(--border)", background: "rgba(0,0,0,0.2)" }}>
+            <div className="grid grid-cols-[160px_1fr_1fr_130px_80px_110px] gap-0 border-b border-border bg-[rgba(0,0,0,0.2)] px-[18px] py-[10px]">
               {["Entry Code","Attendee","Tickets","Total","Status","Booked"].map(h => (
-                <span key={h} style={{ fontSize: "10px", fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.12em" }}>{h}</span>
+                <span key={h} className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">{h}</span>
               ))}
             </div>
             {/* Rows */}
             {tickets.map((t, i) => (
-              <div key={t._id} style={{ display: "grid", gridTemplateColumns: "160px 1fr 1fr 130px 80px 110px", gap: "0", padding: "14px 18px", borderBottom: i < tickets.length - 1 ? "1px solid var(--border)" : "none", alignItems: "center" }}>
-                <span style={{ fontSize: "13px", fontWeight: 800, color: "var(--white)", letterSpacing: "0.14em", fontFamily: "monospace" }}>{t.entryCode}</span>
+              <div key={t._id} className={`grid grid-cols-[160px_1fr_1fr_130px_80px_110px] items-center gap-0 px-[18px] py-[14px] ${i < tickets.length - 1 ? "border-b border-border" : ""}`}>
+                <span className="font-mono text-[13px] font-extrabold tracking-[0.14em] text-fg">{t.entryCode}</span>
                 <div>
-                  <p style={{ margin: "0 0 1px", fontSize: "13px", fontWeight: 600, color: "var(--white)" }}>{t.player?.name ?? <span style={{ color: "var(--muted2)" }}>Unknown</span>}</p>
-                  <p style={{ margin: 0, fontSize: "11px", color: "var(--muted)" }}>{t.player?.email ?? "—"}</p>
+                  <p className="mb-px text-[13px] font-semibold text-fg">{t.player?.name ?? <span className="text-muted-2">Unknown</span>}</p>
+                  <p className="m-0 text-[11px] text-muted">{t.player?.email ?? "—"}</p>
                 </div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", lineHeight: 1.6 }}>
+                <div className="text-[12px] leading-[1.6] text-muted">
                   {(t.lineItems ?? []).map((li, j) => (
                     <span key={j}>{j > 0 && ", "}{li.quantity}× {li.tierName}</span>
                   ))}
                 </div>
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--white)" }}>
+                <span className="text-[13px] font-bold text-fg">
                   ₹{Math.round((t.totalPaise ?? 0) / 100).toLocaleString("en-IN")}
                 </span>
                 <StatusBadge status={t.status} />
-                <span style={{ fontSize: "11px", color: "var(--muted)" }}>
+                <span className="text-[11px] text-muted">
                   {t.bookedAt ? new Date(t.bookedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
                 </span>
               </div>
@@ -243,14 +239,14 @@ export function ScrAttendeesPage({ event, onBack }: { event: ApiScrEvent; onBack
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginTop: "20px" }}>
+            <div className="mt-5 flex items-center justify-center gap-3">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-                style={{ padding: "7px 16px", background: "none", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--muted)", fontSize: "12px", cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.4 : 1 }}>
+                className={`rounded-lg border border-border bg-transparent px-4 py-[7px] text-[12px] text-muted ${page <= 1 ? "cursor-not-allowed opacity-40" : "cursor-pointer opacity-100"}`}>
                 Prev
               </button>
-              <span style={{ fontSize: "12px", color: "var(--muted)" }}>Page {page} of {totalPages}</span>
+              <span className="text-[12px] text-muted">Page {page} of {totalPages}</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                style={{ padding: "7px 16px", background: "none", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--muted)", fontSize: "12px", cursor: page >= totalPages ? "not-allowed" : "pointer", opacity: page >= totalPages ? 0.4 : 1 }}>
+                className={`rounded-lg border border-border bg-transparent px-4 py-[7px] text-[12px] text-muted ${page >= totalPages ? "cursor-not-allowed opacity-40" : "cursor-pointer opacity-100"}`}>
                 Next
               </button>
             </div>

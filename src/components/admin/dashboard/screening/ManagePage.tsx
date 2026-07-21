@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import styles from "../dashboard.module.css";
+import { SCR_MANAGE_LAYOUT, SCR_MANAGE_SIDEBAR, SCR_MANAGE_TAB, SCR_MANAGE_TAB_ACTIVE, SCR_MANAGE_TAB_BAR } from "../ui";
 import { ScrEvent, ScrShow, ScrShowTicket, scrStatusBadge, backBtnStyle, inp } from "./types";
 import { scrApi, type ApiScrEvent, type ApiScrShow, type ApiScrTier, type CreateScrEventPayload } from "@/lib/screening-api";
 
@@ -52,10 +52,10 @@ function toHHMM(ampm: string): string {
 
 function SideCard({ title, accent, children }: { title: string; accent?: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", overflow: "hidden" }}>
-      {accent && <div style={{ height: "3px", background: accent }} />}
-      <div style={{ padding: "16px" }}>
-        <p style={{ margin: "0 0 12px", fontSize: "11px", fontWeight: 800, color: "var(--muted)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{title}</p>
+    <div className="overflow-hidden rounded-[14px] border border-border bg-surface">
+      {accent && <div className="h-[3px]" style={{ background: accent }} />}
+      <div className="p-4">
+        <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.14em] text-muted">{title}</p>
         {children}
       </div>
     </div>
@@ -65,13 +65,13 @@ function SideCard({ title, accent, children }: { title: string; accent?: string;
 function SideRow({ label, sub, icon, accent, onClick }: { label: string; sub?: string; icon?: React.ReactNode; accent?: string; onClick?: () => void }) {
   return (
     <button type="button" onClick={onClick}
-      style={{ display: "flex", alignItems: "center", width: "100%", padding: "9px 0", background: "none", border: "none", borderBottom: "1px solid var(--border)", cursor: "pointer", gap: "10px", textAlign: "left", transition: "opacity 0.15s" }}
+      className="flex w-full cursor-pointer items-center gap-[10px] border-b border-border bg-transparent py-[9px] text-left transition-[opacity] duration-150"
       onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.75")}
       onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-      {icon && <div style={{ width: 28, height: 28, borderRadius: "7px", background: accent ? `${accent}15` : "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--text)" }}>{label}</div>
-        {sub && <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "1px" }}>{sub}</div>}
+      {icon && <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px]" style={{ background: accent ? `${accent}15` : "var(--surface2)" }}>{icon}</div>}
+      <div className="min-w-0 flex-1">
+        <div className="text-[12px] font-semibold text-body">{label}</div>
+        {sub && <div className="mt-px text-[11px] text-muted">{sub}</div>}
       </div>
       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="var(--muted2)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
     </button>
@@ -82,16 +82,16 @@ function TicketRow({ ticket, isLast }: { ticket: ScrShowTicket; isLast: boolean 
   const fillPct   = Math.min(100, Math.round((ticket.sold / Math.max(1, ticket.qty)) * 100));
   const fillColor = fillPct >= 90 ? "#ef4444" : fillPct >= 60 ? "#f59e0b" : "#5be6b2";
   return (
-    <div style={{ padding: "10px 0", borderBottom: isLast ? "none" : "1px solid var(--border)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", gap: "12px" }}>
-        <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--white)" }}>{ticket.name}</span>
-        <div style={{ display: "flex", gap: "12px", alignItems: "center", flexShrink: 0 }}>
-          <span style={{ fontSize: "13px", color: "#5be6b2", fontWeight: 700 }}>₹{Math.round(ticket.pricePaise / 100)}</span>
-          <span style={{ fontSize: "11px", color: "var(--muted)" }}>{ticket.sold}/{ticket.qty} sold</span>
+    <div className={`py-[10px] ${isLast ? "" : "border-b border-border"}`}>
+      <div className="mb-[6px] flex items-center justify-between gap-3">
+        <span className="text-[13px] font-semibold text-fg">{ticket.name}</span>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="text-[13px] font-bold text-accent">₹{Math.round(ticket.pricePaise / 100)}</span>
+          <span className="text-[11px] text-muted">{ticket.sold}/{ticket.qty} sold</span>
         </div>
       </div>
-      <div style={{ height: "3px", borderRadius: "999px", background: "var(--surface2)" }}>
-        <div style={{ height: "100%", width: `${fillPct}%`, background: fillColor, borderRadius: "999px", transition: "width 0.3s" }} />
+      <div className="h-[3px] rounded-full bg-surface-2">
+        <div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${fillPct}%`, background: fillColor }} />
       </div>
     </div>
   );
@@ -106,40 +106,40 @@ function TierManageCard({ tier, onEdit, onDelete }: {
   const canDelete = tier.sold === 0;
 
   return (
-    <div style={{ padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", marginBottom: "8px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "3px" }}>
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--white)" }}>{tier.name}</span>
+    <div className="mb-2 rounded-xl border border-border bg-surface px-4 py-[14px]">
+      <div className="mb-[10px] flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="mb-[3px] flex flex-wrap items-center gap-2">
+            <span className="text-[14px] font-bold text-fg">{tier.name}</span>
             {tier.isDisabled && (
-              <span style={{ fontSize: "10px", fontWeight: 700, color: "#f59e0b", padding: "2px 7px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "999px" }}>DISABLED</span>
+              <span className="rounded-full border border-[rgba(245,158,11,0.25)] bg-[rgba(245,158,11,0.1)] px-[7px] py-[2px] text-[10px] font-bold text-warning">DISABLED</span>
             )}
             {tier.salesEndDate && (
-              <span style={{ fontSize: "10px", fontWeight: 600, color: "var(--muted)", padding: "2px 7px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "999px" }}>
+              <span className="rounded-full border border-border bg-[#0b1114] px-[7px] py-[2px] text-[10px] font-semibold text-muted">
                 Ends {new Date(tier.salesEndDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
               </span>
             )}
           </div>
-          <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>
-            <span style={{ color: "#5be6b2", fontWeight: 700 }}>₹{Math.round(tier.pricePaise / 100)}</span>
+          <p className="m-0 text-[12px] text-muted">
+            <span className="font-bold text-accent">₹{Math.round(tier.pricePaise / 100)}</span>
             {" · "}
             <span>{tier.sold}/{tier.capacity} sold</span>
             {tier.showIds && tier.showIds.length > 0 && (
-              <span style={{ marginLeft: "6px", color: "var(--muted2)" }}>· {tier.showIds.length} show{tier.showIds.length !== 1 ? "s" : ""}</span>
+              <span className="ml-[6px] text-muted-2">· {tier.showIds.length} show{tier.showIds.length !== 1 ? "s" : ""}</span>
             )}
           </p>
         </div>
         {!confirmDelete && (
-          <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+          <div className="flex shrink-0 gap-[6px]">
             <button type="button" onClick={onEdit} title="Edit ticket"
-              style={{ width: 32, height: 32, borderRadius: "8px", background: "rgba(91,230,178,0.08)", border: "1px solid rgba(91,230,178,0.2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-[rgba(91,230,178,0.2)] bg-[rgba(91,230,178,0.08)]"
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(91,230,178,0.18)")}
               onMouseLeave={e => (e.currentTarget.style.background = "rgba(91,230,178,0.08)")}>
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
             <button type="button" title={canDelete ? "Delete ticket" : `${tier.sold} sold — cannot delete`}
               onClick={() => canDelete && setConfirmDelete(true)}
-              style={{ width: 32, height: 32, borderRadius: "8px", background: canDelete ? "rgba(239,68,68,0.08)" : "var(--bg)", border: `1px solid ${canDelete ? "rgba(239,68,68,0.2)" : "var(--border)"}`, cursor: canDelete ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", opacity: canDelete ? 1 : 0.35 }}
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border ${canDelete ? "cursor-pointer border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] opacity-100" : "cursor-not-allowed border-border bg-[#0b1114] opacity-35"}`}
               onMouseEnter={e => canDelete && (e.currentTarget.style.background = "rgba(239,68,68,0.18)")}
               onMouseLeave={e => { if (canDelete) e.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}>
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
@@ -147,17 +147,17 @@ function TierManageCard({ tier, onEdit, onDelete }: {
           </div>
         )}
         {confirmDelete && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-            <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: 600 }}>Delete?</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-[12px] font-semibold text-danger">Delete?</span>
             <button type="button" onClick={() => { setConfirmDelete(false); onDelete(); }}
-              style={{ padding: "5px 12px", background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", borderRadius: "7px", color: "#ef4444", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Yes</button>
+              className="cursor-pointer rounded-[7px] border border-[rgba(239,68,68,0.35)] bg-[rgba(239,68,68,0.15)] px-3 py-[5px] text-[12px] font-bold text-danger">Yes</button>
             <button type="button" onClick={() => setConfirmDelete(false)}
-              style={{ padding: "5px 12px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "7px", color: "var(--muted)", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+              className="cursor-pointer rounded-[7px] border border-border bg-[#0b1114] px-3 py-[5px] text-[12px] font-bold text-muted">Cancel</button>
           </div>
         )}
       </div>
-      <div style={{ height: "4px", borderRadius: "999px", background: "var(--surface2)" }}>
-        <div style={{ height: "100%", width: `${fillPct}%`, background: fillColor, borderRadius: "999px", transition: "width 0.3s" }} />
+      <div className="h-[4px] rounded-full bg-surface-2">
+        <div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${fillPct}%`, background: fillColor }} />
       </div>
     </div>
   );
@@ -167,9 +167,9 @@ function TierManageCard({ tier, onEdit, onDelete }: {
 
 function OvSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px", marginBottom: "14px" }}>
-      <p style={{ margin: "0 0 4px", fontSize: "15px", fontWeight: 800, color: "var(--white)" }}>{title}</p>
-      <div style={{ height: "1px", background: "var(--border)", margin: "12px 0 16px" }} />
+    <div className="mb-[14px] rounded-xl border border-border bg-surface p-5">
+      <p className="mb-1 text-[15px] font-extrabold text-fg">{title}</p>
+      <div className="mx-0 mb-4 mt-3 h-px bg-border" />
       {children}
     </div>
   );
@@ -177,8 +177,8 @@ function OvSection({ title, children }: { title: string; children: React.ReactNo
 
 function OvLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-      {children}{required && <span style={{ color: "#ef4444", marginLeft: "3px" }}>*</span>}
+    <label className="mb-[6px] block text-[12px] font-bold uppercase tracking-[0.08em] text-muted">
+      {children}{required && <span className="ml-[3px] text-danger">*</span>}
     </label>
   );
 }
@@ -188,7 +188,7 @@ function OvSelect({ value, onChange, options, disabled }: {
 }) {
   return (
     <select value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
-      style={{ ...inp, cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.6 : 1, appearance: "none" as const }}>
+      className={`${inp} appearance-none ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer opacity-100"}`}>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
   );
@@ -196,8 +196,8 @@ function OvSelect({ value, onChange, options, disabled }: {
 
 function GuideRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
-      <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--muted)" }}>{label}<span style={{ color: "#ef4444", marginLeft: "3px" }}>*</span></span>
+    <div className="grid grid-cols-2 items-center gap-4 border-b border-border py-3">
+      <span className="text-[13px] font-semibold text-muted">{label}<span className="ml-[3px] text-danger">*</span></span>
       {children}
     </div>
   );
@@ -223,38 +223,38 @@ function MultiSelect({ options, value, onChange, max, disabled }: {
   };
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div ref={ref} className="relative">
       <div onClick={() => !disabled && setOpen(p => !p)}
-        style={{ ...inp, minHeight: "42px", display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.6 : 1 }}>
+        className={`${inp} flex min-h-[42px] flex-wrap items-center gap-[6px] ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer opacity-100"}`}>
         {value.length === 0
-          ? <span style={{ color: "var(--muted)", fontSize: "13px" }}>Select…</span>
+          ? <span className="text-[13px] text-muted">Select…</span>
           : value.map(v => (
-              <span key={v} style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 10px", background: "rgba(91,230,178,0.1)", border: "1px solid rgba(91,230,178,0.3)", borderRadius: "999px", fontSize: "12px", color: "#5be6b2", fontWeight: 600 }}>
+              <span key={v} className="inline-flex items-center gap-[5px] rounded-full border border-[rgba(91,230,178,0.3)] bg-[rgba(91,230,178,0.1)] px-[10px] py-[3px] text-[12px] font-semibold text-accent">
                 {v}
                 {!disabled && (
                   <button type="button" onClick={e => { e.stopPropagation(); toggle(v); }}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "#5be6b2", padding: 0, lineHeight: 1, display: "flex" }}>
+                    className="flex cursor-pointer border-none bg-transparent p-0 leading-none text-accent">
                     <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                   </button>
                 )}
               </span>
             ))}
-        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" style={{ marginLeft: "auto", flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}><path d="M6 9l6 6 6-6"/></svg>
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" className={`ml-auto shrink-0 transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"}`}><path d="M6 9l6 6 6-6"/></svg>
       </div>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 30, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "10px", maxHeight: "220px", overflowY: "auto", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+        <div className="absolute inset-x-0 top-[calc(100%+4px)] z-30 max-h-[220px] overflow-y-auto rounded-[10px] border border-border bg-surface shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
           {options.map(opt => {
             const selected = value.includes(opt);
             const capped   = !selected && !!max && value.length >= max;
             return (
               <div key={opt} onClick={() => !capped && toggle(opt)}
-                style={{ padding: "9px 14px", cursor: capped ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "10px", opacity: capped ? 0.4 : 1, background: selected ? "rgba(91,230,178,0.07)" : "none" }}
+                className={`flex items-center gap-[10px] px-[14px] py-[9px] ${capped ? "cursor-not-allowed opacity-40" : "cursor-pointer opacity-100"} ${selected ? "bg-[rgba(91,230,178,0.07)]" : "bg-transparent"}`}
                 onMouseEnter={(e) => { if (!selected && !capped) (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.04)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = selected ? "rgba(91,230,178,0.07)" : "none"; }}>
-                <div style={{ width: 16, height: 16, borderRadius: "4px", border: `1.5px solid ${selected ? "#5be6b2" : "var(--border)"}`, background: selected ? "#5be6b2" : "none", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-[1.5px] ${selected ? "border-[#5be6b2] bg-accent" : "border-border bg-transparent"}`}>
                   {selected && <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#000" strokeWidth="3.5" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>}
                 </div>
-                <span style={{ fontSize: "13px", color: selected ? "#5be6b2" : "var(--white)", fontWeight: selected ? 600 : 400 }}>{opt}</span>
+                <span className={`text-[13px] ${selected ? "font-semibold text-accent" : "font-normal text-fg"}`}>{opt}</span>
               </div>
             );
           })}
@@ -297,34 +297,34 @@ function ImageUploadBox({ label, ratio, maxSize, existingUrl, disabled, onUpload
   };
 
   return (
-    <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "12px", padding: "14px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+    <div className="rounded-xl border border-border bg-[#0b1114] p-[14px]">
+      <div className="mb-[10px] flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p style={{ margin: "0 0 2px", fontSize: "12px", fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</p>
-          <p style={{ margin: 0, fontSize: "12px", color: "var(--muted2)" }}>{ratio}</p>
+          <p className="mb-[2px] text-[12px] font-extrabold uppercase tracking-[0.1em] text-muted">{label}</p>
+          <p className="m-0 text-[12px] text-muted-2">{ratio}</p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-          <p style={{ margin: 0, fontSize: "11px", color: "var(--muted2)" }}>Max {maxSize}</p>
+        <div className="flex shrink-0 items-center gap-2">
+          <p className="m-0 text-[11px] text-muted-2">Max {maxSize}</p>
           {preview && (
-            <img src={preview} alt="preview" style={{ height: "44px", width: "auto", borderRadius: "6px", border: "1px solid var(--border)", objectFit: "cover" }} />
+            <img src={preview} alt="preview" className="h-[44px] w-auto rounded-md border border-border object-cover" />
           )}
           <button type="button" onClick={() => !disabled && !uploading && fileRef.current?.click()}
-            style={{ padding: "6px 14px", background: "none", border: "1px solid var(--border)", borderRadius: "7px", color: (disabled || uploading) ? "var(--muted2)" : "var(--muted)", fontSize: "12px", fontWeight: 600, cursor: (disabled || uploading) ? "not-allowed" : "pointer" }}>
+            className={`rounded-[7px] border border-border bg-transparent px-[14px] py-[6px] text-[12px] font-semibold ${(disabled || uploading) ? "cursor-not-allowed text-muted-2" : "cursor-pointer text-muted"}`}>
             {uploading ? "Uploading…" : preview ? "Replace" : "Upload"}
           </button>
         </div>
       </div>
-      {uploadErr && <p style={{ margin: "0 0 8px", fontSize: "11px", color: "#ef4444" }}>{uploadErr}</p>}
+      {uploadErr && <p className="mb-2 text-[11px] text-danger">{uploadErr}</p>}
       {!preview && !disabled && (
         <div onClick={() => fileRef.current?.click()}
-          style={{ border: "1.5px dashed var(--border)", borderRadius: "10px", padding: "20px", textAlign: "center", cursor: "pointer" }}
+          className="cursor-pointer rounded-[10px] border-[1.5px] border-dashed border-border p-5 text-center"
           onMouseEnter={(e) => (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(91,230,178,0.4)"}
           onMouseLeave={(e) => (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"}>
-          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" style={{ display: "block", margin: "0 auto 6px" }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span style={{ fontSize: "12px", color: "var(--muted)" }}>Click to upload</span>
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" className="mx-auto mb-[6px] block"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span className="text-[12px] text-muted">Click to upload</span>
         </div>
       )}
-      <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleFile} />
+      <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
     </div>
   );
 }
@@ -380,46 +380,46 @@ function AddShowDrawer({ open, onClose, onSave }: {
     onClose();
   }, [date, startTime, endTime, onSave, onClose, fmt]);
 
-  const fe = (k: string): React.CSSProperties => ({ ...inp, marginTop: "6px", borderColor: errors[k] ? "rgba(239,68,68,0.6)" : undefined });
+  const fe = (k: string) => `${inp} mt-[6px] ${errors[k] ? "border-[rgba(239,68,68,0.6)]!" : ""}`;
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.55)", opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity 0.25s" }} />
-      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 50, width: "min(480px,100vw)", background: "var(--surface)", borderLeft: "1px solid var(--border)", display: "flex", flexDirection: "column", boxShadow: "-6px 0 40px rgba(0,0,0,0.45)", transform: open ? "translateX(0)" : "translateX(100%)", transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
+      <div onClick={onClose} className={`fixed inset-0 z-40 bg-[rgba(0,0,0,0.55)] transition-opacity duration-[250ms] ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`} />
+      <div className={`fixed inset-y-0 right-0 z-50 flex w-[min(480px,100vw)] flex-col border-l border-border bg-surface shadow-[-6px_0_40px_rgba(0,0,0,0.45)] transition-transform duration-[280ms] ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-[22px] py-[18px]">
           <div>
-            <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 800, color: "#5be6b2", letterSpacing: "0.16em", textTransform: "uppercase" }}>Shows</p>
-            <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "var(--white)" }}>Add New Show</h3>
+            <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.16em] text-accent">Shows</p>
+            <h3 className="m-0 text-[17px] font-extrabold text-fg">Add New Show</h3>
           </div>
-          <button type="button" onClick={onClose} style={{ width: 32, height: 32, borderRadius: "8px", background: "var(--bg)", border: "1px solid var(--border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button type="button" onClick={onClose} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-[#0b1114]">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
         </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "22px" }}>
-          <p style={{ margin: "0 0 20px", fontSize: "12px", color: "var(--muted)", lineHeight: 1.6 }}>
+        <div className="flex-1 overflow-y-auto p-[22px]">
+          <p className="mb-5 text-[12px] leading-[1.6] text-muted">
             Adding a new show date makes this event available to book again. Ticket tiers are shared across all shows and can be edited in the Tickets section.
           </p>
-          <div style={{ marginBottom: "18px" }}>
+          <div className="mb-[18px]">
             <OvLabel required>Show Date</OvLabel>
-            <input ref={firstRef} type="date" value={date} onChange={e => { setDate(e.target.value); setErrors(p => ({ ...p, date: "" })); }} style={fe("date")} />
-            {errors.date && <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#ef4444" }}>{errors.date}</p>}
+            <input ref={firstRef} type="date" value={date} onChange={e => { setDate(e.target.value); setErrors(p => ({ ...p, date: "" })); }} className={fe("date")} />
+            {errors.date && <p className="mt-1 text-[11px] text-danger">{errors.date}</p>}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+          <div className="grid grid-cols-2 gap-[14px]">
             <div>
               <OvLabel required>Start Time</OvLabel>
-              <input type="time" value={startTime} onChange={e => { setStart(e.target.value); setErrors(p => ({ ...p, startTime: "" })); }} style={fe("startTime")} />
-              {errors.startTime && <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#ef4444" }}>{errors.startTime}</p>}
+              <input type="time" value={startTime} onChange={e => { setStart(e.target.value); setErrors(p => ({ ...p, startTime: "" })); }} className={fe("startTime")} />
+              {errors.startTime && <p className="mt-1 text-[11px] text-danger">{errors.startTime}</p>}
             </div>
             <div>
               <OvLabel required>End Time</OvLabel>
-              <input type="time" value={endTime} onChange={e => { setEnd(e.target.value); setErrors(p => ({ ...p, endTime: "" })); }} style={fe("endTime")} />
-              {errors.endTime && <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#ef4444" }}>{errors.endTime}</p>}
+              <input type="time" value={endTime} onChange={e => { setEnd(e.target.value); setErrors(p => ({ ...p, endTime: "" })); }} className={fe("endTime")} />
+              {errors.endTime && <p className="mt-1 text-[11px] text-danger">{errors.endTime}</p>}
             </div>
           </div>
         </div>
-        <div style={{ padding: "16px 22px", borderTop: "1px solid var(--border)", display: "flex", gap: "10px", flexShrink: 0 }}>
-          <button type="button" onClick={onClose} style={{ flex: 1, height: "42px", background: "none", border: "1px solid var(--border)", borderRadius: "9px", color: "var(--muted)", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-          <button type="button" onClick={handleSave} style={{ flex: 2, height: "42px", background: "rgba(91,230,178,0.12)", border: "1.5px solid rgba(91,230,178,0.45)", borderRadius: "9px", color: "#5be6b2", fontSize: "13px", fontWeight: 800, cursor: "pointer" }}>Save Show</button>
+        <div className="flex shrink-0 gap-[10px] border-t border-border px-[22px] py-4">
+          <button type="button" onClick={onClose} className="h-[42px] flex-1 cursor-pointer rounded-[9px] border border-border bg-transparent text-[13px] font-bold text-muted">Cancel</button>
+          <button type="button" onClick={handleSave} className="h-[42px] flex-[2] cursor-pointer rounded-[9px] border-[1.5px] border-[rgba(91,230,178,0.45)] bg-[rgba(91,230,178,0.12)] text-[13px] font-extrabold text-accent">Save Show</button>
         </div>
       </div>
     </>
@@ -437,18 +437,18 @@ function ScopeOption({ selected, onClick, title, sub, comingSoon }: {
 }) {
   return (
     <button type="button" onClick={comingSoon ? undefined : onClick}
-      style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 16px", width: "100%", background: selected ? "rgba(91,230,178,0.06)" : "var(--bg)", border: `1.5px solid ${selected ? "rgba(91,230,178,0.35)" : "var(--border)"}`, borderRadius: "11px", cursor: comingSoon ? "not-allowed" : "pointer", textAlign: "left", opacity: comingSoon ? 0.5 : 1, transition: "all 0.15s" }}>
-      <div style={{ width: 20, height: 20, borderRadius: "50%", flexShrink: 0, border: `2px solid ${selected ? "#5be6b2" : "var(--border)"}`, background: selected ? "rgba(91,230,178,0.15)" : "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
-        {selected && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#5be6b2" }} />}
+      className={`flex w-full items-center gap-[14px] rounded-[11px] border-[1.5px] px-4 py-[14px] text-left transition-all duration-150 ${selected ? "border-[rgba(91,230,178,0.35)] bg-[rgba(91,230,178,0.06)]" : "border-border bg-[#0b1114]"} ${comingSoon ? "cursor-not-allowed opacity-50" : "cursor-pointer opacity-100"}`}>
+      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-150 ${selected ? "border-[#5be6b2] bg-[rgba(91,230,178,0.15)]" : "border-border bg-surface-2"}`}>
+        {selected && <div className="h-2 w-2 rounded-full bg-accent" />}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "var(--white)" }}>{title}</p>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="m-0 text-[13px] font-bold text-fg">{title}</p>
           {comingSoon && (
-            <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--muted)", padding: "2px 7px", background: "var(--surface2)", borderRadius: "999px", letterSpacing: "0.06em" }}>SOON</span>
+            <span className="rounded-full bg-surface-2 px-[7px] py-[2px] text-[10px] font-bold tracking-[0.06em] text-muted">SOON</span>
           )}
         </div>
-        <p style={{ margin: "2px 0 0", fontSize: "12px", color: "var(--muted)" }}>{sub}</p>
+        <p className="mt-[2px] text-[12px] text-muted">{sub}</p>
       </div>
     </button>
   );
@@ -477,20 +477,15 @@ type NewTier = {
 
 function StepDot({ n, active, done }: { n: number; active: boolean; done: boolean }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-      <div style={{
-        width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-        background: done || active ? "rgba(91,230,178,0.15)" : "var(--bg)",
-        border: `1.5px solid ${done || active ? "#5be6b2" : "var(--border)"}`,
-        transition: "all 0.2s",
-      }}>
+    <div className="flex items-center gap-[6px]">
+      <div className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border-[1.5px] transition-all duration-200 ${done || active ? "border-[#5be6b2] bg-[rgba(91,230,178,0.15)]" : "border-border bg-[#0b1114]"}`}>
         {done ? (
           <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="3" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>
         ) : (
-          <span style={{ fontSize: "10px", fontWeight: 900, color: active ? "#5be6b2" : "var(--muted2)" }}>{n}</span>
+          <span className={`text-[10px] font-black ${active ? "text-accent" : "text-muted-2"}`}>{n}</span>
         )}
       </div>
-      <span style={{ fontSize: "11px", fontWeight: 700, color: done || active ? "#5be6b2" : "var(--muted2)", transition: "color 0.2s" }}>
+      <span className={`text-[11px] font-bold transition-[color] duration-200 ${done || active ? "text-accent" : "text-muted-2"}`}>
         {n === 1 ? "Details" : "Availability"}
       </span>
     </div>
@@ -499,16 +494,8 @@ function StepDot({ n, active, done }: { n: number; active: boolean; done: boolea
 
 function ToggleSwitch({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button type="button" onClick={() => onChange(!on)} style={{
-      width: 36, height: 20, borderRadius: "999px", border: "none", cursor: "pointer", padding: 2, flexShrink: 0,
-      background: on ? "rgba(91,230,178,0.3)" : "var(--bg)",
-      outline: `1.5px solid ${on ? "#5be6b2" : "var(--border)"}`,
-      transition: "all 0.2s", display: "flex", alignItems: "center",
-    }}>
-      <div style={{
-        width: 14, height: 14, borderRadius: "50%", background: on ? "#5be6b2" : "var(--muted2)",
-        transform: on ? "translateX(16px)" : "translateX(0)", transition: "transform 0.2s, background 0.2s",
-      }} />
+    <button type="button" onClick={() => onChange(!on)} className={`flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-none p-[2px] transition-all duration-200 ${on ? "bg-[rgba(91,230,178,0.3)] [outline:1.5px_solid_#5be6b2]" : "bg-[#0b1114] [outline:1.5px_solid_#24313b]"}`}>
+      <div className={`h-[14px] w-[14px] rounded-full transition-[transform,background] duration-200 ${on ? "translate-x-4 bg-accent" : "translate-x-0 bg-muted-2"}`} />
     </button>
   );
 }
@@ -596,7 +583,7 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
     }
   }, [name, priceRs, quantity, description, hasSalesEnd, salesEndDate, isDisabled, showScope, selectedShowIds, onSave, onClose]);
 
-  const fe = (k: string): React.CSSProperties => ({ ...inp, marginTop: "6px", borderColor: errors[k] ? "rgba(239,68,68,0.6)" : undefined });
+  const fe = (k: string) => `${inp} mt-[6px] ${errors[k] ? "border-[rgba(239,68,68,0.6)]!" : ""}`;
 
   const formatShow = (s: ApiScrShow) => {
     const d = new Date(s.date);
@@ -608,32 +595,32 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
   return (
     <>
       <div onClick={() => { if (!saving) onClose(); }}
-        style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.55)", opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity 0.25s" }} />
-      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 50, width: "min(520px,100vw)", background: "var(--surface)", borderLeft: "1px solid var(--border)", display: "flex", flexDirection: "column", boxShadow: "-6px 0 40px rgba(0,0,0,0.45)", transform: open ? "translateX(0)" : "translateX(100%)", transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
+        className={`fixed inset-0 z-40 bg-[rgba(0,0,0,0.55)] transition-opacity duration-[250ms] ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`} />
+      <div className={`fixed inset-y-0 right-0 z-50 flex w-[min(520px,100vw)] flex-col border-l border-border bg-surface shadow-[-6px_0_40px_rgba(0,0,0,0.45)] transition-transform duration-[280ms] ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}>
 
         {/* Header */}
-        <div style={{ flexShrink: 0, borderBottom: "1px solid var(--border)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px 14px" }}>
+        <div className="shrink-0 border-b border-border">
+          <div className="flex items-center justify-between px-[22px] pt-[18px] pb-[14px]">
             <div>
-              <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 800, color: "#5be6b2", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+              <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.16em] text-accent">
                 {step === 1 ? "Ticket Details" : "Availability Settings"}
               </p>
-              <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "var(--white)" }}>Add Ticket</h3>
+              <h3 className="m-0 text-[17px] font-extrabold text-fg">Add Ticket</h3>
             </div>
-            <button type="button" onClick={onClose} style={{ width: 32, height: 32, borderRadius: "8px", background: "var(--bg)", border: "1px solid var(--border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <button type="button" onClick={onClose} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-[#0b1114]">
               <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
           {/* Step indicator */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0 22px 14px" }}>
+          <div className="flex items-center gap-2 px-[22px] pb-[14px]">
             <StepDot n={1} active={step === 1} done={step === 2} />
-            <div style={{ flex: 1, height: "1px", background: step === 2 ? "rgba(91,230,178,0.3)" : "var(--border)", transition: "background 0.3s" }} />
+            <div className={`h-px flex-1 transition-[background] duration-300 ${step === 2 ? "bg-[rgba(91,230,178,0.3)]" : "bg-border"}`} />
             <StepDot n={2} active={step === 2} done={false} />
           </div>
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "22px", display: "flex", flexDirection: "column", gap: "18px" }}>
+        <div className="flex flex-1 flex-col gap-[18px] overflow-y-auto p-[22px]">
 
           {step === 1 ? (
             <>
@@ -641,8 +628,8 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
               <div>
                 <OvLabel required>Ticket Name</OvLabel>
                 <input ref={nameRef} value={name} onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: "" })); }}
-                  placeholder="e.g. Regular, VIP, Early Bird" style={fe("name")} />
-                {errors.name && <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#ef4444" }}>{errors.name}</p>}
+                  placeholder="e.g. Regular, VIP, Early Bird" className={fe("name")} />
+                {errors.name && <p className="mt-1 text-[11px] text-danger">{errors.name}</p>}
               </div>
 
               {/* Description */}
@@ -650,33 +637,33 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
                 <OvLabel>Description</OvLabel>
                 <textarea value={description} onChange={e => setDescription(e.target.value)}
                   placeholder="What's included — e.g. Free snack + drink, Front row seating" rows={3}
-                  style={{ ...inp, marginTop: "6px", resize: "vertical", minHeight: "80px", fontFamily: "inherit" }} />
+                  className={`${inp} mt-[6px] min-h-[80px] resize-y`} />
               </div>
 
               {/* Price + Qty side by side */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <OvLabel required>Price (₹)</OvLabel>
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "13px", color: "var(--muted)", fontWeight: 700, pointerEvents: "none" }}>₹</span>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-[12px] top-1/2 -translate-y-1/2 text-[13px] font-bold text-muted">₹</span>
                     <input type="number" min="0" step="1" value={priceRs}
                       onChange={e => { setPriceRs(e.target.value); setErrors(p => ({ ...p, price: "" })); }}
-                      placeholder="0" style={{ ...fe("price"), paddingLeft: "26px" }} />
+                      placeholder="0" className={`${fe("price")} pl-[26px]`} />
                   </div>
-                  {errors.price && <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#ef4444" }}>{errors.price}</p>}
+                  {errors.price && <p className="mt-1 text-[11px] text-danger">{errors.price}</p>}
                 </div>
                 <div>
                   <OvLabel required>Total Slots</OvLabel>
                   <input type="number" min="1" value={quantity}
                     onChange={e => { setQuantity(e.target.value); setErrors(p => ({ ...p, quantity: "" })); }}
-                    placeholder="e.g. 100" style={fe("quantity")} />
-                  {errors.quantity && <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#ef4444" }}>{errors.quantity}</p>}
+                    placeholder="e.g. 100" className={fe("quantity")} />
+                  {errors.quantity && <p className="mt-1 text-[11px] text-danger">{errors.quantity}</p>}
                 </div>
               </div>
 
-              <div style={{ background: "rgba(91,230,178,0.04)", border: "1px solid rgba(91,230,178,0.12)", borderRadius: "10px", padding: "12px 14px" }}>
-                <p style={{ margin: 0, fontSize: "11px", color: "var(--muted2)", lineHeight: 1.6 }}>
-                  Set price to <strong style={{ color: "var(--white)" }}>0</strong> for a free ticket. Tax is not added separately — enter the final amount customers will pay.
+              <div className="rounded-[10px] border border-[rgba(91,230,178,0.12)] bg-[rgba(91,230,178,0.04)] px-[14px] py-3">
+                <p className="m-0 text-[11px] leading-[1.6] text-muted-2">
+                  Set price to <strong className="text-fg">0</strong> for a free ticket. Tax is not added separately — enter the final amount customers will pay.
                 </p>
               </div>
             </>
@@ -684,19 +671,19 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
             <>
               {/* Show slot assignment */}
               <div>
-                <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 800, color: "var(--muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Which Shows</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <p className="mb-[10px] text-[12px] font-extrabold uppercase tracking-[0.1em] text-muted">Which Shows</p>
+                <div className="flex flex-col gap-[6px]">
                   {(["all", "specific"] as const).map(scope => (
                     <button key={scope} type="button" onClick={() => setShowScope(scope)}
-                      style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 14px", background: showScope === scope ? "rgba(91,230,178,0.06)" : "var(--bg)", border: `1.5px solid ${showScope === scope ? "rgba(91,230,178,0.4)" : "var(--border)"}`, borderRadius: "9px", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
-                      <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${showScope === scope ? "#5be6b2" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {showScope === scope && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#5be6b2" }} />}
+                      className={`flex cursor-pointer items-center gap-[10px] rounded-[9px] border-[1.5px] px-[14px] py-[11px] text-left transition-all duration-150 ${showScope === scope ? "border-[rgba(91,230,178,0.4)] bg-[rgba(91,230,178,0.06)]" : "border-border bg-[#0b1114]"}`}>
+                      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${showScope === scope ? "border-[#5be6b2]" : "border-border"}`}>
+                        {showScope === scope && <div className="h-[7px] w-[7px] rounded-full bg-accent" />}
                       </div>
                       <div>
-                        <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: showScope === scope ? "var(--white)" : "var(--muted)" }}>
+                        <p className={`m-0 text-[13px] font-bold ${showScope === scope ? "text-fg" : "text-muted"}`}>
                           {scope === "all" ? "All shows" : "Specific shows"}
                         </p>
-                        <p style={{ margin: "1px 0 0", fontSize: "11px", color: "var(--muted2)" }}>
+                        <p className="mt-px text-[11px] text-muted-2">
                           {scope === "all" ? "Ticket valid for every show date" : "Choose which show dates this ticket covers"}
                         </p>
                       </div>
@@ -705,9 +692,9 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
                 </div>
 
                 {showScope === "specific" && (
-                  <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div className="mt-[10px] flex flex-col gap-[6px]">
                     {shows.length === 0 ? (
-                      <div style={{ padding: "14px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "9px", fontSize: "12px", color: "var(--muted2)", textAlign: "center" }}>
+                      <div className="rounded-[9px] border border-border bg-[#0b1114] p-[14px] text-center text-[12px] text-muted-2">
                         No shows added yet — add shows first then come back
                       </div>
                     ) : shows.map(s => {
@@ -715,22 +702,22 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
                       const checked = selectedShowIds.has(s._id);
                       return (
                         <button key={s._id} type="button" onClick={() => toggleShowId(s._id)}
-                          style={{ display: "flex", alignItems: "center", gap: "12px", padding: "11px 14px", background: checked ? "rgba(91,230,178,0.05)" : "var(--bg)", border: `1.5px solid ${checked ? "rgba(91,230,178,0.35)" : "var(--border)"}`, borderRadius: "9px", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
-                          <div style={{ width: 17, height: 17, borderRadius: "4px", border: `2px solid ${checked ? "#5be6b2" : "var(--border)"}`, background: checked ? "rgba(91,230,178,0.12)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                          className={`flex cursor-pointer items-center gap-3 rounded-[9px] border-[1.5px] px-[14px] py-[11px] text-left transition-all duration-150 ${checked ? "border-[rgba(91,230,178,0.35)] bg-[rgba(91,230,178,0.05)]" : "border-border bg-[#0b1114]"}`}>
+                          <div className={`flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[4px] border-2 transition-all duration-150 ${checked ? "border-[#5be6b2] bg-[rgba(91,230,178,0.12)]" : "border-border bg-transparent"}`}>
                             {checked && <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="3.5" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>}
                           </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: checked ? "var(--white)" : "var(--muted)" }}>{label}</p>
-                            <p style={{ margin: "1px 0 0", fontSize: "11px", color: "var(--muted2)" }}>{time}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className={`m-0 text-[12px] font-bold ${checked ? "text-fg" : "text-muted"}`}>{label}</p>
+                            <p className="mt-px text-[11px] text-muted-2">{time}</p>
                           </div>
                           {s.status !== "active" && (
-                            <span style={{ fontSize: "9px", fontWeight: 800, color: "#ef4444", letterSpacing: ".1em", textTransform: "uppercase", flexShrink: 0 }}>{s.status}</span>
+                            <span className="shrink-0 text-[9px] font-extrabold uppercase tracking-[0.1em] text-danger">{s.status}</span>
                           )}
                         </button>
                       );
                     })}
                     {showScope === "specific" && selectedShowIds.size > 0 && (
-                      <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#5be6b2", fontWeight: 700 }}>
+                      <p className="mt-[2px] text-[11px] font-bold text-accent">
                         {selectedShowIds.size} show{selectedShowIds.size > 1 ? "s" : ""} selected
                       </p>
                     )}
@@ -739,38 +726,38 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
               </div>
 
               {/* Sales cutoff */}
-              <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+              <div className="rounded-[10px] border border-border bg-[#0b1114] px-4 py-[14px]">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>Sales End Date</p>
-                    <p style={{ margin: "2px 0 0", fontSize: "11px", color: "var(--muted2)" }}>Stop selling after a specific date & time</p>
+                    <p className="m-0 text-[13px] font-bold text-body">Sales End Date</p>
+                    <p className="mt-[2px] text-[11px] text-muted-2">Stop selling after a specific date & time</p>
                   </div>
                   <ToggleSwitch on={hasSalesEnd} onChange={setHasSalesEnd} />
                 </div>
                 {hasSalesEnd && (
-                  <div style={{ marginTop: "12px" }}>
+                  <div className="mt-3">
                     <input type="datetime-local" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)}
-                      style={{ ...inp, marginTop: 0, colorScheme: "dark" }} />
-                    <p style={{ margin: "5px 0 0", fontSize: "11px", color: "var(--muted2)" }}>Customers cannot buy after this moment</p>
+                      className={`${inp} mt-0 [color-scheme:dark]`} />
+                    <p className="mt-[5px] text-[11px] text-muted-2">Customers cannot buy after this moment</p>
                   </div>
                 )}
               </div>
 
               {/* Disable ticket */}
-              <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+              <div className="rounded-[10px] border border-border bg-[#0b1114] px-4 py-[14px]">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>Disable Ticket</p>
-                    <p style={{ margin: "2px 0 0", fontSize: "11px", color: "var(--muted2)" }}>
+                    <p className="m-0 text-[13px] font-bold text-body">Disable Ticket</p>
+                    <p className="mt-[2px] text-[11px] text-muted-2">
                       {isDisabled ? "Hidden from customers — enable later from ticket settings" : "Visible to customers immediately after saving"}
                     </p>
                   </div>
                   <ToggleSwitch on={isDisabled} onChange={setIsDisabled} />
                 </div>
                 {isDisabled && (
-                  <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "7px", padding: "8px 10px", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "7px" }}>
+                  <div className="mt-[10px] flex items-center gap-[7px] rounded-[7px] border border-[rgba(239,68,68,0.15)] bg-[rgba(239,68,68,0.06)] px-[10px] py-2">
                     <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-                    <p style={{ margin: 0, fontSize: "11px", color: "#ef4444", fontWeight: 600 }}>Ticket will be saved as disabled — not visible on the event page</p>
+                    <p className="m-0 text-[11px] font-semibold text-danger">Ticket will be saved as disabled — not visible on the event page</p>
                   </div>
                 )}
               </div>
@@ -779,16 +766,16 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
         </div>
 
         {/* Footer */}
-        <div style={{ flexShrink: 0 }}>
-          <div style={{ padding: "16px 22px", borderTop: "1px solid var(--border)", display: "flex", gap: "10px" }}>
+        <div className="shrink-0">
+          <div className="flex gap-[10px] border-t border-border px-[22px] py-4">
             {step === 1 ? (
               <>
                 <button type="button" onClick={onClose} disabled={saving}
-                  style={{ flex: 1, height: "42px", background: "none", border: "1px solid var(--border)", borderRadius: "9px", color: "var(--muted)", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>
+                  className="h-[42px] flex-1 cursor-pointer rounded-[9px] border border-border bg-transparent text-[13px] font-bold text-muted">
                   Cancel
                 </button>
                 <button type="button" onClick={handleNext}
-                  style={{ flex: 2, height: "42px", background: "rgba(91,230,178,0.12)", border: "1.5px solid rgba(91,230,178,0.45)", borderRadius: "9px", color: "#5be6b2", fontSize: "13px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+                  className="flex h-[42px] flex-[2] cursor-pointer items-center justify-center gap-[7px] rounded-[9px] border-[1.5px] border-[rgba(91,230,178,0.45)] bg-[rgba(91,230,178,0.12)] text-[13px] font-extrabold text-accent">
                   Next
                   <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
@@ -796,12 +783,12 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
             ) : (
               <>
                 <button type="button" onClick={() => setStep(1)} disabled={saving}
-                  style={{ flex: 1, height: "42px", background: "none", border: "1px solid var(--border)", borderRadius: "9px", color: "var(--muted)", fontSize: "13px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+                  className="flex h-[42px] flex-1 cursor-pointer items-center justify-center gap-[7px] rounded-[9px] border border-border bg-transparent text-[13px] font-bold text-muted">
                   <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                   Back
                 </button>
                 <button type="button" onClick={handleSave} disabled={saving}
-                  style={{ flex: 2, height: "42px", background: saving ? "rgba(91,230,178,0.06)" : "rgba(91,230,178,0.12)", border: "1.5px solid rgba(91,230,178,0.45)", borderRadius: "9px", color: "#5be6b2", fontSize: "13px", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+                  className={`flex h-[42px] flex-[2] items-center justify-center gap-[7px] rounded-[9px] border-[1.5px] border-[rgba(91,230,178,0.45)] text-[13px] font-extrabold text-accent ${saving ? "cursor-default bg-[rgba(91,230,178,0.06)] opacity-70" : "cursor-pointer bg-[rgba(91,230,178,0.12)] opacity-100"}`}>
                   {saving ? "Saving…" : "Add Ticket"}
                   {!saving && <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>}
                 </button>
@@ -809,8 +796,8 @@ function AddTicketDrawer({ open, onClose, onSave, shows }: {
             )}
           </div>
           {saveError && (
-            <div style={{ padding: "0 22px 14px" }}>
-              <p style={{ margin: 0, fontSize: "12px", color: "#ef4444", fontWeight: 600, padding: "9px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px" }}>{saveError}</p>
+            <div className="px-[22px] pb-[14px]">
+              <p className="m-0 rounded-lg border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] px-3 py-[9px] text-[12px] font-semibold text-danger">{saveError}</p>
             </div>
           )}
         </div>
@@ -937,7 +924,7 @@ function EditTicketDrawer({ open, onClose, tier, shows, onSave, onSaveShows }: {
     }
   }, [tier, name, priceRs, quantity, description, hasSalesEnd, salesEndDate, isDisabled, showScope, selectedShowIds, onSave, onSaveShows, onClose, validateStep1, showEdits, shows]);
 
-  const fe = (k: string): React.CSSProperties => ({ ...inp, marginTop: "6px", borderColor: errors[k] ? "rgba(239,68,68,0.6)" : undefined });
+  const fe = (k: string) => `${inp} mt-[6px] ${errors[k] ? "border-[rgba(239,68,68,0.6)]!" : ""}`;
 
   const formatShow = (s: ApiScrShow) => {
     const d = new Date(s.date);
@@ -949,106 +936,106 @@ function EditTicketDrawer({ open, onClose, tier, shows, onSave, onSaveShows }: {
   return (
     <>
       <div onClick={() => { if (!saving) onClose(); }}
-        style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.55)", opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity 0.25s" }} />
-      <div style={{ position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 50, width: "min(520px,100vw)", background: "var(--surface)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", boxShadow: "6px 0 40px rgba(0,0,0,0.45)", transform: open ? "translateX(0)" : "translateX(-100%)", transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
+        className={`fixed inset-0 z-40 bg-[rgba(0,0,0,0.55)] transition-opacity duration-[250ms] ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`} />
+      <div className={`fixed inset-y-0 left-0 z-50 flex w-[min(520px,100vw)] flex-col border-r border-border bg-surface shadow-[6px_0_40px_rgba(0,0,0,0.45)] transition-transform duration-[280ms] ease-in-out ${open ? "translate-x-0" : "-translate-x-full"}`}>
 
         {/* Header */}
-        <div style={{ flexShrink: 0, borderBottom: "1px solid var(--border)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px 14px" }}>
+        <div className="shrink-0 border-b border-border">
+          <div className="flex items-center justify-between px-[22px] pt-[18px] pb-[14px]">
             <div>
-              <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 800, color: "#c8f135", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+              <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#c8f135]">
                 {step === 1 ? "Edit Details" : "Availability Settings"}
               </p>
-              <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "var(--white)" }}>Edit Ticket</h3>
+              <h3 className="m-0 text-[17px] font-extrabold text-fg">Edit Ticket</h3>
             </div>
-            <button type="button" onClick={onClose} style={{ width: 32, height: 32, borderRadius: "8px", background: "var(--bg)", border: "1px solid var(--border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <button type="button" onClick={onClose} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-[#0b1114]">
               <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0 22px 14px" }}>
+          <div className="flex items-center gap-2 px-[22px] pb-[14px]">
             <StepDot n={1} active={step === 1} done={step === 2} />
-            <div style={{ flex: 1, height: "1px", background: step === 2 ? "rgba(200,241,53,0.3)" : "var(--border)", transition: "background 0.3s" }} />
+            <div className={`h-px flex-1 transition-[background] duration-300 ${step === 2 ? "bg-[rgba(200,241,53,0.3)]" : "bg-border"}`} />
             <StepDot n={2} active={step === 2} done={false} />
           </div>
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "22px", display: "flex", flexDirection: "column", gap: "18px" }}>
+        <div className="flex flex-1 flex-col gap-[18px] overflow-y-auto p-[22px]">
           {step === 1 ? (
             <>
               <div>
                 <OvLabel required>Ticket Name</OvLabel>
                 <input ref={nameRef} value={name} onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: "" })); }}
-                  placeholder="e.g. Regular, VIP, Early Bird" style={fe("name")} />
-                {errors.name && <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#ef4444" }}>{errors.name}</p>}
+                  placeholder="e.g. Regular, VIP, Early Bird" className={fe("name")} />
+                {errors.name && <p className="mt-1 text-[11px] text-danger">{errors.name}</p>}
               </div>
               <div>
                 <OvLabel>Description</OvLabel>
                 <textarea value={description} onChange={e => setDescription(e.target.value)}
                   placeholder="What's included — e.g. Free snack + drink, Front row seating" rows={3}
-                  style={{ ...inp, marginTop: "6px", resize: "vertical", minHeight: "80px", fontFamily: "inherit" }} />
+                  className={`${inp} mt-[6px] min-h-[80px] resize-y`} />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <OvLabel required>Price (₹)</OvLabel>
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "13px", color: "var(--muted)", fontWeight: 700, pointerEvents: "none" }}>₹</span>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-[12px] top-1/2 -translate-y-1/2 text-[13px] font-bold text-muted">₹</span>
                     <input type="number" min="0" step="1" value={priceRs}
                       onChange={e => { setPriceRs(e.target.value); setErrors(p => ({ ...p, price: "" })); }}
-                      placeholder="0" style={{ ...fe("price"), paddingLeft: "26px" }} />
+                      placeholder="0" className={`${fe("price")} pl-[26px]`} />
                   </div>
-                  {errors.price && <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#ef4444" }}>{errors.price}</p>}
+                  {errors.price && <p className="mt-1 text-[11px] text-danger">{errors.price}</p>}
                 </div>
                 <div>
                   <OvLabel required>Total Slots</OvLabel>
                   <input type="number" min={minCapacity || 1} value={quantity}
                     onChange={e => { setQuantity(e.target.value); setErrors(p => ({ ...p, quantity: "" })); }}
-                    placeholder="e.g. 100" style={fe("quantity")} />
+                    placeholder="e.g. 100" className={fe("quantity")} />
                   {errors.quantity
-                    ? <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#ef4444" }}>{errors.quantity}</p>
-                    : minCapacity > 0 && <p style={{ margin: "4px 0 0", fontSize: "11px", color: "var(--muted2)" }}>Min {minCapacity} ({minCapacity} already sold)</p>
+                    ? <p className="mt-1 text-[11px] text-danger">{errors.quantity}</p>
+                    : minCapacity > 0 && <p className="mt-1 text-[11px] text-muted-2">Min {minCapacity} ({minCapacity} already sold)</p>
                   }
                 </div>
               </div>
-              <div style={{ background: "rgba(200,241,53,0.04)", border: "1px solid rgba(200,241,53,0.12)", borderRadius: "10px", padding: "12px 14px" }}>
-                <p style={{ margin: 0, fontSize: "11px", color: "var(--muted2)", lineHeight: 1.6 }}>
+              <div className="rounded-[10px] border border-[rgba(200,241,53,0.12)] bg-[rgba(200,241,53,0.04)] px-[14px] py-3">
+                <p className="m-0 text-[11px] leading-[1.6] text-muted-2">
                   Price changes apply to future purchases only — existing tickets keep the price they were bought at.
-                  {minCapacity > 0 && <> Capacity can&apos;t go below <strong style={{ color: "var(--white)" }}>{minCapacity}</strong> (already sold).</>}
+                  {minCapacity > 0 && <> Capacity can&apos;t go below <strong className="text-fg">{minCapacity}</strong> (already sold).</>}
                 </p>
               </div>
 
               {/* Show time editing */}
               {shows.length > 0 && (
                 <div>
-                  <div style={{ marginBottom: "10px" }}>
-                    <p style={{ margin: "0 0 2px", fontSize: "12px", fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Show Times</p>
-                    <p style={{ margin: 0, fontSize: "11px", color: "var(--muted2)" }}>Update date &amp; time for each show</p>
+                  <div className="mb-[10px]">
+                    <p className="mb-[2px] text-[12px] font-extrabold uppercase tracking-[0.1em] text-muted">Show Times</p>
+                    <p className="m-0 text-[11px] text-muted-2">Update date &amp; time for each show</p>
                   </div>
                   {shows.map(s => {
                     const d = new Date(s.date);
                     const label = d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
                     const edit = showEdits[s._id] || { date: "", startTime: "", endTime: "" };
                     return (
-                      <div key={s._id} style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px", marginBottom: "8px" }}>
-                        <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 700, color: "var(--white)" }}>{label}</p>
+                      <div key={s._id} className="mb-2 rounded-[10px] border border-border bg-[#0b1114] p-[14px]">
+                        <p className="mb-[10px] text-[12px] font-bold text-fg">{label}</p>
                         <div>
                           <OvLabel required>Date</OvLabel>
                           <input type="date" value={edit.date}
                             onChange={e => setShowEdits(p => ({ ...p, [s._id]: { ...p[s._id], date: e.target.value } }))}
-                            style={{ ...inp, marginTop: "6px" }} />
+                            className={`${inp} mt-[6px]`} />
                         </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "10px" }}>
+                        <div className="mt-[10px] grid grid-cols-2 gap-[10px]">
                           <div>
                             <OvLabel required>Start Time</OvLabel>
                             <input type="time" value={edit.startTime}
                               onChange={e => setShowEdits(p => ({ ...p, [s._id]: { ...p[s._id], startTime: e.target.value } }))}
-                              style={{ ...inp, marginTop: "6px" }} />
+                              className={`${inp} mt-[6px]`} />
                           </div>
                           <div>
                             <OvLabel>End Time</OvLabel>
                             <input type="time" value={edit.endTime}
                               onChange={e => setShowEdits(p => ({ ...p, [s._id]: { ...p[s._id], endTime: e.target.value } }))}
-                              style={{ ...inp, marginTop: "6px" }} />
+                              className={`${inp} mt-[6px]`} />
                           </div>
                         </div>
                       </div>
@@ -1060,19 +1047,19 @@ function EditTicketDrawer({ open, onClose, tier, shows, onSave, onSaveShows }: {
           ) : (
             <>
               <div>
-                <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 800, color: "var(--muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Which Shows</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <p className="mb-[10px] text-[12px] font-extrabold uppercase tracking-[0.1em] text-muted">Which Shows</p>
+                <div className="flex flex-col gap-[6px]">
                   {(["all", "specific"] as const).map(scope => (
                     <button key={scope} type="button" onClick={() => setShowScope(scope)}
-                      style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 14px", background: showScope === scope ? "rgba(91,230,178,0.06)" : "var(--bg)", border: `1.5px solid ${showScope === scope ? "rgba(91,230,178,0.4)" : "var(--border)"}`, borderRadius: "9px", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
-                      <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${showScope === scope ? "#5be6b2" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {showScope === scope && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#5be6b2" }} />}
+                      className={`flex cursor-pointer items-center gap-[10px] rounded-[9px] border-[1.5px] px-[14px] py-[11px] text-left transition-all duration-150 ${showScope === scope ? "border-[rgba(91,230,178,0.4)] bg-[rgba(91,230,178,0.06)]" : "border-border bg-[#0b1114]"}`}>
+                      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${showScope === scope ? "border-[#5be6b2]" : "border-border"}`}>
+                        {showScope === scope && <div className="h-[7px] w-[7px] rounded-full bg-accent" />}
                       </div>
                       <div>
-                        <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: showScope === scope ? "var(--white)" : "var(--muted)" }}>
+                        <p className={`m-0 text-[13px] font-bold ${showScope === scope ? "text-fg" : "text-muted"}`}>
                           {scope === "all" ? "All shows" : "Specific shows"}
                         </p>
-                        <p style={{ margin: "1px 0 0", fontSize: "11px", color: "var(--muted2)" }}>
+                        <p className="mt-px text-[11px] text-muted-2">
                           {scope === "all" ? "Ticket valid for every show date" : "Choose which show dates this ticket covers"}
                         </p>
                       </div>
@@ -1080,9 +1067,9 @@ function EditTicketDrawer({ open, onClose, tier, shows, onSave, onSaveShows }: {
                   ))}
                 </div>
                 {showScope === "specific" && (
-                  <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div className="mt-[10px] flex flex-col gap-[6px]">
                     {shows.length === 0 ? (
-                      <div style={{ padding: "14px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "9px", fontSize: "12px", color: "var(--muted2)", textAlign: "center" }}>
+                      <div className="rounded-[9px] border border-border bg-[#0b1114] p-[14px] text-center text-[12px] text-muted-2">
                         No shows added yet
                       </div>
                     ) : shows.map(s => {
@@ -1090,16 +1077,16 @@ function EditTicketDrawer({ open, onClose, tier, shows, onSave, onSaveShows }: {
                       const checked = selectedShowIds.has(s._id);
                       return (
                         <button key={s._id} type="button" onClick={() => toggleShowId(s._id)}
-                          style={{ display: "flex", alignItems: "center", gap: "12px", padding: "11px 14px", background: checked ? "rgba(91,230,178,0.05)" : "var(--bg)", border: `1.5px solid ${checked ? "rgba(91,230,178,0.35)" : "var(--border)"}`, borderRadius: "9px", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
-                          <div style={{ width: 17, height: 17, borderRadius: "4px", border: `2px solid ${checked ? "#5be6b2" : "var(--border)"}`, background: checked ? "rgba(91,230,178,0.12)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          className={`flex cursor-pointer items-center gap-3 rounded-[9px] border-[1.5px] px-[14px] py-[11px] text-left transition-all duration-150 ${checked ? "border-[rgba(91,230,178,0.35)] bg-[rgba(91,230,178,0.05)]" : "border-border bg-[#0b1114]"}`}>
+                          <div className={`flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[4px] border-2 ${checked ? "border-[#5be6b2] bg-[rgba(91,230,178,0.12)]" : "border-border bg-transparent"}`}>
                             {checked && <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="3.5" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>}
                           </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: checked ? "var(--white)" : "var(--muted)" }}>{label}</p>
-                            <p style={{ margin: "1px 0 0", fontSize: "11px", color: "var(--muted2)" }}>{time}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className={`m-0 text-[12px] font-bold ${checked ? "text-fg" : "text-muted"}`}>{label}</p>
+                            <p className="mt-px text-[11px] text-muted-2">{time}</p>
                           </div>
                           {s.status !== "active" && (
-                            <span style={{ fontSize: "9px", fontWeight: 800, color: "#ef4444", letterSpacing: ".1em", textTransform: "uppercase", flexShrink: 0 }}>{s.status}</span>
+                            <span className="shrink-0 text-[9px] font-extrabold uppercase tracking-[0.1em] text-danger">{s.status}</span>
                           )}
                         </button>
                       );
@@ -1108,37 +1095,37 @@ function EditTicketDrawer({ open, onClose, tier, shows, onSave, onSaveShows }: {
                 )}
               </div>
 
-              <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+              <div className="rounded-[10px] border border-border bg-[#0b1114] px-4 py-[14px]">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>Sales End Date</p>
-                    <p style={{ margin: "2px 0 0", fontSize: "11px", color: "var(--muted2)" }}>Stop selling after a specific date & time</p>
+                    <p className="m-0 text-[13px] font-bold text-body">Sales End Date</p>
+                    <p className="mt-[2px] text-[11px] text-muted-2">Stop selling after a specific date & time</p>
                   </div>
                   <ToggleSwitch on={hasSalesEnd} onChange={setHasSalesEnd} />
                 </div>
                 {hasSalesEnd && (
-                  <div style={{ marginTop: "12px" }}>
+                  <div className="mt-3">
                     <input type="datetime-local" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)}
-                      style={{ ...inp, marginTop: 0, colorScheme: "dark" }} />
-                    <p style={{ margin: "5px 0 0", fontSize: "11px", color: "var(--muted2)" }}>Customers cannot buy after this moment</p>
+                      className={`${inp} mt-0 [color-scheme:dark]`} />
+                    <p className="mt-[5px] text-[11px] text-muted-2">Customers cannot buy after this moment</p>
                   </div>
                 )}
               </div>
 
-              <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", padding: "14px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+              <div className="rounded-[10px] border border-border bg-[#0b1114] px-4 py-[14px]">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>Disable Ticket</p>
-                    <p style={{ margin: "2px 0 0", fontSize: "11px", color: "var(--muted2)" }}>
+                    <p className="m-0 text-[13px] font-bold text-body">Disable Ticket</p>
+                    <p className="mt-[2px] text-[11px] text-muted-2">
                       {isDisabled ? "Hidden from customers — enable to go live" : "Visible to customers immediately after saving"}
                     </p>
                   </div>
                   <ToggleSwitch on={isDisabled} onChange={setIsDisabled} />
                 </div>
                 {isDisabled && (
-                  <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "7px", padding: "8px 10px", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "7px" }}>
+                  <div className="mt-[10px] flex items-center gap-[7px] rounded-[7px] border border-[rgba(239,68,68,0.15)] bg-[rgba(239,68,68,0.06)] px-[10px] py-2">
                     <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-                    <p style={{ margin: 0, fontSize: "11px", color: "#ef4444", fontWeight: 600 }}>This ticket is hidden — customers cannot see or buy it</p>
+                    <p className="m-0 text-[11px] font-semibold text-danger">This ticket is hidden — customers cannot see or buy it</p>
                   </div>
                 )}
               </div>
@@ -1147,16 +1134,16 @@ function EditTicketDrawer({ open, onClose, tier, shows, onSave, onSaveShows }: {
         </div>
 
         {/* Footer */}
-        <div style={{ flexShrink: 0 }}>
-          <div style={{ padding: "16px 22px", borderTop: "1px solid var(--border)", display: "flex", gap: "10px" }}>
+        <div className="shrink-0">
+          <div className="flex gap-[10px] border-t border-border px-[22px] py-4">
             {step === 1 ? (
               <>
                 <button type="button" onClick={onClose} disabled={saving}
-                  style={{ flex: 1, height: "42px", background: "none", border: "1px solid var(--border)", borderRadius: "9px", color: "var(--muted)", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>
+                  className="h-[42px] flex-1 cursor-pointer rounded-[9px] border border-border bg-transparent text-[13px] font-bold text-muted">
                   Cancel
                 </button>
                 <button type="button" onClick={handleNext}
-                  style={{ flex: 2, height: "42px", background: "rgba(200,241,53,0.12)", border: "1.5px solid rgba(200,241,53,0.45)", borderRadius: "9px", color: "#c8f135", fontSize: "13px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+                  className="flex h-[42px] flex-[2] cursor-pointer items-center justify-center gap-[7px] rounded-[9px] border-[1.5px] border-[rgba(200,241,53,0.45)] bg-[rgba(200,241,53,0.12)] text-[13px] font-extrabold text-[#c8f135]">
                   Next
                   <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
@@ -1164,12 +1151,12 @@ function EditTicketDrawer({ open, onClose, tier, shows, onSave, onSaveShows }: {
             ) : (
               <>
                 <button type="button" onClick={() => setStep(1)} disabled={saving}
-                  style={{ flex: 1, height: "42px", background: "none", border: "1px solid var(--border)", borderRadius: "9px", color: "var(--muted)", fontSize: "13px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+                  className="flex h-[42px] flex-1 cursor-pointer items-center justify-center gap-[7px] rounded-[9px] border border-border bg-transparent text-[13px] font-bold text-muted">
                   <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                   Back
                 </button>
                 <button type="button" onClick={handleSave} disabled={saving}
-                  style={{ flex: 2, height: "42px", background: saving ? "rgba(200,241,53,0.06)" : "rgba(200,241,53,0.12)", border: "1.5px solid rgba(200,241,53,0.45)", borderRadius: "9px", color: "#c8f135", fontSize: "13px", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+                  className={`flex h-[42px] flex-[2] items-center justify-center gap-[7px] rounded-[9px] border-[1.5px] border-[rgba(200,241,53,0.45)] text-[13px] font-extrabold text-[#c8f135] ${saving ? "cursor-default bg-[rgba(200,241,53,0.06)] opacity-70" : "cursor-pointer bg-[rgba(200,241,53,0.12)] opacity-100"}`}>
                   {saving ? "Saving…" : "Save Changes"}
                   {!saving && <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>}
                 </button>
@@ -1177,8 +1164,8 @@ function EditTicketDrawer({ open, onClose, tier, shows, onSave, onSaveShows }: {
             )}
           </div>
           {saveError && (
-            <div style={{ padding: "0 22px 14px" }}>
-              <p style={{ margin: 0, fontSize: "12px", color: "#ef4444", fontWeight: 600, padding: "9px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px" }}>{saveError}</p>
+            <div className="px-[22px] pb-[14px]">
+              <p className="m-0 rounded-lg border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] px-3 py-[9px] text-[12px] font-semibold text-danger">{saveError}</p>
             </div>
           )}
         </div>
@@ -1232,55 +1219,55 @@ function EditVenueDrawer({ open, onClose, initialName, initialCity, initialMapUr
   return (
     <>
       <div onClick={() => { if (!saving) onClose(); }}
-        style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.55)", opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity 0.25s" }} />
-      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 50, width: "min(480px,100vw)", background: "var(--surface)", borderLeft: "1px solid var(--border)", display: "flex", flexDirection: "column", boxShadow: "-6px 0 40px rgba(0,0,0,0.45)", transform: open ? "translateX(0)" : "translateX(100%)", transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
+        className={`fixed inset-0 z-40 bg-[rgba(0,0,0,0.55)] transition-opacity duration-[250ms] ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`} />
+      <div className={`fixed inset-y-0 right-0 z-50 flex w-[min(480px,100vw)] flex-col border-l border-border bg-surface shadow-[-6px_0_40px_rgba(0,0,0,0.45)] transition-transform duration-[280ms] ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-[22px] py-[18px]">
           <div>
-            <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 800, color: "#5be6b2", letterSpacing: "0.16em", textTransform: "uppercase" }}>Venue</p>
-            <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "var(--white)" }}>Edit Venue</h3>
+            <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.16em] text-accent">Venue</p>
+            <h3 className="m-0 text-[17px] font-extrabold text-fg">Edit Venue</h3>
           </div>
-          <button type="button" onClick={onClose} style={{ width: 32, height: 32, borderRadius: "8px", background: "var(--bg)", border: "1px solid var(--border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button type="button" onClick={onClose} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-[#0b1114]">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
         </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "22px", display: "flex", flexDirection: "column", gap: "18px" }}>
+        <div className="flex flex-1 flex-col gap-[18px] overflow-y-auto p-[22px]">
           <div>
             <OvLabel required>Venue Name</OvLabel>
             <input ref={nameRef} value={name} onChange={e => setName(e.target.value)}
-              placeholder="e.g. The Local Cafe" style={{ ...inp, marginTop: "6px" }} />
+              placeholder="e.g. The Local Cafe" className={`${inp} mt-[6px]`} />
           </div>
           <div>
             <OvLabel required>City / Area</OvLabel>
             <input value={city} onChange={e => setCity(e.target.value)}
-              placeholder="e.g. Koramangala, Bangalore" style={{ ...inp, marginTop: "6px" }} />
+              placeholder="e.g. Koramangala, Bangalore" className={`${inp} mt-[6px]`} />
           </div>
           <div>
             <OvLabel>Google Maps URL</OvLabel>
             <input type="url" value={mapUrl} onChange={e => setMapUrl(e.target.value)}
-              placeholder="https://maps.google.com/?q=..." style={{ ...inp, marginTop: "6px" }} />
-            <p style={{ margin: "5px 0 0", fontSize: "11px", color: "var(--muted2)" }}>Customers tap this to open the venue in Google Maps</p>
+              placeholder="https://maps.google.com/?q=..." className={`${inp} mt-[6px]`} />
+            <p className="mt-[5px] text-[11px] text-muted-2">Customers tap this to open the venue in Google Maps</p>
           </div>
-          <div style={{ background: "rgba(91,230,178,0.04)", border: "1px solid rgba(91,230,178,0.12)", borderRadius: "10px", padding: "12px 14px" }}>
-            <p style={{ margin: 0, fontSize: "11px", color: "var(--muted2)", lineHeight: 1.6 }}>
+          <div className="rounded-[10px] border border-[rgba(91,230,178,0.12)] bg-[rgba(91,230,178,0.04)] px-[14px] py-3">
+            <p className="m-0 text-[11px] leading-[1.6] text-muted-2">
               Venue changes go live immediately on the customer-facing event page.
             </p>
           </div>
         </div>
-        <div style={{ flexShrink: 0 }}>
-          <div style={{ padding: "16px 22px", borderTop: "1px solid var(--border)", display: "flex", gap: "10px" }}>
+        <div className="shrink-0">
+          <div className="flex gap-[10px] border-t border-border px-[22px] py-4">
             <button type="button" onClick={onClose} disabled={saving}
-              style={{ flex: 1, height: "42px", background: "none", border: "1px solid var(--border)", borderRadius: "9px", color: "var(--muted)", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>
+              className="h-[42px] flex-1 cursor-pointer rounded-[9px] border border-border bg-transparent text-[13px] font-bold text-muted">
               Cancel
             </button>
             <button type="button" onClick={handleSave} disabled={saving || !name.trim()}
-              style={{ flex: 2, height: "42px", background: saving ? "rgba(91,230,178,0.06)" : "rgba(91,230,178,0.12)", border: "1.5px solid rgba(91,230,178,0.45)", borderRadius: "9px", color: "#5be6b2", fontSize: "13px", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: (saving || !name.trim()) ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+              className={`flex h-[42px] flex-[2] items-center justify-center gap-[7px] rounded-[9px] border-[1.5px] border-[rgba(91,230,178,0.45)] text-[13px] font-extrabold text-accent ${saving ? "cursor-default bg-[rgba(91,230,178,0.06)]" : "cursor-pointer bg-[rgba(91,230,178,0.12)]"} ${(saving || !name.trim()) ? "opacity-70" : "opacity-100"}`}>
               {saving ? "Saving…" : "Save Venue"}
               {!saving && <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>}
             </button>
           </div>
           {saveError && (
-            <div style={{ padding: "0 22px 14px" }}>
-              <p style={{ margin: 0, fontSize: "12px", color: "#ef4444", fontWeight: 600, padding: "9px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px" }}>{saveError}</p>
+            <div className="px-[22px] pb-[14px]">
+              <p className="m-0 rounded-lg border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] px-3 py-[9px] text-[12px] font-semibold text-danger">{saveError}</p>
             </div>
           )}
         </div>
@@ -1591,35 +1578,35 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
 
   return (
     <>
-      <div style={{ paddingBottom: 48 }}>
+      <div className="pb-12">
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "8px", flexWrap: "wrap" }}>
-          <button type="button" onClick={onBack} style={backBtnStyle}>
+        <div className="mb-2 flex flex-wrap items-start gap-[14px]">
+          <button type="button" onClick={onBack} className={backBtnStyle}>
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
             Back
           </button>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 800, color: "#5be6b2", letterSpacing: "0.15em", textTransform: "uppercase" }}>Streaming Events</p>
-            <h2 style={{ margin: "0 0 4px", fontSize: "20px", fontWeight: 800, color: "var(--white)" }}>Manage Event</h2>
-            <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</p>
+          <div className="min-w-0 flex-1">
+            <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent">Streaming Events</p>
+            <h2 className="mb-1 text-[20px] font-extrabold text-fg">Manage Event</h2>
+            <p className="m-0 overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-muted">{ev.title}</p>
           </div>
-          <span style={{ flexShrink: 0, marginTop: "4px", padding: "5px 14px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>{badge.label}</span>
+          <span className="mt-1 shrink-0 rounded-full border px-[14px] py-[5px] text-[11px] font-bold" style={{ background: badge.bg, borderColor: badge.border, color: badge.color }}>{badge.label}</span>
         </div>
 
-        <div style={{ height: "1px", background: "var(--border)", margin: "16px 0 24px" }} />
+        <div className="mx-0 mb-6 mt-4 h-px bg-border" />
 
-        <div className={styles.scrManageLayout}>
+        <div className={SCR_MANAGE_LAYOUT}>
           {/* ── LEFT ── */}
           <div>
             {/* Tab bar */}
-            <div className={styles.scrManageTabBar}>
+            <div className={SCR_MANAGE_TAB_BAR}>
               {([
                 { key: "shows",    label: "Shows & Tickets", icon: <><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></> },
                 { key: "overview", label: "Overview",         icon: <><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></> },
               ] as const).map(t => (
                 <button key={t.key} type="button" onClick={() => setTab(t.key)}
-                  className={`${styles.scrManageTab} ${tab === t.key ? styles.scrManageTabActive : ""}`}>
-                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginRight: "6px", verticalAlign: "middle" }}>{t.icon}</svg>
+                  className={`${SCR_MANAGE_TAB} ${tab === t.key ? SCR_MANAGE_TAB_ACTIVE : ""}`}>
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="mr-[6px] align-middle">{t.icon}</svg>
                   {t.label}
                 </button>
               ))}
@@ -1629,7 +1616,7 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
             {tab === "shows" && (
               <div>
                 {loadingOverview ? (
-                  <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
+                  <div className="flex justify-center px-0 py-[60px]">
                     <svg className="animate-spin" width="24" height="24" fill="none" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" stroke="#5be6b2" strokeWidth="3" strokeOpacity="0.2"/>
                       <path d="M12 2a10 10 0 0110 10" stroke="#5be6b2" strokeWidth="3" strokeLinecap="round"/>
@@ -1638,24 +1625,24 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
                 ) : (
                   <>
                     {/* ── Venue ── */}
-                    <div style={{ marginBottom: "24px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "14px 18px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <div style={{ width: 36, height: 36, borderRadius: "9px", background: "rgba(91,230,178,0.08)", border: "1px solid rgba(91,230,178,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <div className="mb-6 rounded-xl border border-border bg-surface px-[18px] py-[14px]">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border border-[rgba(91,230,178,0.2)] bg-[rgba(91,230,178,0.08)]">
                           <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="2" strokeLinecap="round">
                             <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
                           </svg>
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ margin: "0 0 2px", fontSize: "13px", fontWeight: 700, color: "var(--white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {venueLocation || <span style={{ color: "var(--muted2)" }}>No venue set</span>}
+                        <div className="min-w-0 flex-1">
+                          <p className="mb-[2px] overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-bold text-fg">
+                            {venueLocation || <span className="text-muted-2">No venue set</span>}
                           </p>
-                          <p style={{ margin: 0, fontSize: "11px", color: "var(--muted)" }}>
+                          <p className="m-0 text-[11px] text-muted">
                             {venueCity || "No city set"}
-                            {locationUrl && <span style={{ marginLeft: "8px", color: "#5be6b2", fontWeight: 600 }}>· Maps linked</span>}
+                            {locationUrl && <span className="ml-2 font-semibold text-accent">· Maps linked</span>}
                           </p>
                         </div>
                         <button type="button" onClick={() => setVenueDrawerOpen(true)}
-                          style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "7px 13px", background: "rgba(91,230,178,0.08)", border: "1px solid rgba(91,230,178,0.25)", borderRadius: "8px", color: "#5be6b2", fontSize: "12px", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+                          className="inline-flex shrink-0 cursor-pointer items-center gap-[6px] rounded-lg border border-[rgba(91,230,178,0.25)] bg-[rgba(91,230,178,0.08)] px-[13px] py-[7px] text-[12px] font-bold text-accent">
                           <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                           Edit Venue
                         </button>
@@ -1663,24 +1650,24 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
                     </div>
 
                     {/* ── Ticket Types ── */}
-                    <div style={{ marginBottom: "24px" }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                    <div className="mb-6">
+                      <div className="mb-3 flex items-center justify-between">
                         <div>
-                          <p style={{ margin: 0, fontSize: "12px", fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.12em" }}>Ticket Types</p>
+                          <p className="m-0 text-[12px] font-extrabold uppercase tracking-[0.12em] text-muted">Ticket Types</p>
                           {fullTiers.length > 0 && (
-                            <p style={{ margin: "2px 0 0", fontSize: "11px", color: "var(--muted2)" }}>{fullTiers.length} tier{fullTiers.length !== 1 ? "s" : ""} · {liveSold} sold · {liveCapacity - liveSold} remaining</p>
+                            <p className="mt-[2px] text-[11px] text-muted-2">{fullTiers.length} tier{fullTiers.length !== 1 ? "s" : ""} · {liveSold} sold · {liveCapacity - liveSold} remaining</p>
                           )}
                         </div>
                         <button type="button" onClick={openTicketDrawer}
-                          style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "7px 13px", background: "rgba(91,230,178,0.1)", border: "1px solid rgba(91,230,178,0.3)", borderRadius: "8px", color: "#5be6b2", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>
+                          className="inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-[rgba(91,230,178,0.3)] bg-[rgba(91,230,178,0.1)] px-[13px] py-[7px] text-[12px] font-bold text-accent">
                           <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                           Add Ticket
                         </button>
                       </div>
                       {fullTiers.length === 0 ? (
-                        <div style={{ textAlign: "center", padding: "32px 24px", border: "1.5px dashed var(--border)", borderRadius: "12px" }}>
-                          <p style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: 700, color: "var(--muted)" }}>No ticket types yet</p>
-                          <p style={{ margin: 0, fontSize: "12px", color: "var(--muted2)" }}>Click "Add Ticket" to create your first ticket tier</p>
+                        <div className="rounded-xl border-[1.5px] border-dashed border-border px-6 py-8 text-center">
+                          <p className="mb-1 text-[13px] font-bold text-muted">No ticket types yet</p>
+                          <p className="m-0 text-[12px] text-muted-2">Click "Add Ticket" to create your first ticket tier</p>
                         </div>
                       ) : fullTiers.map(tier => (
                         <TierManageCard
@@ -1694,45 +1681,45 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
 
                     {/* ── Show Dates ── */}
                     <div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                        <p style={{ margin: 0, fontSize: "12px", fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.12em" }}>Show Dates</p>
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="m-0 text-[12px] font-extrabold uppercase tracking-[0.12em] text-muted">Show Dates</p>
                         <button type="button" onClick={openDrawer}
-                          style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "7px 13px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--muted)", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>
+                          className="inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-border bg-[#0b1114] px-[13px] py-[7px] text-[12px] font-bold text-muted">
                           <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                           Add Show
                         </button>
                       </div>
                       {shows.length === 0 && (
-                        <div style={{ textAlign: "center", padding: "32px 24px", border: "1.5px dashed var(--border)", borderRadius: "12px", marginBottom: "8px" }}>
-                          <p style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: 700, color: "var(--muted)" }}>No shows scheduled yet</p>
-                          <p style={{ margin: 0, fontSize: "12px", color: "var(--muted2)" }}>Add a show date to go live with your tickets</p>
+                        <div className="mb-2 rounded-xl border-[1.5px] border-dashed border-border px-6 py-8 text-center">
+                          <p className="mb-1 text-[13px] font-bold text-muted">No shows scheduled yet</p>
+                          <p className="m-0 text-[12px] text-muted-2">Add a show date to go live with your tickets</p>
                         </div>
                       )}
                       {shows.length > 0 && allExpired && (
-                        <div style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "10px", padding: "12px 16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div className="mb-3 flex items-center gap-[10px] rounded-[10px] border border-[rgba(245,158,11,0.2)] bg-[rgba(245,158,11,0.05)] px-4 py-3">
                           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-                          <span style={{ fontSize: "12px", color: "#f59e0b", fontWeight: 600 }}>All shows have expired. Add a new show date to continue selling.</span>
+                          <span className="text-[12px] font-semibold text-warning">All shows have expired. Add a new show date to continue selling.</span>
                         </div>
                       )}
                       {shows.map(show => (
-                        <div key={show.id} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", marginBottom: "8px", overflow: "hidden" }}>
+                        <div key={show.id} className="mb-2 overflow-hidden rounded-xl border border-border bg-surface">
                           <button type="button" onClick={() => toggleShow(show.id)}
-                            style={{ display: "flex", alignItems: "center", width: "100%", padding: "14px 18px", background: "none", border: "none", cursor: "pointer", gap: "12px", textAlign: "left" }}>
-                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: show.status === "active" ? "#22c55e" : "#444", flexShrink: 0 }} />
-                            <div style={{ flex: 1 }}>
-                              <p style={{ margin: "0 0 2px", fontSize: "14px", fontWeight: 700, color: "var(--white)" }}>{show.dateLabel}</p>
-                              <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>{show.timeLabel}</p>
+                            className="flex w-full cursor-pointer items-center gap-3 border-none bg-transparent px-[18px] py-[14px] text-left">
+                            <div className="h-2 w-2 shrink-0 rounded-full" style={{ background: show.status === "active" ? "#22c55e" : "#444" }} />
+                            <div className="flex-1">
+                              <p className="mb-[2px] text-[14px] font-bold text-fg">{show.dateLabel}</p>
+                              <p className="m-0 text-[12px] text-muted">{show.timeLabel}</p>
                             </div>
-                            <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "999px", background: show.status === "active" ? "rgba(34,197,94,0.1)" : "var(--surface2)", color: show.status === "active" ? "#22c55e" : "var(--muted)", border: `1px solid ${show.status === "active" ? "rgba(34,197,94,0.25)" : "var(--border)"}` }}>
+                            <span className={`rounded-full border px-[10px] py-[3px] text-[11px] font-bold ${show.status === "active" ? "border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.1)] text-success" : "border-border bg-surface-2 text-muted"}`}>
                               {show.status === "active" ? "Active" : "Expired"}
                             </span>
-                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" style={{ transition: "transform 0.2s", transform: show.expanded ? "rotate(180deg)" : "none", flexShrink: 0 }}><path d="M7.5 9.75l4.5 4.5 4.5-4.5"/></svg>
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" className={`shrink-0 transition-transform duration-200 ${show.expanded ? "rotate-180" : "rotate-0"}`}><path d="M7.5 9.75l4.5 4.5 4.5-4.5"/></svg>
                           </button>
                           {show.expanded && (
-                            <div style={{ padding: "0 18px 14px", borderTop: "1px solid var(--border)" }}>
-                              <p style={{ margin: "12px 0 8px", fontSize: "11px", fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.12em" }}>Ticket Sales This Show</p>
+                            <div className="border-t border-border px-[18px] pb-[14px]">
+                              <p className="mt-3 mb-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-muted">Ticket Sales This Show</p>
                               {show.tickets.length === 0
-                                ? <p style={{ fontSize: "12px", color: "var(--muted2)", margin: 0 }}>No tickets assigned to this show</p>
+                                ? <p className="m-0 text-[12px] text-muted-2">No tickets assigned to this show</p>
                                 : show.tickets.map((t, i) => <TicketRow key={t.id} ticket={t} isLast={i === show.tickets.length - 1} />)
                               }
                             </div>
@@ -1749,7 +1736,7 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
             {tab === "overview" && (
               <div>
                 {loadingOverview ? (
-                  <div style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}>
+                  <div className="flex justify-center px-0 py-20">
                     <svg className="animate-spin" width="24" height="24" fill="none" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" stroke="#5be6b2" strokeWidth="3" strokeOpacity="0.2"/>
                       <path d="M12 2a10 10 0 0110 10" stroke="#5be6b2" strokeWidth="3" strokeLinecap="round"/>
@@ -1758,41 +1745,41 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
                 ) : (
                   <>
                     {isLocked && (
-                      <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "10px", padding: "11px 16px", marginBottom: "16px", display: "flex", gap: "10px", alignItems: "center" }}>
+                      <div className="mb-4 flex items-center gap-[10px] rounded-[10px] border border-[rgba(245,158,11,0.2)] bg-[rgba(245,158,11,0.06)] px-4 py-[11px]">
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        <span style={{ fontSize: "12px", color: "#f59e0b", fontWeight: 600 }}>This event is published. Some fields may be restricted. Contact <strong>events.moderation@kasakai.in</strong> for structural changes.</span>
+                        <span className="text-[12px] font-semibold text-warning">This event is published. Some fields may be restricted. Contact <strong>events.moderation@kasakai.in</strong> for structural changes.</span>
                       </div>
                     )}
 
                     {/* Event Name + Description */}
                     <OvSection title="Event Info">
-                      <div style={{ marginBottom: "14px" }}>
+                      <div className="mb-[14px]">
                         <OvLabel>Event Name</OvLabel>
                         <input value={eventName} onChange={e => setEventName(e.target.value)} disabled={isLocked}
-                          style={{ ...inp, opacity: isLocked ? 0.55 : 1, cursor: isLocked ? "not-allowed" : "text" }} />
+                          className={`${inp} ${isLocked ? "cursor-not-allowed opacity-[0.55]" : "cursor-text opacity-100"}`} />
                       </div>
                       <div>
                         <OvLabel required>Event Description</OvLabel>
                         <textarea value={description} onChange={e => setDescription(e.target.value)} rows={7} disabled={isLocked}
-                          style={{ ...inp, resize: "vertical", lineHeight: 1.7, opacity: isLocked ? 0.55 : 1, cursor: isLocked ? "not-allowed" : "text" } as React.CSSProperties} />
-                        <p style={{ margin: "5px 0 0", fontSize: "11px", color: "var(--muted2)" }}>{description.length} characters</p>
+                          className={`${inp} resize-y leading-[1.7] ${isLocked ? "cursor-not-allowed opacity-[0.55]" : "cursor-text opacity-100"}`} />
+                        <p className="mt-[5px] text-[11px] text-muted-2">{description.length} characters</p>
                       </div>
                     </OvSection>
 
                     {/* Event Type */}
                     <OvSection title="Event Type">
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "14px" }}>
+                      <div className="mb-[14px] grid grid-cols-2 gap-4">
                         <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                          <div className="mb-[6px] flex justify-between">
                             <OvLabel required>Category</OvLabel>
-                            <span style={{ fontSize: "11px", color: "var(--muted2)" }}>Upto 2</span>
+                            <span className="text-[11px] text-muted-2">Upto 2</span>
                           </div>
                           <MultiSelect options={CATEGORIES} value={categories} onChange={setCategories} max={2} disabled={isLocked} />
                         </div>
                         <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                          <div className="mb-[6px] flex justify-between">
                             <OvLabel>Sub-Category</OvLabel>
-                            <span style={{ fontSize: "11px", color: "var(--muted2)" }}>Upto 2</span>
+                            <span className="text-[11px] text-muted-2">Upto 2</span>
                           </div>
                           <MultiSelect options={availableSubCats.length ? availableSubCats : ["Select a category first"]} value={subCategories} onChange={setSubCats} max={2} disabled={isLocked || availableSubCats.length === 0} />
                         </div>
@@ -1801,46 +1788,46 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
 
                     {/* Venue */}
                     <OvSection title="Set Up Venue">
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+                      <div className="mb-[14px] grid grid-cols-2 gap-3">
                         <div>
                           <OvLabel required>Venue Name</OvLabel>
                           <input value={venueLocation} onChange={e => setVenueLoc(e.target.value)}
-                            style={{ ...inp }} placeholder="e.g. The Local Cafe" />
+                            className={inp} placeholder="e.g. The Local Cafe" />
                         </div>
                         <div>
                           <OvLabel required>City / Area</OvLabel>
                           <input value={venueCity} onChange={e => setVenueCity(e.target.value)}
-                            style={{ ...inp }} placeholder="e.g. Koramangala, Bangalore" />
+                            className={inp} placeholder="e.g. Koramangala, Bangalore" />
                         </div>
                       </div>
-                      <div style={{ marginBottom: "14px" }}>
+                      <div className="mb-[14px]">
                         <OvLabel required>Hosting at your restaurant?</OvLabel>
-                        <div style={{ display: "flex", gap: "24px", marginTop: "8px" }}>
+                        <div className="mt-2 flex gap-6">
                           {(["yes","no"] as const).map(v => (
-                            <label key={v} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: isLocked ? "not-allowed" : "pointer", opacity: isLocked ? 0.55 : 1 }}>
-                              <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${ownRestaurant === v ? "#5be6b2" : "var(--border)"}`, background: ownRestaurant === v ? "#5be6b2" : "none", flexShrink: 0, cursor: "pointer" }}
+                            <label key={v} className={`flex items-center gap-2 ${isLocked ? "cursor-not-allowed opacity-[0.55]" : "cursor-pointer opacity-100"}`}>
+                              <div className={`h-4 w-4 shrink-0 cursor-pointer rounded-full border-2 ${ownRestaurant === v ? "border-[#5be6b2] bg-accent" : "border-border bg-transparent"}`}
                                 onClick={() => !isLocked && setOwnRest(v)} />
-                              <span style={{ fontSize: "13px", color: "var(--muted)", textTransform: "capitalize" }}>{v}</span>
+                              <span className="text-[13px] capitalize text-muted">{v}</span>
                             </label>
                           ))}
                         </div>
                       </div>
-                      <div style={{ marginBottom: "14px" }}>
+                      <div className="mb-[14px]">
                         <OvLabel>Google Maps URL</OvLabel>
                         <input type="url" placeholder="https://maps.google.com/?q=..." value={locationUrl} onChange={e => setLocationUrl(e.target.value)}
-                          style={{ ...inp }} />
-                        <p style={{ margin: "4px 0 0", fontSize: "11px", color: "var(--muted2)" }}>Customers tap this to navigate to the venue</p>
+                          className={inp} />
+                        <p className="mt-1 text-[11px] text-muted-2">Customers tap this to navigate to the venue</p>
                       </div>
                       <div>
                         <OvLabel>Instagram Link</OvLabel>
                         <input type="url" placeholder="https://instagram.com/yourvenue" value={instagramLink} onChange={e => setIgLink(e.target.value)} disabled={isLocked}
-                          style={{ ...inp, opacity: isLocked ? 0.55 : 1 }} />
+                          className={`${inp} ${isLocked ? "opacity-[0.55]" : "opacity-100"}`} />
                       </div>
                     </OvSection>
 
                     {/* Event Card Images */}
                     <OvSection title="Event Card Images">
-                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      <div className="flex flex-col gap-[10px]">
                         <ImageUploadBox
                           label="Landscape for Website" ratio="16:9 · 1600×900px" maxSize="1.5MB"
                           existingUrl={imgUrl} disabled={isLocked}
@@ -1856,20 +1843,20 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
 
                     {/* Event Guide */}
                     <OvSection title="Event Guide">
-                      <div style={{ marginBottom: "12px" }}>
+                      <div className="mb-3">
                         <GuideRow label="Language(s)">
                           <MultiSelect options={LANGUAGES} value={language} onChange={setLanguage} disabled={isLocked} />
                         </GuideRow>
                         <GuideRow label="Minimum age for entry">
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div className="flex items-center gap-[10px]">
                             <OvSelect value={minAge} onChange={setMinAge} options={AGE_OPTS} disabled={isLocked} />
-                            <span style={{ fontSize: "12px", color: "var(--muted)", whiteSpace: "nowrap" }}>&amp; above</span>
+                            <span className="whitespace-nowrap text-[12px] text-muted">&amp; above</span>
                           </div>
                         </GuideRow>
                         <GuideRow label="Age for paid entry">
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div className="flex items-center gap-[10px]">
                             <OvSelect value={ticketAge} onChange={setTicketAge} options={AGE_OPTS} disabled={isLocked} />
-                            <span style={{ fontSize: "12px", color: "var(--muted)", whiteSpace: "nowrap" }}>&amp; above</span>
+                            <span className="whitespace-nowrap text-[12px] text-muted">&amp; above</span>
                           </div>
                         </GuideRow>
                         <GuideRow label="Indoor or Outdoor?">
@@ -1884,23 +1871,23 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
                         <GuideRow label="Pet-friendly?">
                           <OvSelect value={petFriendly} onChange={setPetFriendly} options={["Yes","No"]} disabled={isLocked} />
                         </GuideRow>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", alignItems: "center", padding: "12px 0" }}>
-                          <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--muted)" }}>Gates open before start?<span style={{ color: "#ef4444", marginLeft: "3px" }}>*</span></span>
-                          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div className="grid grid-cols-2 items-center gap-4 py-3">
+                          <span className="text-[13px] font-semibold text-muted">Gates open before start?<span className="ml-[3px] text-danger">*</span></span>
+                          <div className="flex items-center gap-3">
                             <button type="button" onClick={() => !isLocked && setGatesOpen(p => !p)}
-                              style={{ display: "flex", alignItems: "center", gap: "8px", background: "none", border: "none", cursor: isLocked ? "not-allowed" : "pointer", padding: 0, opacity: isLocked ? 0.5 : 1 }}>
-                              <div style={{ width: 40, height: 22, borderRadius: "999px", background: gatesOpen ? "#5be6b2" : "var(--surface2)", border: `1.5px solid ${gatesOpen ? "#5be6b2" : "var(--border)"}`, position: "relative", transition: "background 0.2s" }}>
-                                <div style={{ position: "absolute", top: "2px", left: gatesOpen ? "20px" : "2px", width: "16px", height: "16px", borderRadius: "50%", background: gatesOpen ? "#000" : "var(--muted)", transition: "left 0.2s" }} />
+                              className={`flex items-center gap-2 border-none bg-transparent p-0 ${isLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer opacity-100"}`}>
+                              <div className={`relative h-[22px] w-10 rounded-full border-[1.5px] transition-[background] duration-200 ${gatesOpen ? "border-[#5be6b2] bg-accent" : "border-border bg-surface-2"}`}>
+                                <div className={`absolute top-[2px] h-4 w-4 rounded-full transition-[left] duration-200 ${gatesOpen ? "left-[20px] bg-black" : "left-[2px] bg-muted"}`} />
                               </div>
-                              <span style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 600 }}>{gatesOpen ? "Yes" : "No"}</span>
+                              <span className="text-[12px] font-semibold text-muted">{gatesOpen ? "Yes" : "No"}</span>
                             </button>
                             {gatesOpen && (
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <div className="flex items-center gap-[6px]">
                                 <input type="number" min="5" max="120" value={gatesOpenMinutes}
                                   onChange={e => setGatesOpenMinutes(Number(e.target.value))}
                                   disabled={isLocked}
-                                  style={{ ...inp, width: "64px", padding: "4px 8px", fontSize: "13px" }} />
-                                <span style={{ fontSize: "12px", color: "var(--muted)" }}>min</span>
+                                  className={`${inp} w-[64px]! px-2! py-1!`} />
+                                <span className="text-[12px] text-muted">min</span>
                               </div>
                             )}
                           </div>
@@ -1909,14 +1896,14 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
                     </OvSection>
 
                     {/* Add More Sections */}
-                    <div style={{ background: "rgba(91,230,178,0.03)", border: "1px solid var(--border)", borderRadius: "12px", padding: "16px 20px", marginBottom: "14px" }}>
-                      <p style={{ margin: "0 0 12px", fontSize: "13px", fontWeight: 800, color: "var(--white)" }}>Add More Sections</p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                    <div className="mb-[14px] rounded-xl border border-border bg-[rgba(91,230,178,0.03)] px-5 py-4">
+                      <p className="mb-3 text-[13px] font-extrabold text-fg">Add More Sections</p>
+                      <div className="flex flex-wrap gap-[10px]">
                         {["Event Instructions","Youtube Video","Prohibited Items","FAQs"].map(sec => {
                           const active = extraSections.includes(sec);
                           return (
                             <button key={sec} type="button" onClick={() => toggleExtra(sec)}
-                              style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "7px 14px", background: active ? "rgba(91,230,178,0.1)" : "var(--surface)", border: `1px solid ${active ? "rgba(91,230,178,0.35)" : "var(--border)"}`, borderRadius: "8px", color: active ? "#5be6b2" : "var(--muted)", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
+                              className={`inline-flex cursor-pointer items-center gap-[7px] rounded-lg border px-[14px] py-[7px] text-[12px] font-semibold ${active ? "border-[rgba(91,230,178,0.35)] bg-[rgba(91,230,178,0.1)] text-accent" : "border-border bg-surface text-muted"}`}>
                               {active
                                 ? <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>
                                 : <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -1927,27 +1914,27 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
                         })}
                       </div>
                       {extraSections.map(sec => (
-                        <div key={sec} style={{ marginTop: "14px" }}>
+                        <div key={sec} className="mt-[14px]">
                           <OvLabel>{sec}</OvLabel>
                           <textarea rows={3} placeholder={`Enter ${sec.toLowerCase()}…`} value={extraContent[sec] || ""}
                             onChange={e => setExtraContent(p => ({ ...p, [sec]: e.target.value }))}
-                            style={{ ...inp, resize: "vertical" } as React.CSSProperties} />
+                            className={`${inp} resize-y`} />
                         </div>
                       ))}
                     </div>
 
                     {/* Point of Contact */}
                     <OvSection title="Point of Contact">
-                      <p style={{ margin: "0 0 14px", fontSize: "12px", color: "var(--muted)" }}>Add POCs with whom event feedback will be shared</p>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "14px" }}>
+                      <p className="mb-[14px] text-[12px] text-muted">Add POCs with whom event feedback will be shared</p>
+                      <div className="mb-[14px] flex flex-col gap-3">
                         {pocs.map((poc) => (
-                          <div key={poc.id} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: "10px", alignItems: "center" }}>
-                            <input value={poc.name}  onChange={e => updatePoc(poc.id, "name",  e.target.value)} placeholder="Name"  style={inp} />
-                            <input value={poc.email} onChange={e => updatePoc(poc.id, "email", e.target.value)} placeholder="Email" type="email" style={inp} />
-                            <input value={poc.phone} onChange={e => updatePoc(poc.id, "phone", e.target.value)} placeholder="Phone" type="tel"   style={inp} />
+                          <div key={poc.id} className="grid grid-cols-[1fr_1fr_1fr_auto] items-center gap-[10px]">
+                            <input value={poc.name}  onChange={e => updatePoc(poc.id, "name",  e.target.value)} placeholder="Name"  className={inp} />
+                            <input value={poc.email} onChange={e => updatePoc(poc.id, "email", e.target.value)} placeholder="Email" type="email" className={inp} />
+                            <input value={poc.phone} onChange={e => updatePoc(poc.id, "phone", e.target.value)} placeholder="Phone" type="tel"   className={inp} />
                             {pocs.length > 1 && (
                               <button type="button" onClick={() => removePoc(poc.id)}
-                                style={{ width: 32, height: 32, borderRadius: "7px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-[7px] border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)]">
                                 <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                               </button>
                             )}
@@ -1955,47 +1942,47 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
                         ))}
                       </div>
                       <button type="button" onClick={addPoc}
-                        style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 18px", background: "rgba(91,230,178,0.08)", border: "1px solid rgba(91,230,178,0.25)", borderRadius: "8px", color: "#5be6b2", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>
+                        className="inline-flex cursor-pointer items-center gap-[6px] rounded-lg border border-[rgba(91,230,178,0.25)] bg-[rgba(91,230,178,0.08)] px-[18px] py-2 text-[12px] font-bold text-accent">
                         <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                         Add POC
                       </button>
                     </OvSection>
 
                     {/* Show organiser toggle */}
-                    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "16px 20px", marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                    <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-5 py-4">
                       <div>
-                        <p style={{ margin: "0 0 3px", fontSize: "13px", fontWeight: 700, color: "var(--white)" }}>Show organiser details to customers</p>
-                        <p style={{ margin: 0, fontSize: "11px", color: "var(--muted)" }}>If ON, name, email &amp; phone will be visible on the event page</p>
+                        <p className="mb-[3px] text-[13px] font-bold text-fg">Show organiser details to customers</p>
+                        <p className="m-0 text-[11px] text-muted">If ON, name, email &amp; phone will be visible on the event page</p>
                       </div>
                       <button type="button" onClick={() => setShowOrganiser(p => !p)}
-                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, flexShrink: 0 }}>
-                        <div style={{ width: 40, height: 22, borderRadius: "999px", background: showOrganiser ? "#5be6b2" : "var(--surface2)", border: `1.5px solid ${showOrganiser ? "#5be6b2" : "var(--border)"}`, position: "relative", transition: "background 0.2s" }}>
-                          <div style={{ position: "absolute", top: "2px", left: showOrganiser ? "20px" : "2px", width: "16px", height: "16px", borderRadius: "50%", background: showOrganiser ? "#000" : "var(--muted)", transition: "left 0.2s" }} />
+                        className="shrink-0 cursor-pointer border-none bg-transparent p-0">
+                        <div className={`relative h-[22px] w-10 rounded-full border-[1.5px] transition-[background] duration-200 ${showOrganiser ? "border-[#5be6b2] bg-accent" : "border-border bg-surface-2"}`}>
+                          <div className={`absolute top-[2px] h-4 w-4 rounded-full transition-[left] duration-200 ${showOrganiser ? "left-[20px] bg-black" : "left-[2px] bg-muted"}`} />
                         </div>
                       </button>
                     </div>
 
                     {/* Send copy toggle */}
-                    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "var(--white)" }}>Send a copy of every sale to organiser</p>
+                    <div className="mb-5 flex items-center justify-between rounded-xl border border-border bg-surface px-5 py-4">
+                      <p className="m-0 text-[13px] font-bold text-fg">Send a copy of every sale to organiser</p>
                       <button type="button" onClick={() => setSendCopies(p => !p)}
-                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                        <div style={{ width: 40, height: 22, borderRadius: "999px", background: sendCopies ? "#5be6b2" : "var(--surface2)", border: `1.5px solid ${sendCopies ? "#5be6b2" : "var(--border)"}`, position: "relative", transition: "background 0.2s" }}>
-                          <div style={{ position: "absolute", top: "2px", left: sendCopies ? "20px" : "2px", width: "16px", height: "16px", borderRadius: "50%", background: sendCopies ? "#000" : "var(--muted)", transition: "left 0.2s" }} />
+                        className="cursor-pointer border-none bg-transparent p-0">
+                        <div className={`relative h-[22px] w-10 rounded-full border-[1.5px] transition-[background] duration-200 ${sendCopies ? "border-[#5be6b2] bg-accent" : "border-border bg-surface-2"}`}>
+                          <div className={`absolute top-[2px] h-4 w-4 rounded-full transition-[left] duration-200 ${sendCopies ? "left-[20px] bg-black" : "left-[2px] bg-muted"}`} />
                         </div>
                       </button>
                     </div>
 
                     {/* Save button */}
-                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "14px" }}>
+                    <div className="flex items-center justify-center gap-[14px]">
                       <button type="button" onClick={handleSaveOverview} disabled={saving}
-                        style={{ padding: "12px 40px", background: saving ? "rgba(91,230,178,0.4)" : "#5be6b2", border: "none", borderRadius: "10px", color: "#000", fontSize: "14px", fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", boxShadow: "0 0 24px rgba(91,230,178,0.22)", letterSpacing: "0.04em" }}
+                        className={`rounded-[10px] border-none px-10 py-3 text-[14px] font-extrabold tracking-[0.04em] text-black shadow-[0_0_24px_rgba(91,230,178,0.22)] ${saving ? "cursor-not-allowed bg-[rgba(91,230,178,0.4)]" : "cursor-pointer bg-accent"}`}
                         onMouseEnter={(e) => { if (!saving) (e.currentTarget as HTMLButtonElement).style.background = "#79eebc"; }}
                         onMouseLeave={(e) => { if (!saving) (e.currentTarget as HTMLButtonElement).style.background = "#5be6b2"; }}>
                         {saving ? "Saving…" : "Save Changes"}
                       </button>
                       {saveMsg && (
-                        <span style={{ fontSize: "13px", fontWeight: 600, color: saveMsg === "Saved" ? "#5be6b2" : "#ef4444" }}>
+                        <span className={`text-[13px] font-semibold ${saveMsg === "Saved" ? "text-accent" : "text-danger"}`}>
                           {saveMsg}
                         </span>
                       )}
@@ -2007,27 +1994,27 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
           </div>
 
           {/* ── RIGHT sidebar ── */}
-          <div className={styles.scrManageSidebar}>
-            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", overflow: "hidden" }}>
-              <div style={{ height: "120px", overflow: "hidden", position: "relative" }}>
+          <div className={SCR_MANAGE_SIDEBAR}>
+            <div className="overflow-hidden rounded-[14px] border border-border bg-surface">
+              <div className="relative h-[120px] overflow-hidden">
                 {imgUrl || ev.image ? (
-                  <img src={imgUrl || ev.image} alt={ev.title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={imgUrl || ev.image} alt={ev.title} loading="lazy" className="h-full w-full object-cover" />
                 ) : (
-                  <div style={{ width: "100%", height: "100%", background: "var(--surface2)" }} />
+                  <div className="h-full w-full bg-surface-2" />
                 )}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(18,26,31,0.9), transparent)" }} />
-                <span style={{ position: "absolute", bottom: "10px", left: "12px", padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>{badge.label}</span>
+                <div className="absolute inset-0 bg-[image:linear-gradient(to_top,rgba(18,26,31,0.9),transparent)]" />
+                <span className="absolute bottom-[10px] left-[12px] rounded-full border px-[10px] py-[3px] text-[11px] font-bold" style={{ background: badge.bg, borderColor: badge.border, color: badge.color }}>{badge.label}</span>
               </div>
-              <div style={{ padding: "14px" }}>
-                <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 700, color: "var(--white)", lineHeight: 1.4 }}>{ev.title}</p>
-                <div style={{ display: "flex", gap: "12px" }}>
-                  <div style={{ flex: 1, background: "var(--bg)", borderRadius: "8px", padding: "10px 12px", textAlign: "center" }}>
-                    <p style={{ margin: "0 0 2px", fontSize: "18px", fontWeight: 800, color: "var(--white)" }}>{liveSold}</p>
-                    <p style={{ margin: 0, fontSize: "10px", color: "var(--muted)", fontWeight: 600 }}>Sold</p>
+              <div className="p-[14px]">
+                <p className="mb-[10px] text-[12px] font-bold leading-[1.4] text-fg">{ev.title}</p>
+                <div className="flex gap-3">
+                  <div className="flex-1 rounded-lg bg-[#0b1114] px-3 py-[10px] text-center">
+                    <p className="mb-[2px] text-[18px] font-extrabold text-fg">{liveSold}</p>
+                    <p className="m-0 text-[10px] font-semibold text-muted">Sold</p>
                   </div>
-                  <div style={{ flex: 1, background: "var(--bg)", borderRadius: "8px", padding: "10px 12px", textAlign: "center" }}>
-                    <p style={{ margin: "0 0 2px", fontSize: "18px", fontWeight: 800, color: "var(--white)" }}>{liveCapacity - liveSold}</p>
-                    <p style={{ margin: 0, fontSize: "10px", color: "var(--muted)", fontWeight: 600 }}>Left</p>
+                  <div className="flex-1 rounded-lg bg-[#0b1114] px-3 py-[10px] text-center">
+                    <p className="mb-[2px] text-[18px] font-extrabold text-fg">{liveCapacity - liveSold}</p>
+                    <p className="m-0 text-[10px] font-semibold text-muted">Left</p>
                   </div>
                 </div>
               </div>
@@ -2068,12 +2055,12 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
 
       {/* Success toast */}
       {tierSaveToast && (
-        <div style={{ position: "fixed", bottom: "32px", left: "50%", transform: "translateX(-50%)", zIndex: 9999, pointerEvents: "none" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 24px", background: "rgba(10,10,10,0.92)", border: "1.5px solid rgba(91,230,178,0.45)", borderRadius: "14px", boxShadow: "0 8px 40px rgba(0,0,0,0.7)", backdropFilter: "blur(12px)", whiteSpace: "nowrap" }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(91,230,178,0.15)", border: "1.5px solid rgba(91,230,178,0.5)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div className="pointer-events-none fixed bottom-8 left-1/2 z-[9999] -translate-x-1/2">
+          <div className="flex items-center gap-3 whitespace-nowrap rounded-[14px] border-[1.5px] border-[rgba(91,230,178,0.45)] bg-[rgba(10,10,10,0.92)] px-6 py-[14px] shadow-[0_8px_40px_rgba(0,0,0,0.7)] backdrop-blur-[12px]">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[rgba(91,230,178,0.5)] bg-[rgba(91,230,178,0.15)]">
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="3" strokeLinecap="round"><path d="M5 13l4 4L19 7"/></svg>
             </div>
-            <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--white)" }}>{tierSaveToast}</span>
+            <span className="text-[13px] font-bold text-fg">{tierSaveToast}</span>
           </div>
         </div>
       )}

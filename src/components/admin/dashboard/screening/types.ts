@@ -1,5 +1,3 @@
-import React from "react";
-
 export type ScrEvent = {
   id: string;
   title: string;
@@ -40,16 +38,10 @@ export function mockShowsForEvent(ev: ScrEvent): ScrShow[] {
   }];
 }
 
-// shared back-button style
-export const backBtnStyle: React.CSSProperties = {
-  display: "inline-flex", alignItems: "center", gap: "6px",
-  padding: "8px 14px", background: "var(--surface)", border: "1px solid var(--border)",
-  borderRadius: "8px", color: "var(--muted)", fontSize: "12px", fontWeight: 600,
-  cursor: "pointer", flexShrink: 0, marginTop: "2px",
-};
+// shared back-button style (Tailwind utility string)
+export const backBtnStyle =
+  "mt-[2px] inline-flex shrink-0 cursor-pointer items-center gap-[6px] rounded-lg border border-border bg-surface px-[14px] py-2 text-[12px] font-semibold text-muted";
 
-export const inp: React.CSSProperties = {
-  width: "100%", padding: "10px 12px", background: "var(--bg)",
-  border: "1px solid var(--border)", borderRadius: "8px",
-  color: "var(--white)", fontSize: "13px", outline: "none", boxSizing: "border-box" as const,
-};
+// shared form-input style (Tailwind utility string)
+export const inp =
+  "box-border w-full rounded-lg border border-border bg-[#0b1114] px-3 py-[10px] text-[13px] text-fg outline-none";

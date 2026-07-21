@@ -352,14 +352,14 @@ function StatCard({ label, value, sub, color, icon }: {
   icon: React.ReactNode;
 }) {
   return (
-    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "18px 20px", flex: 1, minWidth: 130, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: color, borderRadius: "14px 14px 0 0" }} />
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "10px" }}>
-        <p style={{ margin: 0, fontSize: "10px", fontWeight: 800, color: "var(--muted)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{label}</p>
-        <div style={{ width: 30, height: 30, borderRadius: "8px", background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
+    <div className="relative min-w-[130px] flex-1 overflow-hidden rounded-[14px] border border-border bg-surface px-5 py-[18px]">
+      <div className="absolute inset-x-0 top-0 h-[3px] rounded-t-[14px]" style={{ background: color }} />
+      <div className="mb-[10px] flex items-start justify-between">
+        <p className="m-0 text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted">{label}</p>
+        <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg" style={{ background: `${color}18` }}>{icon}</div>
       </div>
-      <p style={{ margin: "0 0 3px", fontSize: "24px", fontWeight: 800, color: "var(--white)", lineHeight: 1.1 }}>{value}</p>
-      {sub && <p style={{ margin: 0, fontSize: "11px", color: "var(--muted)", lineHeight: 1.4 }}>{sub}</p>}
+      <p className="mb-[3px] text-[24px] font-extrabold leading-[1.1] text-fg">{value}</p>
+      {sub && <p className="m-0 text-[11px] leading-[1.4] text-muted">{sub}</p>}
     </div>
   );
 }
@@ -367,12 +367,12 @@ function StatCard({ label, value, sub, color, icon }: {
 /* ── Section wrapper ────────────────────────────────────────────────────── */
 function Section({ title, sub, children, accent }: { title: string; sub?: string; children: React.ReactNode; accent?: string }) {
   return (
-    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", overflow: "hidden", marginBottom: "16px" }}>
-      {accent && <div style={{ height: "3px", background: accent }} />}
-      <div style={{ padding: "20px 22px" }}>
-        <div style={{ marginBottom: "18px" }}>
-          <p style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "var(--white)" }}>{title}</p>
-          {sub && <p style={{ margin: "2px 0 0", fontSize: "11px", color: "var(--muted)" }}>{sub}</p>}
+    <div className="mb-4 overflow-hidden rounded-[14px] border border-border bg-surface">
+      {accent && <div className="h-[3px]" style={{ background: accent }} />}
+      <div className="px-[22px] py-5">
+        <div className="mb-[18px]">
+          <p className="m-0 text-[14px] font-extrabold text-fg">{title}</p>
+          {sub && <p className="mt-[2px] text-[11px] text-muted">{sub}</p>}
         </div>
         {children}
       </div>
@@ -387,22 +387,22 @@ function CapacityRing({ sold, capacity, color }: { sold: number; capacity: numbe
   const circ = 2 * Math.PI * R;
   const dash = pct * circ;
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-      <div style={{ position: "relative", width: 140, height: 140 }}>
-        <svg width="140" height="140" style={{ transform: "rotate(-90deg)" }}>
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative h-[140px] w-[140px]">
+        <svg width="140" height="140" className="-rotate-90">
           <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="14" />
           <circle cx="70" cy="70" r={R} fill="none" stroke={color} strokeWidth="14"
             strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
-            style={{ transition: "stroke-dasharray 0.6s ease" }} />
+            className="transition-[stroke-dasharray] duration-[600ms] ease-out" />
         </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <span style={{ fontSize: "22px", fontWeight: 800, color: "var(--white)", lineHeight: 1 }}>{Math.round(pct * 100)}%</span>
-          <span style={{ fontSize: "10px", color: "var(--muted)", fontWeight: 600, marginTop: "3px" }}>filled</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-[22px] font-extrabold leading-none text-fg">{Math.round(pct * 100)}%</span>
+          <span className="mt-[3px] text-[10px] font-semibold text-muted">filled</span>
         </div>
       </div>
-      <div style={{ display: "flex", gap: "16px", fontSize: "11px", fontWeight: 700 }}>
+      <div className="flex gap-4 text-[11px] font-bold">
         <span style={{ color }}>{sold} sold</span>
-        <span style={{ color: "var(--muted)" }}>{capacity - sold} left</span>
+        <span className="text-muted">{capacity - sold} left</span>
       </div>
     </div>
   );
@@ -416,22 +416,21 @@ function VerticalBars({ bars, height = 120, color }: {
 }) {
   const maxVal = Math.max(...bars.map(b => b.value), 1);
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: "10px", height: height + 40, paddingBottom: "32px", position: "relative" }}>
+    <div className="relative flex items-end gap-[10px] pb-8" style={{ height: height + 40 }}>
       {/* Y-axis guide lines */}
       {[0, 50, 100].map(pct => (
-        <div key={pct} style={{ position: "absolute", left: 0, right: 0, bottom: 32 + (pct / 100) * height,
-          borderTop: "1px dashed rgba(255,255,255,0.04)", pointerEvents: "none" }} />
+        <div key={pct} className="pointer-events-none absolute inset-x-0 border-t border-dashed border-[rgba(255,255,255,0.04)]" style={{ bottom: 32 + (pct / 100) * height }} />
       ))}
       {bars.map((b, i) => {
         const barH   = maxVal > 0 ? Math.max(4, Math.round((b.value / maxVal) * height)) : 4;
         const c      = typeof color === "function" ? color(i) : color;
         return (
-          <div key={`${b.label}-${i}`} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", height: "100%", justifyContent: "flex-end" }}>
-            <span style={{ fontSize: "10px", fontWeight: 800, color: "var(--white)" }}>{b.value > 0 ? b.value : ""}</span>
-            <div style={{ width: "100%", height: barH, background: c, borderRadius: "4px 4px 0 0", opacity: b.value === 0 ? 0.15 : 1, transition: "height 0.4s ease" }} />
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, textAlign: "center" }} />
-            <span style={{ fontSize: "9px", fontWeight: 700, color: "var(--muted)", textAlign: "center", maxWidth: "60px", lineHeight: 1.2, marginTop: "4px" }}>{b.label}</span>
-            {b.sub && <span style={{ fontSize: "9px", color: "var(--muted2)", textAlign: "center", maxWidth: "60px", lineHeight: 1.2 }}>{b.sub}</span>}
+          <div key={`${b.label}-${i}`} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
+            <span className="text-[10px] font-extrabold text-fg">{b.value > 0 ? b.value : ""}</span>
+            <div className={`w-full rounded-t-[4px] transition-[height] duration-[400ms] ease-out ${b.value === 0 ? "opacity-15" : "opacity-100"}`} style={{ height: barH, background: c }} />
+            <div className="absolute inset-x-0 bottom-0 text-center" />
+            <span className="mt-1 max-w-[60px] text-center text-[9px] font-bold leading-[1.2] text-muted">{b.label}</span>
+            {b.sub && <span className="max-w-[60px] text-center text-[9px] leading-[1.2] text-muted-2">{b.sub}</span>}
           </div>
         );
       })}
@@ -445,18 +444,18 @@ function HBar({ label, value, total, valueSub, color }: {
 }) {
   const pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
   return (
-    <div style={{ marginBottom: "16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
-        <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--white)" }}>{label}</span>
-        <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-          <span style={{ fontSize: "14px", fontWeight: 800, color }}>{value}</span>
-          {valueSub && <span style={{ fontSize: "10px", color: "var(--muted)" }}>{valueSub}</span>}
+    <div className="mb-4">
+      <div className="mb-[6px] flex items-baseline justify-between">
+        <span className="text-[12px] font-bold text-fg">{label}</span>
+        <div className="flex items-baseline gap-[6px]">
+          <span className="text-[14px] font-extrabold" style={{ color }}>{value}</span>
+          {valueSub && <span className="text-[10px] text-muted">{valueSub}</span>}
         </div>
       </div>
-      <div style={{ height: "8px", background: "rgba(255,255,255,0.05)", borderRadius: "4px", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: "4px", transition: "width 0.5s ease" }} />
+      <div className="h-2 overflow-hidden rounded-[4px] bg-[rgba(255,255,255,0.05)]">
+        <div className="h-full rounded-[4px] transition-[width] duration-500 ease-out" style={{ width: `${pct}%`, background: color }} />
       </div>
-      <div style={{ marginTop: "4px", fontSize: "10px", color: "var(--muted)", textAlign: "right" }}>{pct}%</div>
+      <div className="mt-1 text-right text-[10px] text-muted">{pct}%</div>
     </div>
   );
 }
@@ -467,15 +466,13 @@ function ActionBtn({ label, sub, color, icon, onClick }: {
 }) {
   return (
     <button type="button" onClick={onClick}
-      style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "12px 14px",
-        background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", cursor: "pointer",
-        textAlign: "left", transition: "border-color 0.15s, background 0.15s" }}
+      className="flex w-full cursor-pointer items-center gap-3 rounded-[10px] border border-border bg-[#0b1114] px-[14px] py-3 text-left transition-[border-color,background] duration-150"
       onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = color; (e.currentTarget as HTMLButtonElement).style.background = `${color}0a`; }}
       onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLButtonElement).style.background = "var(--bg)"; }}>
-      <div style={{ width: 36, height: 36, borderRadius: "9px", background: `${color}18`, border: `1px solid ${color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--white)" }}>{label}</div>
-        {sub && <div style={{ fontSize: "10px", color: "var(--muted)", marginTop: "1px" }}>{sub}</div>}
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border" style={{ background: `${color}18`, borderColor: `${color}30` }}>{icon}</div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[12px] font-bold text-fg">{label}</div>
+        {sub && <div className="mt-px text-[10px] text-muted">{sub}</div>}
       </div>
       <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="var(--muted2)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
     </button>
@@ -543,24 +540,24 @@ export function ScrAnalyticsPage({ ev, eventId, analytics, badge, onBack, onRefr
   const maxStatus = Math.max(...statusItems.map(s => s.value), 1);
 
   return (
-    <div style={{ paddingBottom: 48 }}>
+    <div className="pb-12">
 
       {/* ── Header ── */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "8px", flexWrap: "wrap" }}>
-        <button type="button" onClick={onBack} style={backBtnStyle}>
+      <div className="mb-2 flex flex-wrap items-start gap-[14px]">
+        <button type="button" onClick={onBack} className={backBtnStyle}>
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           Back
         </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 800, color: "#a78bfa", letterSpacing: "0.15em", textTransform: "uppercase" }}>Event Analytics</p>
-          <h2 style={{ margin: "0 0 2px", fontSize: "20px", fontWeight: 800, color: "var(--white)" }}>Analytics Dashboard</h2>
-          <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</p>
+        <div className="min-w-0 flex-1">
+          <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#a78bfa]">Event Analytics</p>
+          <h2 className="mb-[2px] text-[20px] font-extrabold text-fg">Analytics Dashboard</h2>
+          <p className="m-0 overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-muted">{ev.title}</p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, marginTop: "2px", flexWrap: "wrap" }}>
-          <span style={{ padding: "4px 12px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>{badge.label}</span>
+        <div className="mt-[2px] flex shrink-0 flex-wrap items-center gap-2">
+          <span className="rounded-full border px-3 py-1 text-[11px] font-bold" style={{ background: badge.bg, borderColor: badge.border, color: badge.color }}>{badge.label}</span>
           {onRefresh && (
             <button type="button" onClick={handleRefresh} disabled={refreshing}
-              style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "7px 13px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--muted)", fontSize: "11px", fontWeight: 600, cursor: refreshing ? "not-allowed" : "pointer", opacity: refreshing ? 0.6 : 1 }}>
+              className={`inline-flex items-center gap-[5px] rounded-lg border border-border bg-surface px-[13px] py-[7px] text-[11px] font-semibold text-muted ${refreshing ? "cursor-not-allowed opacity-60" : "cursor-pointer opacity-100"}`}>
               <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className={refreshing ? "animate-spin" : ""}>
                 <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
               </svg>
@@ -568,7 +565,7 @@ export function ScrAnalyticsPage({ ev, eventId, analytics, badge, onBack, onRefr
             </button>
           )}
           <button type="button" onClick={handleExport} disabled={exporting}
-            style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "7px 14px", background: "rgba(91,230,178,0.1)", border: "1px solid rgba(91,230,178,0.3)", borderRadius: "8px", color: "#5be6b2", fontSize: "11px", fontWeight: 700, cursor: exporting ? "not-allowed" : "pointer", opacity: exporting ? 0.7 : 1 }}>
+            className={`inline-flex items-center gap-[5px] rounded-lg border border-[rgba(91,230,178,0.3)] bg-[rgba(91,230,178,0.1)] px-[14px] py-[7px] text-[11px] font-bold text-accent ${exporting ? "cursor-not-allowed opacity-70" : "cursor-pointer opacity-100"}`}>
             {exporting
               ? <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="animate-spin"><circle cx="12" cy="12" r="10" strokeOpacity="0.2"/><path d="M12 2a10 10 0 0110 10"/></svg>
               : <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -578,10 +575,10 @@ export function ScrAnalyticsPage({ ev, eventId, analytics, badge, onBack, onRefr
         </div>
       </div>
 
-      <div style={{ height: "1px", background: "var(--border)", margin: "16px 0 20px" }} />
+      <div className="mx-0 mb-5 mt-4 h-px bg-border" />
 
       {/* ── STAT CARDS ── */}
-      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "20px" }}>
+      <div className="mb-5 flex flex-wrap gap-3">
         <StatCard label="Tickets Sold" value={String(analytics.totalTicketsSold)}
           sub={`of ${analytics.totalCapacity} capacity · ${fillPct}% full`} color="#5be6b2"
           icon={<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="2" strokeLinecap="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/></svg>} />
@@ -599,30 +596,30 @@ export function ScrAnalyticsPage({ ev, eventId, analytics, badge, onBack, onRefr
 
       {/* ── NO SALES PLACEHOLDER ── */}
       {!hasSales && (
-        <div style={{ background: "var(--surface)", border: "1px dashed var(--border)", borderRadius: "14px", padding: "40px 24px", textAlign: "center", marginBottom: "16px" }}>
-          <div style={{ width: 52, height: 52, borderRadius: "12px", background: "rgba(91,230,178,0.08)", border: "1px solid rgba(91,230,178,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+        <div className="mb-4 rounded-[14px] border border-dashed border-border bg-surface px-6 py-10 text-center">
+          <div className="mx-auto mb-[14px] flex h-[52px] w-[52px] items-center justify-center rounded-xl border border-[rgba(91,230,178,0.2)] bg-[rgba(91,230,178,0.08)]">
             <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="1.8" strokeLinecap="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
           </div>
-          <p style={{ margin: "0 0 4px", fontSize: "15px", fontWeight: 800, color: "var(--white)" }}>No Tickets Sold Yet</p>
-          <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)", lineHeight: 1.6 }}>Sales data will appear here once users start booking.</p>
+          <p className="mb-1 text-[15px] font-extrabold text-fg">No Tickets Sold Yet</p>
+          <p className="m-0 text-[12px] leading-[1.6] text-muted">Sales data will appear here once users start booking.</p>
         </div>
       )}
 
       {/* ── TWO-COLUMN: Capacity ring + Booking status ── */}
       {hasSales && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+        <div className="mb-4 grid grid-cols-2 gap-4">
 
           {/* Capacity ring */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px" }}>
-            <p style={{ margin: "0 0 18px", fontSize: "14px", fontWeight: 800, color: "var(--white)" }}>Capacity Fill</p>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+          <div className="rounded-[14px] border border-border bg-surface px-[22px] py-5">
+            <p className="mb-[18px] text-[14px] font-extrabold text-fg">Capacity Fill</p>
+            <div className="flex justify-center">
               <CapacityRing sold={analytics.totalTicketsSold} capacity={analytics.totalCapacity} color={ringColor} />
             </div>
           </div>
 
           {/* Booking status histogram */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px" }}>
-            <p style={{ margin: "0 0 18px", fontSize: "14px", fontWeight: 800, color: "var(--white)" }}>Booking Status</p>
+          <div className="rounded-[14px] border border-border bg-surface px-[22px] py-5">
+            <p className="mb-[18px] text-[14px] font-extrabold text-fg">Booking Status</p>
             <VerticalBars
               bars={statusItems.map(s => ({ label: s.label, value: s.value }))}
               color={i => statusItems[i].color}
@@ -647,12 +644,12 @@ export function ScrAnalyticsPage({ ev, eventId, analytics, badge, onBack, onRefr
             <VerticalBars bars={tierBars} color="#5be6b2" height={130} />
           )}
           {analytics.tierStats.map(t => (
-            <div key={t.tierId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 0", borderTop: "1px solid var(--border)", fontSize: "12px" }}>
-              <span style={{ color: "var(--muted)", fontWeight: 600 }}>{t.tierName}</span>
-              <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-                <span style={{ color: "#5be6b2", fontWeight: 700 }}>{t.sold} sold</span>
-                <span style={{ color: "var(--muted)" }}>{t.capacity - t.sold} left</span>
-                <span style={{ color: "var(--muted2)", minWidth: "30px", textAlign: "right" }}>
+            <div key={t.tierId} className="flex items-center justify-between border-t border-border py-[9px] text-[12px]">
+              <span className="font-semibold text-muted">{t.tierName}</span>
+              <div className="flex items-center gap-4">
+                <span className="font-bold text-accent">{t.sold} sold</span>
+                <span className="text-muted">{t.capacity - t.sold} left</span>
+                <span className="min-w-[30px] text-right text-muted-2">
                   {t.capacity > 0 ? `${Math.round((t.sold / t.capacity) * 100)}%` : "—"}
                 </span>
               </div>
@@ -680,9 +677,9 @@ export function ScrAnalyticsPage({ ev, eventId, analytics, badge, onBack, onRefr
             />
           )}
           {analytics.tierStats.filter(t => t.revenuePaise > 0).map(t => (
-            <div key={t.tierId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 0", borderTop: "1px solid var(--border)", fontSize: "12px" }}>
-              <span style={{ color: "var(--muted)", fontWeight: 600 }}>{t.tierName} · ₹{Math.round(t.pricePaise / 100).toLocaleString("en-IN")} / ticket</span>
-              <span style={{ color: "#a78bfa", fontWeight: 700 }}>₹{(t.revenuePaise / 100).toLocaleString("en-IN")}</span>
+            <div key={t.tierId} className="flex items-center justify-between border-t border-border py-[9px] text-[12px]">
+              <span className="font-semibold text-muted">{t.tierName} · ₹{Math.round(t.pricePaise / 100).toLocaleString("en-IN")} / ticket</span>
+              <span className="font-bold text-[#a78bfa]">₹{(t.revenuePaise / 100).toLocaleString("en-IN")}</span>
             </div>
           ))}
         </Section>
@@ -703,12 +700,12 @@ export function ScrAnalyticsPage({ ev, eventId, analytics, badge, onBack, onRefr
 
       {/* ── TIER BREAKDOWN TABLE ── */}
       <Section title="Full Tier Breakdown">
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "520px" }}>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] border-collapse text-[12px]">
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--border)" }}>
+              <tr className="border-b border-border">
                 {["Ticket Type","Price","Capacity","Sold","Available","Revenue","Fill %"].map(h => (
-                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>{h}</th>
+                  <th key={h} className="whitespace-nowrap px-[14px] py-[10px] text-left font-bold text-muted">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -717,27 +714,27 @@ export function ScrAnalyticsPage({ ev, eventId, analytics, badge, onBack, onRefr
                 const fp   = t.capacity > 0 ? Math.round((t.sold / t.capacity) * 100) : 0;
                 const col  = fp >= 90 ? "#f87171" : fp >= 60 ? "#fbbf24" : "#5be6b2";
                 return (
-                  <tr key={t.tierId} style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td style={{ padding: "11px 14px", color: "var(--white)", fontWeight: 600 }}>{t.tierName}</td>
-                    <td style={{ padding: "11px 14px", color: "var(--muted)" }}>₹{Math.round(t.pricePaise / 100).toLocaleString("en-IN")}</td>
-                    <td style={{ padding: "11px 14px", color: "var(--text)" }}>{t.capacity}</td>
-                    <td style={{ padding: "11px 14px", color: t.sold > 0 ? "#5be6b2" : "var(--muted)", fontWeight: t.sold > 0 ? 700 : 400 }}>{t.sold > 0 ? t.sold : "—"}</td>
-                    <td style={{ padding: "11px 14px", color: "var(--text)" }}>{t.capacity - t.sold}</td>
-                    <td style={{ padding: "11px 14px", color: "var(--text)" }}>{t.revenuePaise > 0 ? `₹${(t.revenuePaise / 100).toLocaleString("en-IN")}` : "—"}</td>
-                    <td style={{ padding: "11px 14px" }}>
-                      <span style={{ fontSize: "11px", fontWeight: 800, color: col }}>{fp}%</span>
+                  <tr key={t.tierId} className="border-b border-border">
+                    <td className="px-[14px] py-[11px] font-semibold text-fg">{t.tierName}</td>
+                    <td className="px-[14px] py-[11px] text-muted">₹{Math.round(t.pricePaise / 100).toLocaleString("en-IN")}</td>
+                    <td className="px-[14px] py-[11px] text-body">{t.capacity}</td>
+                    <td className={`px-[14px] py-[11px] ${t.sold > 0 ? "font-bold text-accent" : "font-normal text-muted"}`}>{t.sold > 0 ? t.sold : "—"}</td>
+                    <td className="px-[14px] py-[11px] text-body">{t.capacity - t.sold}</td>
+                    <td className="px-[14px] py-[11px] text-body">{t.revenuePaise > 0 ? `₹${(t.revenuePaise / 100).toLocaleString("en-IN")}` : "—"}</td>
+                    <td className="px-[14px] py-[11px]">
+                      <span className="text-[11px] font-extrabold" style={{ color: col }}>{fp}%</span>
                     </td>
                   </tr>
                 );
               })}
-              <tr style={{ background: "rgba(91,230,178,0.03)" }}>
-                <td style={{ padding: "11px 14px", color: "#5be6b2", fontWeight: 800 }}>Totals</td>
-                <td style={{ padding: "11px 14px", color: "var(--muted)" }}>—</td>
-                <td style={{ padding: "11px 14px", fontWeight: 700, color: "var(--white)" }}>{analytics.totalCapacity}</td>
-                <td style={{ padding: "11px 14px", fontWeight: 700, color: hasSales ? "#5be6b2" : "var(--muted)" }}>{hasSales ? analytics.totalTicketsSold : "—"}</td>
-                <td style={{ padding: "11px 14px", fontWeight: 700, color: "var(--white)" }}>{analytics.totalCapacity - analytics.totalTicketsSold}</td>
-                <td style={{ padding: "11px 14px", fontWeight: 700, color: "var(--white)" }}>{analytics.totalRevenuePaise > 0 ? `₹${(analytics.totalRevenuePaise / 100).toLocaleString("en-IN")}` : "—"}</td>
-                <td style={{ padding: "11px 14px", fontWeight: 800, color: ringColor }}>{fillPct}%</td>
+              <tr className="bg-[rgba(91,230,178,0.03)]">
+                <td className="px-[14px] py-[11px] font-extrabold text-accent">Totals</td>
+                <td className="px-[14px] py-[11px] text-muted">—</td>
+                <td className="px-[14px] py-[11px] font-bold text-fg">{analytics.totalCapacity}</td>
+                <td className={`px-[14px] py-[11px] font-bold ${hasSales ? "text-accent" : "text-muted"}`}>{hasSales ? analytics.totalTicketsSold : "—"}</td>
+                <td className="px-[14px] py-[11px] font-bold text-fg">{analytics.totalCapacity - analytics.totalTicketsSold}</td>
+                <td className="px-[14px] py-[11px] font-bold text-fg">{analytics.totalRevenuePaise > 0 ? `₹${(analytics.totalRevenuePaise / 100).toLocaleString("en-IN")}` : "—"}</td>
+                <td className="px-[14px] py-[11px] font-extrabold" style={{ color: ringColor }}>{fillPct}%</td>
               </tr>
             </tbody>
           </table>
@@ -745,9 +742,9 @@ export function ScrAnalyticsPage({ ev, eventId, analytics, badge, onBack, onRefr
       </Section>
 
       {/* ── QUICK ACTIONS ── */}
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px 22px", marginBottom: "16px" }}>
-        <p style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 800, color: "var(--white)" }}>Quick Actions</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+      <div className="mb-4 rounded-[14px] border border-border bg-surface px-[22px] py-5">
+        <p className="mb-[14px] text-[14px] font-extrabold text-fg">Quick Actions</p>
+        <div className="grid grid-cols-2 gap-[10px]">
           <ActionBtn label="Manage Event" sub="Edit details, shows, tickets"
             color="#5be6b2"
             onClick={() => router.push(`/dashboard/streaming/${eventId}/manage`)}

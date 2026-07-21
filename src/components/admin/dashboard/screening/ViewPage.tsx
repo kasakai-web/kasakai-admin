@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import styles from "../dashboard.module.css";
+import { SCR_VIEW_LAYOUT } from "../ui";
 import { scrStatusBadge, backBtnStyle } from "./types";
 import type { ApiScrEvent } from "@/lib/screening-api";
 
@@ -96,33 +96,33 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
   const minPrice = ev.tiers.length > 0 ? Math.min(...ev.tiers.map(t => t.pricePaise)) : 0;
 
   return (
-    <div style={{ paddingBottom: 48 }}>
+    <div className="pb-12">
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "20px", flexWrap: "wrap" }}>
-        <button type="button" onClick={onBack} style={backBtnStyle}>
+      <div className="mb-5 flex flex-wrap items-start gap-[14px]">
+        <button type="button" onClick={onBack} className={backBtnStyle}>
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           Back
         </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 800, color: "#5be6b2", letterSpacing: "0.15em", textTransform: "uppercase" }}>Screening Events</p>
-          <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 800, color: "var(--white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</h2>
+        <div className="min-w-0 flex-1">
+          <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent">Screening Events</p>
+          <h2 className="m-0 overflow-hidden text-ellipsis whitespace-nowrap text-[20px] font-extrabold text-fg">{ev.title}</h2>
         </div>
-        <span style={{ flexShrink: 0, marginTop: "4px", padding: "4px 12px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>{badge.label}</span>
+        <span className="mt-1 shrink-0 rounded-full border px-3 py-1 text-[11px] font-bold" style={{ background: badge.bg, borderColor: badge.border, color: badge.color }}>{badge.label}</span>
       </div>
 
       {/* Hero image */}
-      <div style={{ position: "relative", borderRadius: "16px", overflow: "hidden", height: "340px", marginBottom: "24px", background: "#090910" }}>
+      <div className="relative mb-6 h-[340px] overflow-hidden rounded-2xl bg-[#090910]">
         {!heroImgErr && ev.image ? (
           <>
             <img src={ev.image} alt={ev.title}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(10px)", transform: "scale(1.1)", opacity: 0.5 }}
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-[10px]"
               onError={() => setHeroImgErr(true)} />
             <img src={ev.image} alt={ev.title}
-              style={{ position: "relative", display: "block", width: "100%", height: "100%", objectFit: "contain" }}
+              className="relative block h-full w-full object-contain"
               onError={() => setHeroImgErr(true)} />
           </>
         ) : (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, background: "linear-gradient(160deg, #0d0d1a 0%, #090910 100%)" }}>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[image:linear-gradient(160deg,#0d0d1a_0%,#090910_100%)]">
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
               <rect x="1" y="1" width="22" height="15" rx="2" stroke="#1e2240" strokeWidth="1.5" fill="#0c0c1a"/>
               <path d="M12 16v3" stroke="#1e2240" strokeWidth="1.5"/>
@@ -132,23 +132,23 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
               <circle cx="12" cy="8.5" r="4" stroke="#1e2240" strokeWidth="1" fill="#10102a"/>
               <polygon points="10.5,6.5 10.5,10.5 14.5,8.5" fill="#1e2240"/>
             </svg>
-            <span style={{ fontSize: "10px", fontWeight: 800, color: "#1e2240", letterSpacing: "0.18em", textTransform: "uppercase" }}>No Preview Available</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#1e2240]">No Preview Available</span>
           </div>
         )}
       </div>
 
       {/* Title block */}
-      <div style={{ marginBottom: "24px" }}>
-        <h1 style={{ margin: "0 0 8px", fontSize: "24px", fontWeight: 800, color: "var(--white)", lineHeight: 1.3 }}>{ev.title}</h1>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}>
-          <span style={{ fontSize: "14px", fontWeight: 600, color: "#5be6b2" }}>{dateLabel}</span>
-          {timeLabel && <><span style={{ color: "var(--muted)", fontSize: "13px" }}>|</span><span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text)" }}>{timeLabel}</span></>}
+      <div className="mb-6">
+        <h1 className="mb-2 text-[24px] font-extrabold leading-[1.3] text-fg">{ev.title}</h1>
+        <div className="flex flex-wrap items-center gap-[6px]">
+          <span className="text-[14px] font-semibold text-accent">{dateLabel}</span>
+          {timeLabel && <><span className="text-[13px] text-muted">|</span><span className="text-[14px] font-semibold text-body">{timeLabel}</span></>}
           {venueParts.length > 0 && (
             <>
-              <span style={{ color: "var(--muted)", fontSize: "13px" }}>|</span>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+              <span className="text-[13px] text-muted">|</span>
+              <div className="inline-flex items-center gap-[5px]">
                 <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text)" }}>{venueParts.join(", ")}</span>
+                <span className="text-[14px] font-semibold text-body">{venueParts.join(", ")}</span>
               </div>
             </>
           )}
@@ -156,46 +156,46 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
       </div>
 
       {/* Two-column layout */}
-      <div className={styles.scrViewLayout}>
+      <div className={SCR_VIEW_LAYOUT}>
 
         {/* ── LEFT COLUMN ── */}
         <div>
           {/* About */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "24px", marginBottom: "16px" }}>
-            <h3 style={{ margin: "0 0 14px", fontSize: "17px", fontWeight: 800, color: "var(--white)" }}>About</h3>
+          <div className="mb-4 rounded-[14px] border border-border bg-surface p-6">
+            <h3 className="mb-[14px] text-[17px] font-extrabold text-fg">About</h3>
             {ev.description ? (
               <>
-                <div style={{ fontSize: "14px", color: "var(--text)", lineHeight: 1.8, overflow: "hidden", ...(aboutExpanded ? {} : { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical" as const }) }}>
+                <div className={`overflow-hidden text-[14px] leading-[1.8] text-body ${aboutExpanded ? "" : "line-clamp-4"}`}>
                   {ev.description.split("\n\n").map((para, i) => (
-                    <p key={i} style={{ margin: i === 0 ? 0 : "14px 0 0" }}>{para}</p>
+                    <p key={i} className={i === 0 ? "m-0" : "mt-[14px]"}>{para}</p>
                   ))}
                 </div>
                 <button type="button" onClick={() => setAboutExpanded(v => !v)}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "4px", marginTop: "12px", background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--white)", fontSize: "13px", fontWeight: 600 }}>
+                  className="mt-3 inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-0 text-[13px] font-semibold text-fg">
                   {aboutExpanded ? "Read less" : "Read more"}
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ transition: "transform 0.2s", transform: aboutExpanded ? "rotate(180deg)" : "rotate(0deg)" }}><path d="M7.5 9.75l4.5 4.5 4.5-4.5"/></svg>
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={`transition-transform duration-200 ${aboutExpanded ? "rotate-180" : "rotate-0"}`}><path d="M7.5 9.75l4.5 4.5 4.5-4.5"/></svg>
                 </button>
               </>
             ) : (
-              <p style={{ fontSize: "14px", color: "var(--muted)", margin: 0 }}>No description provided.</p>
+              <p className="m-0 text-[14px] text-muted">No description provided.</p>
             )}
           </div>
 
           {/* Things to know */}
           {thingsToKnow.length > 0 && (
-            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "24px", marginBottom: "16px" }}>
-              <h3 style={{ margin: "0 0 18px", fontSize: "17px", fontWeight: 800, color: "var(--white)" }}>Things to Know</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0" }}>
+            <div className="mb-4 rounded-[14px] border border-border bg-surface p-6">
+              <h3 className="mb-[18px] text-[17px] font-extrabold text-fg">Things to Know</h3>
+              <div className="grid grid-cols-2 gap-0">
                 {thingsToKnow.map((item, i) => (
                   <div key={i}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 0" }}>
-                      <div style={{ width: 32, height: 32, borderRadius: "8px", background: item.warn ? "rgba(239,68,68,0.08)" : "rgba(91,230,178,0.08)", border: `1px solid ${item.warn ? "rgba(239,68,68,0.15)" : "rgba(91,230,178,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <div className="flex items-center gap-[10px] py-3">
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${item.warn ? "border-[rgba(239,68,68,0.15)] bg-[rgba(239,68,68,0.08)]" : "border-[rgba(91,230,178,0.15)] bg-[rgba(91,230,178,0.08)]"}`}>
                         <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke={item.warn ? "#ef4444" : "#5be6b2"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
                       </div>
-                      <span style={{ fontSize: "13px", color: item.warn ? "#ef4444" : "var(--text)", lineHeight: 1.4 }}>{item.label}</span>
+                      <span className={`text-[13px] leading-[1.4] ${item.warn ? "text-danger" : "text-body"}`}>{item.label}</span>
                     </div>
                     {i < thingsToKnow.length - 2 && (
-                      <div style={{ height: "1px", background: "var(--border)", marginLeft: "42px" }} />
+                      <div className="ml-[42px] h-px bg-border" />
                     )}
                   </div>
                 ))}
@@ -205,26 +205,26 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
 
           {/* Extra sections */}
           {ev.extraSections?.map((sec, i) => sec.content && (
-            <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "24px", marginBottom: "16px" }}>
-              <h3 style={{ margin: "0 0 12px", fontSize: "17px", fontWeight: 800, color: "var(--white)" }}>{sec.type || "More Info"}</h3>
-              <p style={{ fontSize: "14px", color: "var(--text)", lineHeight: 1.8, margin: 0 }}>{sec.content}</p>
+            <div key={i} className="mb-4 rounded-[14px] border border-border bg-surface p-6">
+              <h3 className="mb-3 text-[17px] font-extrabold text-fg">{sec.type || "More Info"}</h3>
+              <p className="m-0 text-[14px] leading-[1.8] text-body">{sec.content}</p>
             </div>
           ))}
 
           {/* More / T&C */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "24px" }}>
-            <h3 style={{ margin: "0 0 14px", fontSize: "17px", fontWeight: 800, color: "var(--white)" }}>More</h3>
+          <div className="rounded-[14px] border border-border bg-surface p-6">
+            <h3 className="mb-[14px] text-[17px] font-extrabold text-fg">More</h3>
             <button type="button" onClick={() => setTermsExpanded(v => !v)}
-              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "12px 14px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", cursor: "pointer" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              className="flex w-full cursor-pointer items-center justify-between rounded-[10px] border border-border bg-[#0b1114] px-[14px] py-3">
+              <div className="flex items-center gap-[10px]">
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--white)" }}>Terms and Conditions</span>
+                <span className="text-[13px] font-semibold text-fg">Terms and Conditions</span>
               </div>
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" style={{ transition: "transform 0.2s", transform: termsExpanded ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0 }}><path d="M7.5 9.75l4.5 4.5 4.5-4.5"/></svg>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" className={`shrink-0 transition-transform duration-200 ${termsExpanded ? "rotate-180" : "rotate-0"}`}><path d="M7.5 9.75l4.5 4.5 4.5-4.5"/></svg>
             </button>
             {termsExpanded && (
-              <div style={{ marginTop: "12px", padding: "14px 16px", background: "var(--bg)", borderRadius: "8px", fontSize: "12px", color: "var(--muted)", lineHeight: 1.8 }}>
-                <ul style={{ margin: 0, paddingLeft: "16px" }}>
+              <div className="mt-3 rounded-lg bg-[#0b1114] px-4 py-[14px] text-[12px] leading-[1.8] text-muted">
+                <ul className="m-0 pl-4">
                   <li>All sales are final. No refunds unless the event is cancelled by the organiser.</li>
                   <li>Valid ID required at entry for age verification.</li>
                   <li>Entry is subject to availability and venue capacity.</li>
@@ -236,56 +236,56 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
         </div>
 
         {/* ── RIGHT SIDEBAR ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px", position: "sticky", top: "24px" }}>
+        <div className="sticky top-6 flex flex-col gap-[14px]">
           {/* Venue card */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", overflow: "hidden" }}>
-            <div style={{ padding: "20px" }}>
-              <p style={{ margin: "0 0 14px", fontSize: "12px", fontWeight: 800, color: "#5be6b2", letterSpacing: "0.14em", textTransform: "uppercase" }}>Venue</p>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "14px" }}>
-                <div style={{ width: 40, height: 40, borderRadius: "10px", background: "rgba(91,230,178,0.08)", border: "1px solid rgba(91,230,178,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div className="overflow-hidden rounded-[14px] border border-border bg-surface">
+            <div className="p-5">
+              <p className="mb-[14px] text-[12px] font-extrabold uppercase tracking-[0.14em] text-accent">Venue</p>
+              <div className="mb-[14px] flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[rgba(91,230,178,0.2)] bg-[rgba(91,230,178,0.08)]">
                   <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="1.8" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 </div>
                 <div>
-                  <p style={{ margin: "0 0 2px", fontSize: "14px", fontWeight: 700, color: "var(--white)" }}>{venueName}</p>
-                  {venueCity && venueName !== venueCity && <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>{venueCity}</p>}
+                  <p className="mb-[2px] text-[14px] font-bold text-fg">{venueName}</p>
+                  {venueCity && venueName !== venueCity && <p className="m-0 text-[12px] text-muted">{venueCity}</p>}
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                <div style={{ width: 40, height: 40, borderRadius: "10px", background: "rgba(91,230,178,0.08)", border: "1px solid rgba(91,230,178,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[rgba(91,230,178,0.2)] bg-[rgba(91,230,178,0.08)]">
                   <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#5be6b2" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <div>
-                  <p style={{ margin: "0 0 2px", fontSize: "14px", fontWeight: 700, color: "var(--white)" }}>
+                  <p className="mb-[2px] text-[14px] font-bold text-fg">
                     {timeLabel ? `Gates open at ${timeLabel}` : "Time TBD"}
                   </p>
-                  <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>{dateLabel}</p>
+                  <p className="m-0 text-[12px] text-muted">{dateLabel}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Ticket / status card */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "20px" }}>
-            <p style={{ margin: "0 0 14px", fontSize: "12px", fontWeight: 800, color: "#5be6b2", letterSpacing: "0.14em", textTransform: "uppercase" }}>Ticket Status</p>
+          <div className="rounded-[14px] border border-border bg-surface p-5">
+            <p className="mb-[14px] text-[12px] font-extrabold uppercase tracking-[0.14em] text-accent">Ticket Status</p>
             {ev.status === "published" && ev.tiers.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div className="flex flex-col gap-2">
                 {ev.tiers.map(t => (
-                  <div key={t._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "8px 10px", background: "var(--bg)", borderRadius: "8px", border: "1px solid var(--border)" }}>
-                    <span style={{ fontSize: "13px", color: "var(--muted)" }}>{t.name}</span>
-                    <div style={{ textAlign: "right" }}>
-                      <span style={{ fontSize: "15px", fontWeight: 800, color: "var(--white)" }}>{t.pricePaise === 0 ? "Free" : `₹${Math.round(t.pricePaise / 100)}`}</span>
-                      <span style={{ fontSize: "10px", color: "var(--muted)", display: "block" }}>{t.sold}/{t.capacity} sold</span>
+                  <div key={t._id} className="flex items-baseline justify-between rounded-lg border border-border bg-[#0b1114] px-[10px] py-2">
+                    <span className="text-[13px] text-muted">{t.name}</span>
+                    <div className="text-right">
+                      <span className="text-[15px] font-extrabold text-fg">{t.pricePaise === 0 ? "Free" : `₹${Math.round(t.pricePaise / 100)}`}</span>
+                      <span className="block text-[10px] text-muted">{t.sold}/{t.capacity} sold</span>
                     </div>
                   </div>
                 ))}
-                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "var(--muted)" }}>
+                <p className="mt-1 text-[11px] text-muted">
                   from ₹{Math.round(minPrice / 100)} · inclusive of all taxes
                 </p>
               </div>
             ) : (
-              <div style={{ textAlign: "center", padding: "12px 0" }}>
-                <span style={{ display: "inline-block", padding: "8px 20px", borderRadius: "999px", fontSize: "13px", fontWeight: 700, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>{badge.label}</span>
-                <p style={{ margin: "12px 0 0", fontSize: "12px", color: "var(--muted)" }}>
+              <div className="py-3 text-center">
+                <span className="inline-block rounded-full border px-5 py-2 text-[13px] font-bold" style={{ background: badge.bg, borderColor: badge.border, color: badge.color }}>{badge.label}</span>
+                <p className="mt-3 text-[12px] text-muted">
                   {ev.status === "cancelled" ? "This event has been cancelled." : "This event is not yet published."}
                 </p>
               </div>
@@ -294,21 +294,21 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
 
           {/* Contacts card */}
           {ev.contacts?.length > 0 && (
-            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px" }}>
-              <p style={{ margin: "0 0 12px", fontSize: "12px", fontWeight: 800, color: "var(--muted)", letterSpacing: "0.12em", textTransform: "uppercase" }}>Contacts</p>
+            <div className="rounded-[14px] border border-border bg-surface p-4">
+              <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.12em] text-muted">Contacts</p>
               {ev.contacts.map((c, i) => (
-                <div key={i} style={{ padding: "8px 0", borderBottom: i < ev.contacts.length - 1 ? "1px solid var(--border)" : "none" }}>
-                  <p style={{ margin: "0 0 2px", fontSize: "13px", fontWeight: 700, color: "var(--white)" }}>{c.name}</p>
-                  {c.phone && <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>{c.phone}</p>}
-                  {c.email && <p style={{ margin: 0, fontSize: "11px", color: "var(--muted)" }}>{c.email}</p>}
+                <div key={i} className={`py-2 ${i < ev.contacts.length - 1 ? "border-b border-border" : ""}`}>
+                  <p className="mb-[2px] text-[13px] font-bold text-fg">{c.name}</p>
+                  {c.phone && <p className="m-0 text-[12px] text-muted">{c.phone}</p>}
+                  {c.email && <p className="m-0 text-[11px] text-muted">{c.email}</p>}
                 </div>
               ))}
             </div>
           )}
 
           {/* Admin actions card */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px" }}>
-            <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 800, color: "var(--muted)", letterSpacing: "0.12em", textTransform: "uppercase" }}>Admin Actions</p>
+          <div className="rounded-[14px] border border-border bg-surface p-4">
+            <p className="mb-[10px] text-[12px] font-extrabold uppercase tracking-[0.12em] text-muted">Admin Actions</p>
             {[
               { label: "Edit Event Details",   icon: <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>,                                                                                                        onClick: onManage },
               { label: "View Attendees",        icon: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></>,                              onClick: onViewAttendees },
@@ -316,10 +316,10 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
             ].map(({ label, icon, onClick }) => (
               <button key={label} type="button" onClick={onClick}
                 disabled={!onClick}
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "9px 0", background: "none", border: "none", borderBottom: "1px solid var(--border)", cursor: onClick ? "pointer" : "default", color: "var(--muted)", fontSize: "12px", fontWeight: 500, transition: "color 0.15s", opacity: onClick ? 1 : 0.4 }}
+                className={`flex w-full items-center justify-between border-b border-border bg-transparent py-[9px] text-[12px] font-medium text-muted transition-[color] duration-150 ${onClick ? "cursor-pointer opacity-100" : "cursor-default opacity-40"}`}
                 onMouseEnter={(e) => { if (onClick) (e.currentTarget as HTMLButtonElement).style.color = "var(--white)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--muted)"; }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div className="flex items-center gap-2">
                   <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round">{icon}</svg>
                   {label}
                 </div>
