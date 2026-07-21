@@ -250,7 +250,9 @@ type FeedbackRow = {
 
 type FeedbackApiResponse = {
   success: boolean; count?: number;
-  summary?: { avgGame?: number | null; tagCounts?: Record<string, number> };
+  total?: number; page?: number; limit?: number; totalPages?: number;
+  summary?: { avgGame?: number | null; tagCounts?: Record<string, number>; total?: number };
+  filters?: { organisers?: string[]; turfs?: string[]; games?: { key: string; label: string }[] };
   data: FeedbackRow[]; message?: string;
 };
 
@@ -1579,8 +1581,9 @@ function Feedback() {
   const [tab, setTab] = useState<"player" | "organiser">("player");
 
   // ── Tab 1: Player → Platform (GameFeedback) ────────────────────────────────
-  const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
-  const [summary, setSummary]   = useState<{ avgGame?: number | null; tagCounts?: Record<string, number> }>({});
+  const [feedback, setFeedback] = useState<FeedbackRow[]>([]); // current page only
+  const [summary, setSummary]   = useState<{ avgGame?: number | null; tagCounts?: Record<string, number>; total?: number }>({});
+  const [fbFilterOpts, setFbFilterOpts] = useState<{ organisers: string[]; turfs: string[]; games: { key: string; label: string }[] }>({ organisers: [], turfs: [], games: [] });
   const [fbLoading, setFbLoading] = useState(true);
   const [fbError, setFbError]     = useState("");
   const [fbSearch, setFbSearch]   = useState("");
@@ -1591,6 +1594,19 @@ function Feedback() {
   const [fbTurf, setFbTurf]           = useState("");
   const [fbGame, setFbGame]           = useState("");
   const [fbDateRange, setFbDateRange] = useState<DateRange>("all");
+
+  // ── Server-side pagination state ──
+  const FB_PAGE_SIZE = 25;
+  const [fbPage, setFbPage]             = useState(1);
+  const [fbTotal, setFbTotal]           = useState(0); // rows matching filters
+  const [fbTotalPages, setFbTotalPages] = useState(1);
+
+  // Debounced search — avoids one request per keystroke
+  const [fbDebouncedSearch, setFbDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setFbDebouncedSearch(fbSearch), 300);
+    return () => clearTimeout(t);
+  }, [fbSearch]);
 
   // ── Tab 2: Organiser → Player (PlayerRating) ───────────────────────────────
   const [prRows, setPrRows]       = useState<PlayerRatingRow[]>([]);
@@ -1605,18 +1621,32 @@ function Feedback() {
   const [prGame, setPrGame]           = useState("");
   const [prDateRange, setPrDateRange] = useState<DateRange>("all");
 
-  useEffect(() => {
-    const token = getAdminToken();
-    if (!token) { setFbLoading(false); setFbError("Admin session missing."); return; }
-    fetch(`${API_BASE}/admin/feedback?limit=200`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
-      .then((d: FeedbackApiResponse) => {
-        if (d.success) { setFeedback(d.data || []); setSummary(d.summary || {}); }
-        else setFbError(d.message || "Failed to load feedback.");
-      })
-      .catch(() => setFbError("Cannot reach the server."))
-      .finally(() => setFbLoading(false));
-  }, []);
+  const fetchFeedback = useCallback(async () => {
+    setFbLoading(true); setFbError("");
+    try {
+      const token = getAdminToken();
+      if (!token) { setFbError("Admin session missing."); return; }
+      const params = new URLSearchParams({
+        page: String(fbPage), limit: String(FB_PAGE_SIZE), sortKey, sortDir,
+      });
+      if (fbDebouncedSearch.trim()) params.set("search", fbDebouncedSearch.trim());
+      if (fbOrganiser)            params.set("organiser", fbOrganiser);
+      if (fbTurf)                 params.set("turf", fbTurf);
+      if (fbGame)                 params.set("game", fbGame);
+      if (fbDateRange !== "all")  params.set("dateRange", fbDateRange);
+      const res = await fetch(`${API_BASE}/admin/feedback?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } });
+      const d = (await res.json()) as FeedbackApiResponse;
+      if (!res.ok || !d.success) { setFbError(d.message || "Failed to load feedback."); return; }
+      setFeedback(d.data || []);
+      setSummary(d.summary || {});
+      if (d.filters) setFbFilterOpts({ organisers: d.filters.organisers || [], turfs: d.filters.turfs || [], games: d.filters.games || [] });
+      setFbTotal(d.total ?? (d.data?.length ?? 0));
+      setFbTotalPages(d.totalPages ?? 1);
+    } catch { setFbError("Cannot reach the server."); }
+    finally { setFbLoading(false); }
+  }, [fbPage, fbDebouncedSearch, sortKey, sortDir, fbOrganiser, fbTurf, fbGame, fbDateRange]);
+
+  useEffect(() => { fetchFeedback(); }, [fetchFeedback]);
 
   useEffect(() => {
     const token = getAdminToken();
@@ -1633,6 +1663,7 @@ function Feedback() {
 
   // ── Tab 1 helpers ──────────────────────────────────────────────────────────
   function toggleSort(key: FbSortKey) {
+    setFbPage(1);
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("desc"); }
   }
@@ -1654,42 +1685,8 @@ function Feedback() {
   const thSort = "cursor-pointer select-none";
 
   // ── Unique filter lists ──────────────────────────────────────────────────────
-  const fbOrganisers = useMemo(() => {
-    const s = new Set<string>();
-    feedback.forEach(f => { if (f.game?.organiser?.name) s.add(f.game.organiser.name); });
-    return Array.from(s).sort();
-  }, [feedback]);
-
-  const fbTurfs = useMemo(() => {
-    const s = new Set<string>();
-    feedback.forEach(f => { if (f.game?.turf?.name) s.add(f.game.turf.name); });
-    return Array.from(s).sort();
-  }, [feedback]);
-
-  const fbGames = useMemo(() => {
-    const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    const map = new Map<string, string>(); // "title||YYYY-MM-DD" → display label
-    feedback.forEach(f => {
-      const title = f.game?.title;
-      if (!title) return;
-      const dateOnly = (f.game?.scheduledAt || "").slice(0, 10); // "2025-06-09" — no timezone shift
-      const key = `${title}||${dateOnly}`;
-      if (!map.has(key)) {
-        let dateLabel = "";
-        if (dateOnly) {
-          const [, m, d] = dateOnly.split("-").map(Number);
-          dateLabel = `${d} ${MONTHS[m - 1]}`;
-        }
-        map.set(key, dateLabel ? `${title} — ${dateLabel}` : title);
-      }
-    });
-    // YYYY-MM-DD strings sort lexicographically = chronologically; newest first
-    return Array.from(map.entries()).sort((a, b) => {
-      const dA = a[0].split("||")[1] || "";
-      const dB = b[0].split("||")[1] || "";
-      return dB !== dA ? dB.localeCompare(dA) : a[1].localeCompare(b[1]);
-    });
-  }, [feedback]);
+  // Player-feedback filter options come from the server (computed over ALL
+  // feedback, not just the current page) via `fbFilterOpts`.
 
   const prOrganisers = useMemo(() => {
     const s = new Set<string>();
@@ -1734,31 +1731,8 @@ function Feedback() {
   const DATE_RANGE_LABELS: Record<DateRange, string> = { all: "All Time", today: "Today", week: "7 Days", month: "30 Days" };
   const DATE_RANGES: DateRange[] = ["all", "today", "week", "month"];
 
-  const fbFiltered = feedback.filter((f) => {
-    const q = fbSearch.trim().toLowerCase();
-    const matchSearch = !q || [
-      f.submittedBy?.name || "", f.submittedBy?.phone || "",
-      f.game?.title || "", f.game?.organiser?.name || "",
-      f.game?.turf?.name || "", f.comment || "",
-    ].join(" ").toLowerCase().includes(q);
-    const matchOrg  = !fbOrganiser || f.game?.organiser?.name === fbOrganiser;
-    const matchTurf = !fbTurf || f.game?.turf?.name === fbTurf;
-    const matchGame = !fbGame || (() => {
-      const [ft, fd] = fbGame.split("||");
-      return f.game?.title === ft && (f.game?.scheduledAt || "").slice(0, 10) === fd;
-    })();
-    const matchDate = inDateRange(f.createdAt, fbDateRange);
-    return matchSearch && matchOrg && matchTurf && matchGame && matchDate;
-  });
-
-  const fbSorted = [...fbFiltered].sort((a, b) => {
-    let av = 0, bv = 0;
-    if (sortKey === "date")           { av = new Date(a.createdAt).getTime(); bv = new Date(b.createdAt).getTime(); }
-    if (sortKey === "gameRating")     { av = a.gameRating ?? 0;       bv = b.gameRating ?? 0; }
-    if (sortKey === "organiserRating"){ av = a.organiserRating ?? 0;  bv = b.organiserRating ?? 0; }
-    if (sortKey === "venueRating")    { av = a.venueRating ?? 0;      bv = b.venueRating ?? 0; }
-    return sortDir === "asc" ? av - bv : bv - av;
-  });
+  // Player feedback is filtered, sorted and paginated by the server; `feedback`
+  // is already the exact page to render.
 
   const prFiltered = prRows.filter((r) => {
     const q = prSearch.trim().toLowerCase();
@@ -1795,7 +1769,7 @@ function Feedback() {
           type="button"
           onClick={() => setTab("player")}
         >
-          Player → Platform ({feedback.length})
+          Player → Platform ({summary.total ?? 0})
         </button>
         <button
           className={`${TAB} ${tab === "organiser" ? TAB_ACTIVE : ""}`}
@@ -1810,7 +1784,7 @@ function Feedback() {
       {tab === "player" && (
         <>
           <div className={PAYMENT_SUMMARY}>
-            <div className={PAY_CARD}><div className={STAT_LABEL}>Total Submissions</div><div className={PAY_VALUE}>{fbLoading ? "—" : feedback.length}</div><div className={PAY_SUB}>Post-game feedback</div></div>
+            <div className={PAY_CARD}><div className={STAT_LABEL}>Total Submissions</div><div className={PAY_VALUE}>{fbLoading ? "—" : (summary.total ?? 0)}</div><div className={PAY_SUB}>Post-game feedback</div></div>
             <div className={PAY_CARD}><div className={STAT_LABEL}>Avg Game Rating</div><div className={`${PAY_VALUE} text-warning!`}>{summary.avgGame != null ? `${summary.avgGame} / 5` : "—"}</div><div className={PAY_SUB}>Across all submitted feedback</div></div>
             <div className={PAY_CARD}>
               <div className={STAT_LABEL}>Top Tags</div>
@@ -1823,22 +1797,22 @@ function Feedback() {
           </div>
 
           <div className={TOOLBAR}>
-            <input className={SEARCH_INPUT} placeholder="Search player, organiser, turf, game, comment…" value={fbSearch} onChange={(e) => setFbSearch(e.target.value)} />
-            <select className={FILTER_SELECT} value={fbOrganiser} onChange={(e) => setFbOrganiser(e.target.value)}>
+            <input className={SEARCH_INPUT} placeholder="Search player, organiser, turf, game, comment…" value={fbSearch} onChange={(e) => { setFbSearch(e.target.value); setFbPage(1); }} />
+            <select className={FILTER_SELECT} value={fbOrganiser} onChange={(e) => { setFbOrganiser(e.target.value); setFbPage(1); }}>
               <option value="">All Organisers</option>
-              {fbOrganisers.map(o => <option key={o} value={o}>{o}</option>)}
+              {fbFilterOpts.organisers.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
-            <select className={FILTER_SELECT} value={fbTurf} onChange={(e) => setFbTurf(e.target.value)}>
+            <select className={FILTER_SELECT} value={fbTurf} onChange={(e) => { setFbTurf(e.target.value); setFbPage(1); }}>
               <option value="">All Turfs</option>
-              {fbTurfs.map(t => <option key={t} value={t}>{t}</option>)}
+              {fbFilterOpts.turfs.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
-            <select className={FILTER_SELECT} value={fbGame} onChange={(e) => setFbGame(e.target.value)}>
+            <select className={FILTER_SELECT} value={fbGame} onChange={(e) => { setFbGame(e.target.value); setFbPage(1); }}>
               <option value="">All Games</option>
-              {fbGames.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+              {fbFilterOpts.games.map(g => <option key={g.key} value={g.key}>{g.label}</option>)}
             </select>
             <div className="flex flex-wrap gap-1">
               {DATE_RANGES.map(r => (
-                <button key={r} type="button" onClick={() => setFbDateRange(r)}
+                <button key={r} type="button" onClick={() => { setFbDateRange(r); setFbPage(1); }}
                   className={`cursor-pointer border px-3 py-[7px] text-[12px] ${fbDateRange === r ? "border-accent bg-accent font-bold text-black" : "border-border-2 bg-surface font-normal text-muted"}`}>
                   {DATE_RANGE_LABELS[r]}
                 </button>
@@ -1846,7 +1820,7 @@ function Feedback() {
             </div>
             {(fbOrganiser || fbTurf || fbGame || fbDateRange !== "all" || fbSearch) && (
               <button type="button"
-                onClick={() => { setFbOrganiser(""); setFbTurf(""); setFbGame(""); setFbDateRange("all"); setFbSearch(""); }}
+                onClick={() => { setFbOrganiser(""); setFbTurf(""); setFbGame(""); setFbDateRange("all"); setFbSearch(""); setFbPage(1); }}
                 className="cursor-pointer whitespace-nowrap border border-[rgba(241,118,127,0.35)] bg-[rgba(241,118,127,0.1)] px-3 py-[7px] text-[12px] text-danger">
                 ✕ Clear Filters
               </button>
@@ -1854,7 +1828,7 @@ function Feedback() {
           </div>
           {!fbLoading && (
             <div className="mb-[10px] text-[12px] text-muted">
-              Showing <strong className="text-fg">{fbSorted.length}</strong> of {feedback.length} entries
+              <strong className="text-fg">{fbTotal}</strong> {fbTotal === 1 ? "entry" : "entries"} match
             </div>
           )}
 
@@ -1878,10 +1852,10 @@ function Feedback() {
                 </tr>
               </thead>
               <tbody>
-                {!fbLoading && fbSorted.length === 0 && (
+                {!fbLoading && feedback.length === 0 && (
                   <tr><td colSpan={10} className="p-6! text-center text-muted!">No feedback submitted yet.</td></tr>
                 )}
-                {fbSorted.map((f) => (
+                {feedback.map((f) => (
                   <tr key={f._id}>
                     <td>
                       <div className="font-medium">{f.submittedBy?.name || "—"}</div>
@@ -1938,6 +1912,24 @@ function Feedback() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {!fbLoading && fbTotal > 0 && (
+            <div className="mt-[14px] flex flex-wrap items-center justify-between gap-3">
+              <div className="text-[12px] text-muted">
+                Showing <strong className="text-fg">{(fbPage - 1) * FB_PAGE_SIZE + 1}</strong>–
+                <strong className="text-fg">{Math.min(fbPage * FB_PAGE_SIZE, fbTotal)}</strong> of{" "}
+                <strong className="text-fg">{fbTotal}</strong>
+              </div>
+              <div className="flex items-center gap-[6px]">
+                <button className={pagerBtnCls(fbPage <= 1)} type="button" disabled={fbPage <= 1} onClick={() => setFbPage(1)}>« First</button>
+                <button className={pagerBtnCls(fbPage <= 1)} type="button" disabled={fbPage <= 1} onClick={() => setFbPage((p) => Math.max(1, p - 1))}>‹ Prev</button>
+                <span className={pagerPillCls}>Page {fbPage} / {fbTotalPages}</span>
+                <button className={pagerBtnCls(fbPage >= fbTotalPages)} type="button" disabled={fbPage >= fbTotalPages} onClick={() => setFbPage((p) => Math.min(fbTotalPages, p + 1))}>Next ›</button>
+                <button className={pagerBtnCls(fbPage >= fbTotalPages)} type="button" disabled={fbPage >= fbTotalPages} onClick={() => setFbPage(fbTotalPages)}>Last »</button>
+              </div>
+            </div>
+          )}
 
           {/* Full-comment modal */}
           {commentModal && (
