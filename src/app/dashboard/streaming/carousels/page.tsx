@@ -4,6 +4,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import styles from "./page.module.css";
 import { scrApi } from "@/lib/screening-api";
+import { resolveImageUrl } from "@/lib/resolve-image";
 
 type SelectedFile = { file: File; url: string; uploadedUrl?: string };
 type UploadType = "banner" | "poster";
@@ -243,7 +244,7 @@ export default function Page() {
                     <div className={styles.previewWrap}>
                       <div className={styles.previewFrame}>
                         <Image
-                          src={file.url}
+                          src={resolveImageUrl(file.url)}
                           alt={config.alt}
                           fill
                           className={styles.previewImage}
@@ -325,7 +326,7 @@ export default function Page() {
               <div key={item._id} className={styles.carouselRow}>
                 <div className={styles.carouselPreview}>
                   <Image
-                    src={item.banner}
+                    src={resolveImageUrl(item.banner)}
                     alt={item.title}
                     fill
                     className={styles.carouselImage}

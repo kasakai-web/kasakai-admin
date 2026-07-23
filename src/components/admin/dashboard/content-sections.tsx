@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import type { DashboardSection } from "./constants";
 import { getAdminToken } from "@/lib/admin-session";
+import { resolveImageUrl } from "@/lib/resolve-image";
 import { PassPage } from "./passes/PassPage";
 
 /* ── Tailwind atoms (migrated 1:1 from dashboard.module.css) ─────────────────────
@@ -93,9 +94,6 @@ const TAB_ACTIVE = "text-fg! border-b-fg!";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:5000/api/v1";
 
-// Backend origin (strips /api/v1 suffix) — used to resolve relative upload paths
-const BACKEND_ORIGIN = API_BASE.replace(/\/api\/v1\/?$/, "");
-
 // Module-level cache: avoids re-fetching Users / Organisers on every tab switch
 const _adminCache = new Map<string, { data: unknown; ts: number }>();
 const ADMIN_CACHE_TTL = 60_000; // 60 s
@@ -117,12 +115,6 @@ function pagerBtnCls(disabled: boolean): string {
 
 // Shared class for the bright "Page X / Y" indicator pill
 const pagerPillCls = "mx-[2px] whitespace-nowrap rounded-md bg-[#facc15] px-3 py-[6px] text-[13px] font-extrabold text-[#0b1114]";
-
-function resolveImageUrl(src: string | null | undefined): string | null {
-  if (!src) return null;
-  if (src.startsWith("http://") || src.startsWith("https://")) return src;
-  return `${BACKEND_ORIGIN}${src.startsWith("/") ? src : `/${src}`}`;
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

@@ -3,6 +3,7 @@ import React, { useState, useCallback } from "react";
 import { SCR_CARD, SCR_GRID2, SCR_GRID_POC } from "../ui";
 import { backBtnStyle, inp } from "./types";
 import { scrApi } from "@/lib/screening-api";
+import { resolveImageUrl } from "@/lib/resolve-image";
 import type { CreateScrEventPayload } from "@/lib/screening-api";
 
 /* ── static data ── */
@@ -142,7 +143,7 @@ function UploadBox({ label, hint, value, onChange }: {
         <input type="file" accept="image/*" className="hidden" disabled={uploading}
           onChange={e => { const f=e.target.files?.[0]; if(f) handleFile(f); }} />
         {value
-          ? <img src={value} alt="" className="max-h-[120px] max-w-full rounded-md object-cover" />
+          ? <img src={resolveImageUrl(value)} alt="" className="max-h-[120px] max-w-full rounded-md object-cover" />
           : uploading
           ? <p className="m-0 text-[13px] text-muted">Uploading…</p>
           : <>
@@ -577,7 +578,7 @@ function GallerySlot({ value, onChange }: { value:string; onChange:(url:string)=
       <input type="file" accept="image/*" className="hidden" disabled={uploading}
         onChange={e => { const f=e.target.files?.[0]; if(f) handleFile(f); }} />
       {value
-        ? <img src={value} alt="" className="h-full w-full object-cover" />
+        ? <img src={resolveImageUrl(value)} alt="" className="h-full w-full object-cover" />
         : uploading
         ? <span className="text-[10px] text-muted">…</span>
         : tooBig

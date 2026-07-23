@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { SCR_VIEW_LAYOUT } from "../ui";
 import { scrStatusBadge, backBtnStyle } from "./types";
+import { resolveImageUrl } from "@/lib/resolve-image";
 import type { ApiScrEvent } from "@/lib/screening-api";
 
 function buildThingsToKnow(ev: ApiScrEvent): { label: string; warn?: boolean; icon: React.ReactNode }[] {
@@ -114,10 +115,10 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
       <div className="relative mb-6 h-[340px] overflow-hidden rounded-2xl bg-[#090910]">
         {!heroImgErr && ev.image ? (
           <>
-            <img src={ev.image} alt={ev.title}
+            <img src={resolveImageUrl(ev.image)} alt={ev.title}
               className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-[10px]"
               onError={() => setHeroImgErr(true)} />
-            <img src={ev.image} alt={ev.title}
+            <img src={resolveImageUrl(ev.image)} alt={ev.title}
               className="relative block h-full w-full object-contain"
               onError={() => setHeroImgErr(true)} />
           </>
