@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { SCR_MANAGE_LAYOUT, SCR_MANAGE_SIDEBAR, SCR_MANAGE_TAB, SCR_MANAGE_TAB_ACTIVE, SCR_MANAGE_TAB_BAR } from "../ui";
 import { ScrEvent, ScrShow, ScrShowTicket, scrStatusBadge, backBtnStyle, inp } from "./types";
 import { scrApi, type ApiScrEvent, type ApiScrShow, type ApiScrTier, type CreateScrEventPayload } from "@/lib/screening-api";
+import { resolveImageUrl } from "@/lib/resolve-image";
 
 // ── static data ───────────────────────────────────────────────────────────────
 
@@ -306,7 +307,7 @@ function ImageUploadBox({ label, ratio, maxSize, existingUrl, disabled, onUpload
         <div className="flex shrink-0 items-center gap-2">
           <p className="m-0 text-[11px] text-muted-2">Max {maxSize}</p>
           {preview && (
-            <img src={preview} alt="preview" className="h-[44px] w-auto rounded-md border border-border object-cover" />
+            <img src={resolveImageUrl(preview)} alt="preview" className="h-[44px] w-auto rounded-md border border-border object-cover" />
           )}
           <button type="button" onClick={() => !disabled && !uploading && fileRef.current?.click()}
             className={`rounded-[7px] border border-border bg-transparent px-[14px] py-[6px] text-[12px] font-semibold ${(disabled || uploading) ? "cursor-not-allowed text-muted-2" : "cursor-pointer text-muted"}`}>
@@ -1998,7 +1999,7 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
             <div className="overflow-hidden rounded-[14px] border border-border bg-surface">
               <div className="relative h-[120px] overflow-hidden">
                 {imgUrl || ev.image ? (
-                  <img src={imgUrl || ev.image} alt={ev.title} loading="lazy" className="h-full w-full object-cover" />
+                  <img src={resolveImageUrl(imgUrl || ev.image)} alt={ev.title} loading="lazy" className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full w-full bg-surface-2" />
                 )}
