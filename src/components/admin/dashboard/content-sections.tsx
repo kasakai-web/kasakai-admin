@@ -1184,10 +1184,10 @@ function Games() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [detailGameId, setDetailGameId] = useState<string | null>(null);
 
-  const [deleteTarget, setDeleteTarget] = useState<AdminGameRow | null>(null);
-  const [deleteReason, setDeleteReason] = useState("");
-  const [deleteError, setDeleteError]   = useState("");
-  const [deleteBusy, setDeleteBusy]     = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<AdminGameRow | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelError, setCancelError]   = useState("");
+  const [cancelBusy, setCancelBusy]     = useState(false);
   const [toast, setToast]               = useState<string | null>(null);
 
   const fetchGames = useCallback(async () => {
@@ -1205,27 +1205,27 @@ function Games() {
 
   useEffect(() => { fetchGames(); }, [fetchGames]);
 
-  async function doDelete() {
-    if (!deleteTarget) return;
-    if (!deleteReason.trim()) { setDeleteError("Please provide a reason for deletion."); return; }
-    setDeleteBusy(true); setDeleteError("");
+  async function doCancel() {
+    if (!cancelTarget) return;
+    if (!cancelReason.trim()) { setCancelError("Please provide a reason for cancellation."); return; }
+    setCancelBusy(true); setCancelError("");
     try {
       const token = getAdminToken();
-      const res   = await fetch(`${API_BASE}/admin/games/${deleteTarget.id}`, {
+      const res   = await fetch(`${API_BASE}/admin/games/${cancelTarget.id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ reason: deleteReason.trim() }),
+        body: JSON.stringify({ reason: cancelReason.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) { setDeleteError(data.message || "Delete failed."); return; }
-      const deletedTitle = deleteTarget.title;
-      setDeleteTarget(null);
-      setDeleteReason("");
-      setToast(`"${deletedTitle}" has been deleted. Players were refunded and notified.`);
+      if (!res.ok) { setCancelError(data.message || "Cancel failed."); return; }
+      const cancelledTitle = cancelTarget.title;
+      setCancelTarget(null);
+      setCancelReason("");
+      setToast(`"${cancelledTitle}" has been cancelled. Players were refunded and notified.`);
       setTimeout(() => setToast(null), 4000);
       await fetchGames();
-    } catch { setDeleteError("Cannot reach the server."); }
-    finally { setDeleteBusy(false); }
+    } catch { setCancelError("Cannot reach the server."); }
+    finally { setCancelBusy(false); }
   }
 
   const filtered = games.filter((g) => {
@@ -1280,9 +1280,9 @@ function Games() {
                       <button
                         className={`${ACTION_BTN} border-[rgba(239,68,68,0.4)]! text-danger!`}
                         type="button"
-                        onClick={() => { setDeleteTarget(g); setDeleteReason(""); setDeleteError(""); }}
+                        onClick={() => { setCancelTarget(g); setCancelReason(""); setCancelError(""); }}
                       >
-                        Delete
+                        Cancel
                       </button>
                     )}
                   </div>
@@ -1297,39 +1297,39 @@ function Games() {
         <GameDetailModal gameId={detailGameId} onClose={() => setDetailGameId(null)} />
       )}
 
-      {/* Delete confirmation modal */}
-      {deleteTarget && (
-        <div className={MODAL_OVERLAY} onClick={() => setDeleteTarget(null)}>
+      {/* Cancel confirmation modal */}
+      {cancelTarget && (
+        <div className={MODAL_OVERLAY} onClick={() => setCancelTarget(null)}>
           <div className={`${MODAL} max-w-[460px]!`} onClick={(e) => e.stopPropagation()}>
             <div className={MODAL_HEAD}>
-              <div className={SECTION_TITLE}>Delete Game</div>
-              <button className={MODAL_CLOSE} type="button" onClick={() => setDeleteTarget(null)}>✕</button>
+              <div className={SECTION_TITLE}>Cancel Game</div>
+              <button className={MODAL_CLOSE} type="button" onClick={() => setCancelTarget(null)}>✕</button>
             </div>
             <div className="mb-[14px] text-[14px] text-body">
-              Are you sure you want to delete <strong>{deleteTarget.title}</strong>?{" "}
+              Are you sure you want to cancel <strong>{cancelTarget.title}</strong>?{" "}
               <span className="text-danger">
                 This cancels the game, refunds every paid player, and notifies everyone involved. This action cannot be undone.
               </span>
             </div>
             <label className={FORM_LABEL}>
-              Reason for deletion
+              Reason for cancellation
               <input
                 className={`${SEARCH_INPUT} mt-[6px]! w-full`}
                 placeholder="e.g. Duplicate listing, organiser request, policy violation…"
-                value={deleteReason}
-                onChange={(e) => setDeleteReason(e.target.value)}
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
               />
             </label>
-            {deleteError && <div className={`${FORM_ERROR} mt-[10px]`}>{deleteError}</div>}
+            {cancelError && <div className={`${FORM_ERROR} mt-[10px]`}>{cancelError}</div>}
             <div className={`${MODAL_ACTIONS} mt-[18px]`}>
-              <button className={ACTION_BTN} type="button" onClick={() => setDeleteTarget(null)}>Cancel</button>
+              <button className={ACTION_BTN} type="button" onClick={() => setCancelTarget(null)}>Back</button>
               <button
                 className={`${ACTION_BTN} border-[rgba(239,68,68,0.5)]! bg-[rgba(239,68,68,0.08)]! text-danger!`}
                 type="button"
-                disabled={deleteBusy}
-                onClick={doDelete}
+                disabled={cancelBusy}
+                onClick={doCancel}
               >
-                {deleteBusy ? "Deleting…" : "Confirm Delete"}
+                {cancelBusy ? "Cancelling…" : "Confirm Cancel"}
               </button>
             </div>
           </div>
