@@ -1184,6 +1184,12 @@ function Games() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [detailGameId, setDetailGameId] = useState<string | null>(null);
 
+  const [deleteTarget, setDeleteTarget] = useState<AdminGameRow | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [deleteError, setDeleteError]   = useState("");
+  const [deleteBusy, setDeleteBusy]     = useState(false);
+  const [toast, setToast]               = useState<string | null>(null);
+
   const fetchGames = useCallback(async () => {
     setLoading(true); setError("");
     try {
@@ -1198,6 +1204,29 @@ function Games() {
   }, []);
 
   useEffect(() => { fetchGames(); }, [fetchGames]);
+
+  async function doDelete() {
+    if (!deleteTarget) return;
+    if (!deleteReason.trim()) { setDeleteError("Please provide a reason for deletion."); return; }
+    setDeleteBusy(true); setDeleteError("");
+    try {
+      const token = getAdminToken();
+      const res   = await fetch(`${API_BASE}/admin/games/${deleteTarget.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason: deleteReason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setDeleteError(data.message || "Delete failed."); return; }
+      const deletedTitle = deleteTarget.title;
+      setDeleteTarget(null);
+      setDeleteReason("");
+      setToast(`"${deletedTitle}" has been deleted. Players were refunded and notified.`);
+      setTimeout(() => setToast(null), 4000);
+      await fetchGames();
+    } catch { setDeleteError("Cannot reach the server."); }
+    finally { setDeleteBusy(false); }
+  }
 
   const filtered = games.filter((g) => {
     const q = search.trim().toLowerCase();
@@ -1243,9 +1272,20 @@ function Games() {
                 <td>{g.organiserName || "—"}</td>
                 <td><span className={`${BADGE} ${badgeClassForStatus(g.status)}`}>{formatStatusLabel(g.status)}</span></td>
                 <td>
-                  <button className={ACTION_BTN} type="button" onClick={() => setDetailGameId(g.id)}>
-                    View Detail
-                  </button>
+                  <div className={ACTIONS}>
+                    <button className={ACTION_BTN} type="button" onClick={() => setDetailGameId(g.id)}>
+                      View Detail
+                    </button>
+                    {!["cancelled", "completed"].includes((g.status || "").toLowerCase()) && (
+                      <button
+                        className={`${ACTION_BTN} border-[rgba(239,68,68,0.4)]! text-danger!`}
+                        type="button"
+                        onClick={() => { setDeleteTarget(g); setDeleteReason(""); setDeleteError(""); }}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -1255,6 +1295,53 @@ function Games() {
 
       {detailGameId && (
         <GameDetailModal gameId={detailGameId} onClose={() => setDetailGameId(null)} />
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className={MODAL_OVERLAY} onClick={() => setDeleteTarget(null)}>
+          <div className={`${MODAL} max-w-[460px]!`} onClick={(e) => e.stopPropagation()}>
+            <div className={MODAL_HEAD}>
+              <div className={SECTION_TITLE}>Delete Game</div>
+              <button className={MODAL_CLOSE} type="button" onClick={() => setDeleteTarget(null)}>✕</button>
+            </div>
+            <div className="mb-[14px] text-[14px] text-body">
+              Are you sure you want to delete <strong>{deleteTarget.title}</strong>?{" "}
+              <span className="text-danger">
+                This cancels the game, refunds every paid player, and notifies everyone involved. This action cannot be undone.
+              </span>
+            </div>
+            <label className={FORM_LABEL}>
+              Reason for deletion
+              <input
+                className={`${SEARCH_INPUT} mt-[6px]! w-full`}
+                placeholder="e.g. Duplicate listing, organiser request, policy violation…"
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+              />
+            </label>
+            {deleteError && <div className={`${FORM_ERROR} mt-[10px]`}>{deleteError}</div>}
+            <div className={`${MODAL_ACTIONS} mt-[18px]`}>
+              <button className={ACTION_BTN} type="button" onClick={() => setDeleteTarget(null)}>Cancel</button>
+              <button
+                className={`${ACTION_BTN} border-[rgba(239,68,68,0.5)]! bg-[rgba(239,68,68,0.08)]! text-danger!`}
+                type="button"
+                disabled={deleteBusy}
+                onClick={doDelete}
+              >
+                {deleteBusy ? "Deleting…" : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success toast */}
+      {toast && (
+        <div className="fixed bottom-7 left-1/2 z-[10000] flex min-w-[280px] -translate-x-1/2 items-center gap-[10px] rounded-xl border-[1.5px] border-[rgba(239,68,68,0.4)] bg-[rgba(17,20,36,0.97)] px-5 py-[13px] shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+          <span className="text-[13px] font-semibold text-fg">{toast}</span>
+        </div>
       )}
     </>
   );
