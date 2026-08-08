@@ -148,6 +148,7 @@ type UserDetailGame = {
   paymentStatus?: string | null; amountPaidPaise?: number;
   signedUpAt?: string | null; optedOut?: boolean; optedOutReason?: string | null;
   backedOut?: boolean; backedOutAt?: string | null; backoutType?: "pre_cutoff" | "post_cutoff" | null;
+  removed?: boolean; removedAt?: string | null;
   guestCount?: number; guestNames?: string[];
   // organiser rows
   registrations?: number; presentCount?: number; revenuePaise?: number;
@@ -777,11 +778,18 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
                           <td>{g.organiserName || "—"}</td>
                           <td>
                             <span className={`${BADGE} ${badgeClassForStatus(g.status || undefined)}`}>{formatStatusLabel(g.status || undefined)}</span>
-                            {g.backedOut
-                              ? <div className="mt-[3px] text-[11px] text-warning" title={g.backedOutAt ? formatDateTime(g.backedOutAt) : undefined}>
-                                  Backed out{g.backoutType === "post_cutoff" ? " (after cutoff)" : ""}
-                                </div>
-                              : g.optedOut && <div className="mt-[3px] text-[11px] text-warning">Opted out{g.optedOutReason === "format_change" ? " (format change)" : ""}</div>}
+                            {g.backedOut ? (
+                              <div className="mt-[3px] text-[11px] text-warning" title={g.backedOutAt ? formatDateTime(g.backedOutAt) : undefined}>
+                                Backed out{g.backoutType === "post_cutoff" ? " (after cutoff)" : ""}
+                              </div>
+                            ) : g.removed ? (
+                              // Not the player's doing — kept visually distinct from a backout.
+                              <div className="mt-[3px] text-[11px] text-muted" title={g.removedAt ? formatDateTime(g.removedAt) : undefined}>
+                                Removed by organiser
+                              </div>
+                            ) : g.optedOut ? (
+                              <div className="mt-[3px] text-[11px] text-warning">Opted out{g.optedOutReason === "format_change" ? " (format change)" : ""}</div>
+                            ) : null}
                           </td>
                           <td>
                             {g.attendanceMarked
