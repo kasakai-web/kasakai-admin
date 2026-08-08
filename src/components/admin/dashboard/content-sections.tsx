@@ -147,6 +147,7 @@ type UserDetailGame = {
   registered?: boolean; attended?: string; attendanceMarked?: boolean;
   paymentStatus?: string | null; amountPaidPaise?: number;
   signedUpAt?: string | null; optedOut?: boolean; optedOutReason?: string | null;
+  backedOut?: boolean; backedOutAt?: string | null; backoutType?: "pre_cutoff" | "post_cutoff" | null;
   guestCount?: number; guestNames?: string[];
   // organiser rows
   registrations?: number; presentCount?: number; revenuePaise?: number;
@@ -776,7 +777,11 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
                           <td>{g.organiserName || "—"}</td>
                           <td>
                             <span className={`${BADGE} ${badgeClassForStatus(g.status || undefined)}`}>{formatStatusLabel(g.status || undefined)}</span>
-                            {g.optedOut && <div className="mt-[3px] text-[11px] text-warning">Opted out{g.optedOutReason === "format_change" ? " (format change)" : ""}</div>}
+                            {g.backedOut
+                              ? <div className="mt-[3px] text-[11px] text-warning" title={g.backedOutAt ? formatDateTime(g.backedOutAt) : undefined}>
+                                  Backed out{g.backoutType === "post_cutoff" ? " (after cutoff)" : ""}
+                                </div>
+                              : g.optedOut && <div className="mt-[3px] text-[11px] text-warning">Opted out{g.optedOutReason === "format_change" ? " (format change)" : ""}</div>}
                           </td>
                           <td>
                             {g.attendanceMarked
