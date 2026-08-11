@@ -2046,14 +2046,18 @@ type DateRange = "all" | "today" | "week" | "month";
 
 type CommentModalData = { comment: string; player: string; game: string };
 
+// An organiser's STANDING rating of a player — one row per (organiser, player),
+// revised over time rather than re-created per game. The game fields describe the
+// occasion the opinion was last formed on, not a game the rating belongs to.
 type PlayerRatingRow = {
   id: string;
   playerName: string; playerPhone?: string | null;
   organiserName: string; organiserPhone?: string | null;
-  gameTitle?: string | null; gameFormat?: string | null; gameDate?: string | null;
+  lastGameTitle?: string | null; lastGameFormat?: string | null; lastGameDate?: string | null;
   conductRating: number; gameplayRating: number; avgRating: number;
   preferredPosition?: string | null; gkAffinity?: number | null;
   notes?: string | null; ratedAt?: string | null;
+  gamesObserved?: number; revision?: number;
 };
 
 function Feedback() {
@@ -2177,9 +2181,9 @@ function Feedback() {
     const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const map = new Map<string, string>(); // "title||YYYY-MM-DD" → display label
     prRows.forEach(r => {
-      const title = r.gameTitle;
+      const title = r.lastGameTitle;
       if (!title) return;
-      const dateOnly = (r.gameDate || "").slice(0, 10);
+      const dateOnly = (r.lastGameDate || "").slice(0, 10);
       const key = `${title}||${dateOnly}`;
       if (!map.has(key)) {
         let dateLabel = "";
@@ -2215,11 +2219,11 @@ function Feedback() {
 
   const prFiltered = prRows.filter((r) => {
     const q = prSearch.trim().toLowerCase();
-    const matchSearch = !q || [r.playerName, r.playerPhone || "", r.organiserName, r.organiserPhone || "", r.gameTitle || "", r.notes || ""].join(" ").toLowerCase().includes(q);
+    const matchSearch = !q || [r.playerName, r.playerPhone || "", r.organiserName, r.organiserPhone || "", r.lastGameTitle || "", r.notes || ""].join(" ").toLowerCase().includes(q);
     const matchOrg  = !prOrganiser || r.organiserName === prOrganiser;
     const matchGame = !prGame || (() => {
       const [ft, fd] = prGame.split("||");
-      return r.gameTitle === ft && (r.gameDate || "").slice(0, 10) === fd;
+      return r.lastGameTitle === ft && (r.lastGameDate || "").slice(0, 10) === fd;
     })();
     const matchDate = inDateRange(r.ratedAt, prDateRange);
     return matchSearch && matchOrg && matchGame && matchDate;
@@ -2462,7 +2466,7 @@ function Feedback() {
               {prOrganisers.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
             <select className={FILTER_SELECT} value={prGame} onChange={(e) => setPrGame(e.target.value)}>
-              <option value="">All Games</option>
+              <option value="">Any Last Game</option>
               {prGames.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
             </select>
             <div className="flex flex-wrap gap-1">
@@ -2496,7 +2500,7 @@ function Feedback() {
                 <tr>
                   <th>Player</th>
                   <th>Organiser</th>
-                  <th>Game</th>
+                  <th>Last Rated In</th>
                   <th>Position</th>
                   <th className={thSort} onClick={() => togglePrSort("conduct")}>Conduct ★{prSortIcon("conduct")}</th>
                   <th className={thSort} onClick={() => togglePrSort("gameplay")}>Gameplay ★{prSortIcon("gameplay")}</th>
@@ -2520,8 +2524,12 @@ function Feedback() {
                       {r.organiserPhone && <div className="text-[11px] text-muted">{r.organiserPhone}</div>}
                     </td>
                     <td>
-                      <div>{r.gameTitle || "—"}</div>
-                      {r.gameFormat && <div className="text-[11px] text-muted">{r.gameFormat}</div>}
+                      <div>{r.lastGameTitle || "—"}</div>
+                      <div className="text-[11px] text-muted">
+                        {r.lastGameFormat && <span>{r.lastGameFormat} · </span>}
+                        {r.gamesObserved ?? 0} game{(r.gamesObserved ?? 0) === 1 ? "" : "s"} observed
+                        {(r.revision ?? 1) > 1 && <span> · rev {r.revision}</span>}
+                      </div>
                     </td>
                     <td>
                       {r.preferredPosition
