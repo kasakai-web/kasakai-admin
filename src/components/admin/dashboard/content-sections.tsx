@@ -324,7 +324,29 @@ type Turf = {
   hasFloodlights: boolean; hasChangingRooms: boolean; hasParking: boolean; hasRefreshments: boolean;
   contactPhone?: string; contactName?: string; googleMapsUrl?: string; parkingNotes?: string;
   isVerified: boolean; isActive: boolean; totalGamesHosted: number; averageRating: number; createdAt: string;
+  // Derived from address.city by the backend (utils/metro.js). `metro` is the
+  // travel region players browse by — "Delhi NCR", not "Gurgaon". Read-only here:
+  // the API recomputes it on every write and ignores it if sent.
+  metro?: string | null; citySlug?: string | null;
 };
+
+// What a typed city string resolves to. `derived: true` means the registry has
+// no entry for it, so it will end up as a city of its own in the player's picker.
+type CityResolution = {
+  metroSlug: string; metroLabel: string;
+  citySlug: string; cityLabel: string;
+  derived: boolean;
+} | null;
+
+type MetroGroup = { slug: string; label: string; state: string; cities: { slug: string; label: string }[] };
+
+// Display label for a stored metro slug. Returns null for a slug the registry
+// does not know — a city that grouped itself because nobody has added it to
+// utils/metro.js yet, which the table flags rather than hides.
+function metroLabelFor(slug: string | null | undefined, groups: MetroGroup[]): string | null {
+  if (!slug) return null;
+  return groups.find((g) => g.slug === slug)?.label ?? null;
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -2678,6 +2700,44 @@ function TurfModal({ initial, onClose, onSaved }: { initial?: Turf | null; onClo
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState("");
 
+  // ── City → metro preview ──────────────────────────────────────────────────
+  // The city typed here decides which city's browse list this venue's games show
+  // up in. That mapping is not obvious from the form ("Gurgaon" lands under
+  // "Delhi NCR"), and a mistake is invisible until an organiser wonders why
+  // nobody is joining — so the consequence is shown live, before saving.
+  const [cityOptions, setCityOptions] = useState<MetroGroup[]>([]);
+  const [resolution, setResolution]   = useState<CityResolution>(null);
+  const typedCity = form["address.city"];
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res  = await fetch(`${API_BASE}/turfs/city-options`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
+        const data = await res.json();
+        if (!cancelled && data.success) setCityOptions(data.data.metros || []);
+      } catch { /* the form still works; only the suggestions are missing */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Debounced so a typed city does not fire a request per keystroke. Resolution
+  // stays server-side — one implementation of the alias rules, not two.
+  useEffect(() => {
+    if (!typedCity.trim()) { setResolution(null); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const res  = await fetch(`${API_BASE}/turfs/resolve-city?city=${encodeURIComponent(typedCity)}`, {
+          headers: { Authorization: `Bearer ${getAdminToken()}` },
+        });
+        const data = await res.json();
+        if (!cancelled && data.success) setResolution(data.data);
+      } catch { /* preview only */ }
+    }, 350);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [typedCity]);
+
   const set = (k: keyof TurfForm, v: string | number | boolean | string[]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
@@ -2724,7 +2784,43 @@ function TurfModal({ initial, onClose, onSaved }: { initial?: Turf | null; onClo
             <label className={FORM_LABEL}>Address Line 1 *<input className={inp} value={form["address.line1"]} onChange={(e) => set("address.line1", e.target.value)} required /></label>
             <label className={FORM_LABEL}>Address Line 2<input className={inp} value={form["address.line2"]} onChange={(e) => set("address.line2", e.target.value)} /></label>
             <label className={FORM_LABEL}>Area *<input className={inp} value={form["address.area"]} onChange={(e) => set("address.area", e.target.value)} required /></label>
-            <label className={FORM_LABEL}>City *<input className={inp} value={form["address.city"]} onChange={(e) => set("address.city", e.target.value)} required /></label>
+            <label className={FORM_LABEL}>
+              City *
+              <input
+                className={inp}
+                value={form["address.city"]}
+                onChange={(e) => set("address.city", e.target.value)}
+                list="kk-city-options"
+                placeholder="e.g. Gurugram"
+                required
+              />
+              {/* Canonical spellings, so most venues never go through the alias
+                  path at all. Free text is still allowed — a new city has to be
+                  addable before someone can get round to registering it. */}
+              <datalist id="kk-city-options">
+                {cityOptions.flatMap((m) =>
+                  m.cities.map((c) => <option key={`${m.slug}-${c.slug}`} value={c.label}>{m.label}</option>)
+                )}
+              </datalist>
+              {resolution && (
+                <span className={`mt-[6px] block text-[11.5px] leading-snug ${resolution.derived ? "text-warning!" : "text-muted!"}`}>
+                  {resolution.derived ? (
+                    <>
+                      ⚠ Not a known city — players will see it as its own city,
+                      “{resolution.cityLabel}”. If it belongs to an existing one
+                      (e.g. Gurgaon → Delhi NCR), use that city&apos;s name, or add it
+                      to the registry.
+                    </>
+                  ) : (
+                    <>
+                      Players will find this venue under{" "}
+                      <strong className="text-success!">{resolution.metroLabel}</strong>
+                      {resolution.cityLabel !== resolution.metroLabel && <> › {resolution.cityLabel}</>}
+                    </>
+                  )}
+                </span>
+              )}
+            </label>
             <label className={FORM_LABEL}>State *<input className={inp} value={form["address.state"]} onChange={(e) => set("address.state", e.target.value)} required /></label>
             <label className={FORM_LABEL}>Pincode *<input className={inp} value={form["address.pincode"]} onChange={(e) => set("address.pincode", e.target.value)} required /></label>
             <label className={FORM_LABEL}>
@@ -2771,6 +2867,21 @@ function Venues({ onOpenDetail }: { onOpenDetail: (t: string) => void }) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [search, setSearch]         = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "discontinued">("all");
+  // Only to turn a stored metro slug back into its display label. A slug with no
+  // entry here is a derived metro — a city nobody has registered yet.
+  const [cityOptions, setCityOptions] = useState<MetroGroup[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res  = await fetch(`${API_BASE}/turfs/city-options`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
+        const data = await res.json();
+        if (!cancelled && data.success) setCityOptions(data.data.metros || []);
+      } catch { /* falls back to showing the raw slug */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const fetchTurfs = useCallback(async () => {
     setLoading(true); setError("");
@@ -2841,9 +2952,9 @@ function Venues({ onOpenDetail }: { onOpenDetail: (t: string) => void }) {
       ) : (
         <div className={TABLE_WRAP}>
           <table className={TABLE}>
-            <thead><tr><th>Venue</th><th>Area</th><th>City</th><th>State</th><th>Surface</th><th>Pitches</th><th>Floodlights</th><th>Verified</th><th>Status</th><th>Games</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Venue</th><th>Area</th><th>City</th><th>Browsed under</th><th>State</th><th>Surface</th><th>Pitches</th><th>Floodlights</th><th>Verified</th><th>Status</th><th>Games</th><th>Actions</th></tr></thead>
             <tbody>
-              {filtered.length === 0 && <tr><td colSpan={11} className="p-8! text-center text-muted!">{turfs.length === 0 ? "No venues yet." : "No venues match the current filters."}</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={12} className="p-8! text-center text-muted!">{turfs.length === 0 ? "No venues yet." : "No venues match the current filters."}</td></tr>}
               {filtered.map((t) => {
                 const busy = actionLoading !== null;
                 return (
@@ -2851,6 +2962,16 @@ function Venues({ onOpenDetail }: { onOpenDetail: (t: string) => void }) {
                     <td className="font-medium">{t.name}</td>
                     <td>{t.address.area}</td>
                     <td>{t.address.city}</td>
+                    {/* The city players actually browse by. A venue showing "—"
+                        predates the metro mapping and will not appear in any
+                        city-filtered list — run scripts/migrate_turf_metro.js. */}
+                    <td>
+                      {t.metro
+                        ? <span className={`${BADGE} ${metroLabelFor(t.metro, cityOptions) ? BADGE_GRAY : BADGE_AMBER}`}>
+                            {metroLabelFor(t.metro, cityOptions) || t.metro}
+                          </span>
+                        : <span className={`${BADGE} ${BADGE_RED}`}>Unmapped</span>}
+                    </td>
                     <td>{t.address.state}</td>
                     <td><span className={`${BADGE} ${BADGE_GRAY}`}>{surfaceLabel(t.surfaceType)}</span></td>
                     <td>{t.numberOfPitches}</td>
