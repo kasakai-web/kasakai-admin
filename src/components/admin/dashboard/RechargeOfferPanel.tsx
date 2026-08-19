@@ -6,9 +6,13 @@ import { getAdminToken } from "@/lib/admin-session";
 /* Wallet recharge offers — the admin editor.
  *
  * One campaign made of tiers the admin defines: any recharge range, paying
- * either a flat amount or a percentage (with a cap). The campaign carries the
- * guard rails — validity window, per-player limit, total budget, first-recharge
- * only — because an offer without them is just a permanent discount.
+ * either a flat amount or a percentage (with a cap), to a chosen audience —
+ * everyone, first-time rechargers, or players who have topped up before. That
+ * last field is what lets one campaign run "₹100 on your first ₹500, ₹40 on
+ * every ₹500 after that": two tiers over the same range, never the same player.
+ *
+ * The campaign carries the guard rails — validity window, per-player limit,
+ * total budget — because an offer without them is just a permanent discount.
  *
  * All validation is the server's (utils/rechargeOffers.js): the same rules have
  * to hold for the credit path, so duplicating them here would only let the two
@@ -29,9 +33,11 @@ const FIELD =
 const FIELD_LABEL = "mb-[5px] block text-[11px] uppercase tracking-[0.08em] text-muted";
 
 type TierMode = "flat" | "percent";
+type Audience = "all" | "first" | "repeat";
 
 type ApiTier = {
   key: string;
+  audience: Audience;
   minPaise: number;
   maxPaise: number | null;
   mode: TierMode;
@@ -51,7 +57,6 @@ type OfferConfig = {
   campaignId: string;
   startsAtIST: string | null;
   endsAtIST: string | null;
-  firstRechargeOnly: boolean;
   perPlayerLimit: number;
   maxTotalBonusPaise: number;
   spentBonusPaise: number;
@@ -63,6 +68,7 @@ type OfferConfig = {
 
 type DraftTier = {
   id: string;
+  audience: Audience;
   minRs: string;
   maxRs: string; // "" = open-ended
   mode: TierMode;
@@ -75,6 +81,7 @@ type Preview = {
   bonusPaise: number;
   totalPaise: number;
   reason: string;
+  audience: Audience;
   tierLabel: string | null;
   upsell: { addPaise: number; bonusPaise: number; atPaise: number } | null;
 };
@@ -87,6 +94,18 @@ const STATUS_LABEL: Record<string, string> = {
   budget_exhausted: "Budget spent",
 };
 
+// Short form for the collapsed tier chips.
+const AUDIENCE_CHIP: Record<Audience, string> = {
+  all: "Everyone",
+  first: "1st recharge",
+  repeat: "Repeat",
+};
+const AUDIENCE_TONE: Record<Audience, string> = {
+  all: "text-muted",
+  first: "text-[#4ade80]",
+  repeat: "text-[#60a5fa]",
+};
+
 const fmt = (paise: number) => `₹${Math.round(paise / 100).toLocaleString("en-IN")}`;
 const toPaise = (rs: string) => Math.round(Number(rs || 0) * 100);
 const toRs = (paise: number) => String(paise / 100);
@@ -97,6 +116,7 @@ const newTierId = () => `t${++tierSeq}`;
 function toDraft(t: ApiTier): DraftTier {
   return {
     id: newTierId(),
+    audience: t.audience ?? "all",
     minRs: toRs(t.minPaise),
     maxRs: t.maxPaise == null ? "" : toRs(t.maxPaise),
     mode: t.mode,
@@ -112,7 +132,6 @@ export function RechargeOfferPanel() {
   const [tiers, setTiers] = useState<DraftTier[]>([]);
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
-  const [firstOnly, setFirstOnly] = useState(false);
   const [perPlayerLimit, setPerPlayerLimit] = useState("0");
   const [budgetRs, setBudgetRs] = useState("0");
 
@@ -123,6 +142,9 @@ export function RechargeOfferPanel() {
   const [expanded, setExpanded] = useState(false);
 
   const [previewRs, setPreviewRs] = useState("500");
+  // Which player the dry run is imagining. With audience tiers the same amount
+  // deliberately pays two different bonuses, so this has to be explicit.
+  const [previewReturning, setPreviewReturning] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewErr, setPreviewErr] = useState("");
 
@@ -132,10 +154,10 @@ export function RechargeOfferPanel() {
       enabled,
       startsAtIST: startsAt || null,
       endsAtIST: endsAt || null,
-      firstRechargeOnly: firstOnly,
       perPlayerLimit: Math.round(Number(perPlayerLimit || 0)),
       maxTotalBonusPaise: toPaise(budgetRs),
       tiers: tiers.map((t) => ({
+        audience: t.audience,
         minPaise: toPaise(t.minRs),
         maxPaise: t.maxRs.trim() === "" ? null : toPaise(t.maxRs),
         mode: t.mode,
@@ -144,7 +166,7 @@ export function RechargeOfferPanel() {
           : { bonusPaise: toPaise(t.bonusRs) }),
       })),
     }),
-    [enabled, startsAt, endsAt, firstOnly, perPlayerLimit, budgetRs, tiers]
+    [enabled, startsAt, endsAt, perPlayerLimit, budgetRs, tiers]
   );
 
   const applyConfig = useCallback((data: OfferConfig) => {
@@ -153,7 +175,6 @@ export function RechargeOfferPanel() {
     setTiers((data.tiers || []).map(toDraft));
     setStartsAt(data.startsAtIST || "");
     setEndsAt(data.endsAtIST || "");
-    setFirstOnly(!!data.firstRechargeOnly);
     setPerPlayerLimit(String(data.perPlayerLimit || 0));
     setBudgetRs(toRs(data.maxTotalBonusPaise || 0));
   }, []);
@@ -251,7 +272,7 @@ export function RechargeOfferPanel() {
         const res = await fetch(`${API_BASE}/admin/wallet-offers/preview`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ ...payload, amountPaise }),
+          body: JSON.stringify({ ...payload, amountPaise, hasPriorTopup: previewReturning }),
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
@@ -267,18 +288,23 @@ export function RechargeOfferPanel() {
     }, 500);
 
     return () => { if (previewTimer.current) clearTimeout(previewTimer.current); };
-  }, [previewRs, payload, tiers.length, expanded]);
+  }, [previewRs, previewReturning, payload, tiers.length, expanded]);
 
-  const addTier = () => {
-    const last = tiers[tiers.length - 1];
-    // Start the new tier where the previous one ends — the common case, and it
-    // keeps the ranges non-overlapping without the admin doing the arithmetic.
+  const addTier = (audience: Audience = "all") => {
+    // Start the new tier where the last tier of the SAME audience ends — the
+    // common case, and it keeps that audience's ranges from overlapping without
+    // the admin doing the arithmetic. Tiers for other audiences are irrelevant
+    // here: they are never seen by the same player.
+    const lane = audience === "all"
+      ? tiers
+      : tiers.filter((t) => t.audience === audience || t.audience === "all");
+    const last = lane[lane.length - 1];
     const suggestedMin = last
       ? last.maxRs.trim() !== "" ? last.maxRs : String(Number(last.minRs || 0) * 2 || 500)
       : "500";
     setTiers((p) => [
       ...p,
-      { id: newTierId(), minRs: suggestedMin, maxRs: "", mode: "flat", bonusRs: "", percent: "", capRs: "" },
+      { id: newTierId(), audience, minRs: suggestedMin, maxRs: "", mode: "flat", bonusRs: "", percent: "", capRs: "" },
     ]);
   };
 
@@ -353,6 +379,11 @@ export function RechargeOfferPanel() {
           {config.tiers.map((t) => (
             <div key={t.key} className="rounded-[10px] border border-border-2 px-3 py-[7px] text-[12px] text-muted">
               {t.rangeLabel} → <strong className="text-success">{t.rewardLabel}</strong>
+              {t.audience !== "all" && (
+                <span className={`ml-[6px] font-mono text-[10px] uppercase tracking-[0.06em] ${AUDIENCE_TONE[t.audience]}`}>
+                  {AUDIENCE_CHIP[t.audience]}
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -369,7 +400,7 @@ export function RechargeOfferPanel() {
           <div className="mt-4 mb-[6px] flex items-center justify-between">
             <div className="text-[13px] font-bold text-fg">Recharge tiers</div>
             <div className="font-mono text-[11px] text-muted">
-              min inclusive · max exclusive · gaps allowed, overlaps not
+              min inclusive · max exclusive · gaps allowed · overlaps only across audiences
             </div>
           </div>
 
@@ -380,6 +411,18 @@ export function RechargeOfferPanel() {
                 className="flex flex-wrap items-end gap-3 rounded-[10px] border border-border-2 px-3 py-[10px]"
               >
                 <div className="w-[26px] shrink-0 pb-[7px] font-mono text-[12px] text-muted">{i + 1}</div>
+
+                <div className="w-[150px]">
+                  <label className={FIELD_LABEL}>Applies to</label>
+                  <select
+                    className={FIELD} value={t.audience}
+                    onChange={(e) => patchTier(t.id, { audience: e.target.value as Audience })}
+                  >
+                    <option value="all">Everyone</option>
+                    <option value="first">First recharge</option>
+                    <option value="repeat">After 1st recharge</option>
+                  </select>
+                </div>
 
                 <div className="w-[110px]">
                   <label className={FIELD_LABEL}>From ₹</label>
@@ -454,14 +497,32 @@ export function RechargeOfferPanel() {
             )}
           </div>
 
-          <button
-            className={`${TOPBAR_BTN} mt-[10px]`}
-            type="button"
-            onClick={addTier}
-            disabled={!!config && tiers.length >= config.limits.maxTiers}
-          >
-            + Add tier
-          </button>
+          <div className="mt-[10px] flex flex-wrap items-center gap-2">
+            <button
+              className={TOPBAR_BTN}
+              type="button"
+              onClick={() => addTier("all")}
+              disabled={!!config && tiers.length >= config.limits.maxTiers}
+            >
+              + Add tier
+            </button>
+            <button
+              className={TOPBAR_BTN}
+              type="button"
+              onClick={() => addTier("first")}
+              disabled={!!config && tiers.length >= config.limits.maxTiers}
+            >
+              + First-recharge tier
+            </button>
+            <button
+              className={TOPBAR_BTN}
+              type="button"
+              onClick={() => addTier("repeat")}
+              disabled={!!config && tiers.length >= config.limits.maxTiers}
+            >
+              + Repeat-recharge tier
+            </button>
+          </div>
 
           {/* ── Campaign rules ── */}
           <div className="mt-5 mb-[6px] text-[13px] font-bold text-fg">Campaign rules</div>
@@ -496,10 +557,10 @@ export function RechargeOfferPanel() {
               />
               <div className="mt-[4px] text-[11px] text-muted">0 = unlimited</div>
             </div>
-            <label className="flex cursor-pointer items-center gap-[7px] self-end pb-[7px] text-[12.5px] text-fg">
-              <input type="checkbox" checked={firstOnly} onChange={(e) => setFirstOnly(e.target.checked)} />
-              First recharge only
-            </label>
+          </div>
+          <div className="mt-[8px] text-[11.5px] leading-[1.5] text-muted">
+            Who each bonus is for is now set per tier, above — one campaign can pay a
+            first-recharge rate and a different rate on every recharge after it.
           </div>
 
           {/* ── Dry run ── */}
@@ -511,6 +572,31 @@ export function RechargeOfferPanel() {
                   className={FIELD} type="number" min={0} step={1} value={previewRs}
                   onChange={(e) => setPreviewRs(e.target.value)}
                 />
+              </div>
+              {/* Which player — the same amount can pay two different bonuses
+                  once a tier is audience-specific, so the dry run has to say
+                  whose recharge it is describing. */}
+              <div>
+                <label className={FIELD_LABEL}>on their</label>
+                <div className="flex">
+                  {[
+                    { on: false, label: "First recharge" },
+                    { on: true, label: "Later recharge" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => setPreviewReturning(opt.on)}
+                      className={`cursor-pointer border border-border-2 px-[12px] py-[7px] font-mono text-[11.5px] ${
+                        previewReturning === opt.on
+                          ? "border-fg! bg-fg! text-black!"
+                          : "bg-transparent text-muted hover:text-fg"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="flex-1 pb-[2px] text-[13px]">
                 {previewErr ? (
@@ -533,7 +619,11 @@ export function RechargeOfferPanel() {
                     </>
                   ) : (
                     <span className="text-muted">
-                      no bonus at this amount
+                      {preview.reason === "audience_mismatch"
+                        ? `no bonus — a tier covers ${fmt(toPaise(previewRs))}, but not on a ${
+                            previewReturning ? "later" : "first"
+                          } recharge`
+                        : "no bonus at this amount"}
                       {preview.upsell
                         ? ` — nudge shown: add ${fmt(preview.upsell.addPaise)} more for ${fmt(preview.upsell.bonusPaise)}`
                         : ""}
