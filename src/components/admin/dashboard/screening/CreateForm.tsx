@@ -3,7 +3,8 @@ import React, { useState, useCallback } from "react";
 import { SCR_CARD, SCR_GRID2, SCR_GRID_POC } from "../ui";
 import { backBtnStyle, inp } from "./types";
 import { scrApi } from "@/lib/screening-api";
-import { resolveImageUrl } from "@/lib/resolve-image";
+import Image from "next/image";
+import { resolveImageUrl, isOptimizableImageUrl } from "@/lib/resolve-image";
 import type { CreateScrEventPayload } from "@/lib/screening-api";
 
 /* ── static data ── */
@@ -143,7 +144,13 @@ function UploadBox({ label, hint, value, onChange }: {
         <input type="file" accept="image/*" className="hidden" disabled={uploading}
           onChange={e => { const f=e.target.files?.[0]; if(f) handleFile(f); }} />
         {value
-          ? <img src={resolveImageUrl(value)} alt="" className="max-h-[120px] max-w-full rounded-md object-cover" />
+          /* width/height are only the ratio hint next/image needs; `auto` on both
+             hands sizing back to the max-* caps, so the preview keeps its natural
+             shape instead of being forced into a 200×120 crop. */
+          ? <Image src={resolveImageUrl(value)} alt="" width={200} height={120}
+              style={{ width: "auto", height: "auto" }}
+              unoptimized={!isOptimizableImageUrl(resolveImageUrl(value))}
+              className="max-h-[120px] max-w-full rounded-md" />
           : uploading
           ? <p className="m-0 text-[13px] text-muted">Uploading…</p>
           : <>
@@ -392,7 +399,7 @@ function S2({ form, set }: { form:Draft; set:React.Dispatch<React.SetStateAction
               className="mx-auto mb-3 block">
               <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
             </svg>
-            No shows yet. Click "Add Show" to schedule one.
+            No shows yet. Click “Add Show” to schedule one.
           </div>
         )}
 
@@ -578,7 +585,9 @@ function GallerySlot({ value, onChange }: { value:string; onChange:(url:string)=
       <input type="file" accept="image/*" className="hidden" disabled={uploading}
         onChange={e => { const f=e.target.files?.[0]; if(f) handleFile(f); }} />
       {value
-        ? <img src={resolveImageUrl(value)} alt="" className="h-full w-full object-cover" />
+        ? <Image src={resolveImageUrl(value)} alt="" width={200} height={200}
+            unoptimized={!isOptimizableImageUrl(resolveImageUrl(value))}
+            className="h-full w-full object-cover" />
         : uploading
         ? <span className="text-[10px] text-muted">…</span>
         : tooBig

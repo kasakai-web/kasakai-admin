@@ -247,11 +247,12 @@ export type ScrCarousel = {
 /* ── API helpers ──────────────────────────────────────────────────────────── */
 
 export const scrApi = {
-  listAdmin: (params?: { search?: string; status?: string; page?: number }) => {
+  listAdmin: (params?: { search?: string; status?: string; page?: number; limit?: number }) => {
     const qs = new URLSearchParams();
     if (params?.search) qs.set('search', params.search);
     if (params?.status) qs.set('status', params.status);
     if (params?.page)   qs.set('page', String(params.page));
+    if (params?.limit)  qs.set('limit', String(params.limit));
     const query = qs.toString() ? `?${qs.toString()}` : '';
     return apiFetch<ApiScrListResponse>(`/screening/admin/events${query}`);
   },

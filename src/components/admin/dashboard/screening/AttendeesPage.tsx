@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { scrApi, type ScrAdminTicket, type ApiScrEvent } from "@/lib/screening-api";
+import { usePagination, useResetPageOnFilterChange } from "../shared/usePagination";
+import { Pagination } from "../shared/Pagination";
 import { backBtnStyle, scrStatusBadge } from "./types";
 
 type StatusFilter = "all" | "confirmed" | "used" | "pending" | "cancelled";
@@ -106,18 +108,23 @@ export function ScrAttendeesPage({ event, onBack }: { event: ApiScrEvent; onBack
   const [debouncedSearch, setDebounced] = useState("");
   const [tickets,  setTickets]  = useState<ScrAdminTicket[]>([]);
   const [total,    setTotal]    = useState(0);
-  const [page,     setPage]     = useState(1);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Pagination — page + rows-per-page live in the URL (?page=2&limit=100) ──
+  const { page, limit, setPage, setLimit, resetPage } = usePagination({ defaultLimit: 50 });
 
   const badge = scrStatusBadge(event.status);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { setDebounced(search); setPage(1); }, 350);
+    debounceRef.current = setTimeout(() => setDebounced(search), 350);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search]);
+  // Rewind only once the query actually CHANGES — resetting from inside the
+  // debounce would fire on mount too, throwing away a `?page=` link.
+  useResetPageOnFilterChange(resetPage, [search]);
 
   useEffect(() => {
     setLoading(true);
@@ -126,14 +133,12 @@ export function ScrAttendeesPage({ event, onBack }: { event: ApiScrEvent; onBack
       status: statusFilter === "all" ? undefined : statusFilter,
       search: debouncedSearch || undefined,
       page,
+      limit,
     })
       .then(d => { setTickets(d.tickets); setTotal(d.total); })
       .catch(e => setError(e instanceof Error ? e.message : "Failed to load"))
       .finally(() => setLoading(false));
-  }, [event._id, statusFilter, debouncedSearch, page]);
-
-  const LIMIT = 50;
-  const totalPages = Math.ceil(total / LIMIT);
+  }, [event._id, statusFilter, debouncedSearch, page, limit]);
 
   return (
     <div className="pb-12">
@@ -172,7 +177,7 @@ export function ScrAttendeesPage({ event, onBack }: { event: ApiScrEvent; onBack
       {/* Status tabs */}
       <div className="mb-5 flex flex-wrap gap-[6px]">
         {STATUS_TABS.map(t => (
-          <button key={t.key} type="button" onClick={() => { setStatusFilter(t.key); setPage(1); }}
+          <button key={t.key} type="button" onClick={() => { setStatusFilter(t.key); resetPage(); }}
             className={`cursor-pointer rounded-full border px-[14px] py-[6px] text-[12px] font-bold transition-all duration-150 ${statusFilter === t.key ? "border-[rgba(167,139,250,0.4)] bg-[rgba(167,139,250,0.12)] text-[#a78bfa]" : "border-border bg-transparent text-muted"}`}>
             {t.label}
           </button>
@@ -237,20 +242,15 @@ export function ScrAttendeesPage({ event, onBack }: { event: ApiScrEvent; onBack
             ))}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-5 flex items-center justify-center gap-3">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-                className={`rounded-lg border border-border bg-transparent px-4 py-[7px] text-[12px] text-muted ${page <= 1 ? "cursor-not-allowed opacity-40" : "cursor-pointer opacity-100"}`}>
-                Prev
-              </button>
-              <span className="text-[12px] text-muted">Page {page} of {totalPages}</span>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                className={`rounded-lg border border-border bg-transparent px-4 py-[7px] text-[12px] text-muted ${page >= totalPages ? "cursor-not-allowed opacity-40" : "cursor-pointer opacity-100"}`}>
-                Next
-              </button>
-            </div>
-          )}
+          <Pagination
+            page={page}
+            limit={limit}
+            total={total}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+            label="tickets"
+            className="mt-5"
+          />
         </>
       )}
     </div>

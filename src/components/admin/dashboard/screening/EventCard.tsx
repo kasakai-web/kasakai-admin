@@ -2,7 +2,8 @@
 import React, { memo, useState } from "react";
 import { SCR_EVENT_CARD, SCR_EVENT_CARD_IMG, SCR_EVENT_CARD_CONTENT } from "../ui";
 import { ScrEvent, scrStatusBadge } from "./types";
-import { resolveImageUrl } from "@/lib/resolve-image";
+import Image from "next/image";
+import { resolveImageUrl, isOptimizableImageUrl } from "@/lib/resolve-image";
 
 type Props = {
   ev: ScrEvent;
@@ -26,10 +27,16 @@ export const ScrEventCard = memo(function ScrEventCard({ ev, onManage, onViewAna
 
   return (
     <div className={SCR_EVENT_CARD}>
-      <div className={`${SCR_EVENT_CARD_IMG} flex items-center justify-center`}>
+      {/* `relative` is what lets the poster below use `fill` — the card art is
+          150px wide on desktop but full-bleed under 640px, so a fixed
+          width/height pair could not describe both. */}
+      <div className={`${SCR_EVENT_CARD_IMG} relative flex items-center justify-center`}>
         {!imgErr && ev.image ? (
-          <img src={resolveImageUrl(ev.image)} alt={ev.title} loading="lazy"
-            className="block h-full w-full object-cover"
+          <Image src={resolveImageUrl(ev.image)} alt={ev.title}
+            fill
+            sizes="(max-width: 640px) 100vw, 150px"
+            unoptimized={!isOptimizableImageUrl(resolveImageUrl(ev.image))}
+            className="object-cover"
             onError={() => setImgErr(true)} />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-[6px] bg-[image:linear-gradient(160deg,#0d0d1a_0%,#090910_100%)]">

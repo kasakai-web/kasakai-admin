@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { getAdminToken } from "@/lib/admin-session";
+import { usePagination } from "../shared/usePagination";
+import { Pagination } from "../shared/Pagination";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:5000/api/v1";
 
@@ -156,12 +158,26 @@ function computeMonthPassDates(passType: PassType, passMonthYear: string): { sta
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+type PlayerListSummary = { total: number; activePasses: number; noPass: number };
+
 export function PassPage() {
   const [players, setPlayers]   = useState<PlayerPassRow[]>([]);
+  const [total, setTotal]       = useState(0);
+  const [summary, setSummary]   = useState<PlayerListSummary>({ total: 0, activePasses: 0, noPass: 0 });
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
   const [search, setSearch]     = useState("");
   const [filterPass, setFilterPass] = useState<PassType | "all">("all");
+
+  // ── Pagination — page + cards-per-page live in the URL (?page=2&limit=50) ──
+  const { page, limit, setPage, setLimit, resetPage } = usePagination();
+
+  // Debounced search — avoids one request per keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   // saving state per player
   const [savingMap, setSavingMap] = useState<Record<string, string | null>>({});
@@ -175,25 +191,51 @@ export function PassPage() {
   // History modal
   const [historyModal, setHistoryModal] = useState<HistoryModal>(null);
 
+  // Searching and the pass filter run on the server, so the page holds only the
+  // cards on screen instead of every player on the platform.
+  const query = (() => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+    if (filterPass !== "all")   params.set("passType", filterPass);
+    return params.toString();
+  })();
+
   const fetchPlayers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const token = getAdminToken();
-      const res = await fetch(`${API_BASE}/admin/players`, {
+      const res = await fetch(`${API_BASE}/admin/players?${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Failed to load players");
       setPlayers(data.data);
+      setTotal(data.total ?? data.data.length);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load players");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [query]);
 
   useEffect(() => { fetchPlayers(); }, [fetchPlayers]);
+
+  /* The three cards are their own request with no query of their own, so they
+     are counted once on mount instead of on every page change. */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/admin/players/summary`, {
+          headers: { Authorization: `Bearer ${getAdminToken()}` },
+        });
+        const data = await res.json();
+        if (!cancelled && data.success) setSummary(data.data);
+      } catch { /* the cards just stay at 0; the table is unaffected */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // ── API calls ──────────────────────────────────────────────────────────────
 
@@ -281,18 +323,8 @@ export function PassPage() {
     passExpiry   !== (p.passExpiry    ? p.passExpiry.split("T")[0] : "") ||
     passMonthYear !== (p.passMonthYear ?? "");
 
-  const filtered = players.filter((p) => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      p.name.toLowerCase().includes(q) ||
-      p.phone.includes(q) ||
-      (p.email || "").toLowerCase().includes(q);
-    const matchPass = filterPass === "all" || getLocal(p).passType === filterPass;
-    return matchSearch && matchPass;
-  });
-
-  const activePasses = players.filter((p) => getLocal(p).passType !== "none").length;
+  // The server returns the already-searched, already-filtered page.
+  const filtered = players;
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -511,10 +543,11 @@ export function PassPage() {
 
       {/* Summary strip */}
       <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+        {/* Counted platform-wide by the API, so they hold still while paging. */}
         {[
-          { label: "Total Players",  value: players.length },
-          { label: "Active Passes",  value: activePasses,   accent: "#c8ff3e" },
-          { label: "No Pass",        value: players.length - activePasses },
+          { label: "Total Players",  value: summary.total },
+          { label: "Active Passes",  value: summary.activePasses, accent: "#c8ff3e" },
+          { label: "No Pass",        value: summary.noPass },
         ].map(({ label, value, accent }) => (
           <div key={label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid #1a1a1a", borderRadius: 10, padding: "14px 20px", minWidth: 120 }}>
             <div style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</div>
@@ -529,12 +562,12 @@ export function PassPage() {
           type="text"
           placeholder="Search by name, phone or email…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); resetPage(); }}
           style={{ flex: 1, minWidth: 200, background: "#0a0a0a", border: "1px solid #222", borderRadius: 8, padding: "9px 14px", color: "#fff", fontSize: 13, outline: "none" }}
         />
         <select
           value={filterPass}
-          onChange={(e) => setFilterPass(e.target.value as PassType | "all")}
+          onChange={(e) => { setFilterPass(e.target.value as PassType | "all"); resetPage(); }}
           style={{ background: "#0a0a0a", border: "1px solid #222", borderRadius: 8, padding: "9px 14px", color: "#aaa", fontSize: 13, outline: "none", cursor: "pointer" }}
         >
           <option value="all">All Pass Types</option>
@@ -761,6 +794,17 @@ export function PassPage() {
             );
           })}
         </div>
+      )}
+
+      {!loading && !error && (
+        <Pagination
+          page={page}
+          limit={limit}
+          total={total}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+          label="players"
+        />
       )}
     </div>
   );

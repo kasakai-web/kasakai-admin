@@ -68,9 +68,15 @@ export function NotificationBell() {
     } catch {}
   }, []);
 
+  /* Polled loosely on purpose. Nothing on the platform addresses a notification
+     to an admin — every notify() call site passes 'player' or 'organiser' — so
+     this count is 0 for every admin session, and a tight poll was buying nothing
+     but a query a minute per open tab. Opening the panel refetches anyway. */
+  const UNREAD_POLL_MS = 60_000;
+
   useEffect(() => {
     fetchUnreadCount();
-    const id = setInterval(fetchUnreadCount, 15_000);
+    const id = setInterval(fetchUnreadCount, UNREAD_POLL_MS);
     return () => clearInterval(id);
   }, [fetchUnreadCount]);
 

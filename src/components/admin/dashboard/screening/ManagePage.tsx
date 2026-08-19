@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { SCR_MANAGE_LAYOUT, SCR_MANAGE_SIDEBAR, SCR_MANAGE_TAB, SCR_MANAGE_TAB_ACTIVE, SCR_MANAGE_TAB_BAR } from "../ui";
 import { ScrEvent, ScrShow, ScrShowTicket, scrStatusBadge, backBtnStyle, inp } from "./types";
 import { scrApi, type ApiScrEvent, type ApiScrShow, type ApiScrTier, type CreateScrEventPayload } from "@/lib/screening-api";
-import { resolveImageUrl } from "@/lib/resolve-image";
+import Image from "next/image";
+import { resolveImageUrl, isOptimizableImageUrl } from "@/lib/resolve-image";
 
 // ── static data ───────────────────────────────────────────────────────────────
 
@@ -307,7 +308,16 @@ function ImageUploadBox({ label, ratio, maxSize, existingUrl, disabled, onUpload
         <div className="flex shrink-0 items-center gap-2">
           <p className="m-0 text-[11px] text-muted-2">Max {maxSize}</p>
           {preview && (
-            <img src={resolveImageUrl(preview)} alt="preview" className="h-[44px] w-auto rounded-md border border-border object-cover" />
+            /* `preview` is a `blob:` URL while the file is still uploading, which
+               the optimizer cannot fetch — isOptimizableImageUrl covers that. The
+               thumbnail keeps its natural aspect (`w-auto`), so `height` is fixed
+               and `width` is handed back to CSS via the style below, which is how
+               next/image wants a one-dimension override expressed. */
+            <Image src={resolveImageUrl(preview)} alt="preview"
+              width={88} height={44}
+              style={{ width: "auto", height: 44 }}
+              unoptimized={!isOptimizableImageUrl(resolveImageUrl(preview))}
+              className="rounded-md border border-border object-cover" />
           )}
           <button type="button" onClick={() => !disabled && !uploading && fileRef.current?.click()}
             className={`rounded-[7px] border border-border bg-transparent px-[14px] py-[6px] text-[12px] font-semibold ${(disabled || uploading) ? "cursor-not-allowed text-muted-2" : "cursor-pointer text-muted"}`}>
@@ -1668,7 +1678,7 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
                       {fullTiers.length === 0 ? (
                         <div className="rounded-xl border-[1.5px] border-dashed border-border px-6 py-8 text-center">
                           <p className="mb-1 text-[13px] font-bold text-muted">No ticket types yet</p>
-                          <p className="m-0 text-[12px] text-muted-2">Click "Add Ticket" to create your first ticket tier</p>
+                          <p className="m-0 text-[12px] text-muted-2">Click “Add Ticket” to create your first ticket tier</p>
                         </div>
                       ) : fullTiers.map(tier => (
                         <TierManageCard
@@ -1999,7 +2009,11 @@ export function ScrManageEventPage({ ev, onBack }: { ev: ScrEvent; onBack: () =>
             <div className="overflow-hidden rounded-[14px] border border-border bg-surface">
               <div className="relative h-[120px] overflow-hidden">
                 {imgUrl || ev.image ? (
-                  <img src={resolveImageUrl(imgUrl || ev.image)} alt={ev.title} loading="lazy" className="h-full w-full object-cover" />
+                  <Image src={resolveImageUrl(imgUrl || ev.image)} alt={ev.title}
+                    fill
+                    sizes="260px"
+                    unoptimized={!isOptimizableImageUrl(resolveImageUrl(imgUrl || ev.image))}
+                    className="object-cover" />
                 ) : (
                   <div className="h-full w-full bg-surface-2" />
                 )}

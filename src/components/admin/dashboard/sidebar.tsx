@@ -1,9 +1,9 @@
+import Link from "next/link";
 import type { DashboardSection } from "./constants";
-import { sidebarGroups } from "./constants";
+import { sidebarGroups, sectionRoutes } from "./constants";
 
 type SidebarProps = {
   activeSection: DashboardSection;
-  onNavigate: (section: DashboardSection) => void;
   open: boolean;
   onClose: () => void;
   onLogout: () => void;
@@ -39,7 +39,7 @@ const BADGE_BASE = "ml-auto rounded-[3px] border px-[6px] py-px font-mono text-[
 const BADGE_AMBER = "border-[rgba(245,158,11,0.2)] bg-[rgba(245,158,11,0.08)] text-warning";
 const BADGE_RED = "border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] text-danger";
 
-export function Sidebar({ activeSection, onNavigate, open, onClose, onLogout }: SidebarProps) {
+export function Sidebar({ activeSection, open, onClose, onLogout }: SidebarProps) {
   return (
     <>
       {open ? (
@@ -88,14 +88,12 @@ export function Sidebar({ activeSection, onNavigate, open, onClose, onLogout }: 
                 const isActive = item.section === activeSection;
                 const accent = NAV_ACCENT[item.accent ?? "default"];
                 return (
-                  <button
+                  <Link
                     key={item.section}
+                    href={sectionRoutes[item.section]}
                     className={`${NAV_BASE} ${accent.hover} ${isActive ? accent.active : ""}`}
-                    onClick={() => {
-                      onNavigate(item.section);
-                      onClose();
-                    }}
-                    type="button"
+                    onClick={onClose}
+                    aria-current={isActive ? "page" : undefined}
                     {...(item.accent ? { "data-accent": item.accent } : {})}
                   >
                     {item.label}
@@ -106,7 +104,7 @@ export function Sidebar({ activeSection, onNavigate, open, onClose, onLogout }: 
                         {item.badge}
                       </span>
                     ) : null}
-                  </button>
+                  </Link>
                 );
               })}
             </div>

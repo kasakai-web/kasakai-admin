@@ -60,6 +60,45 @@ export const sectionPaths: Record<DashboardSection, string> = {
   "scr-crousels": "Streaming / Crousels",
 };
 
+/* Every section is its own route, so its code only ships when you open it.
+   This map is the single source of truth in both directions: the sidebar links
+   through it, and the layout reads the active section back off the URL. */
+export const sectionRoutes: Record<DashboardSection, string> = {
+  dashboard:     "/dashboard",
+  users:         "/dashboard/users",
+  organisers:    "/dashboard/organisers",
+  games:         "/dashboard/games",
+  payments:      "/dashboard/payments",
+  finance:       "/dashboard/finance",
+  "wallet-admin": "/dashboard/wallets",
+  passes:        "/dashboard/passes",
+  notifications: "/dashboard/notifications",
+  feedback:      "/dashboard/feedback",
+  disputes:      "/dashboard/disputes",
+  communities:   "/dashboard/communities",
+  venues:        "/dashboard/venues",
+  "scr-events":  "/dashboard/streaming",
+  "scr-guests":  "/dashboard/streaming/guests",
+  "scr-finance": "/dashboard/streaming/finance",
+  "scr-crousels": "/dashboard/streaming/carousels",
+};
+
+/* Longest-prefix match, so /dashboard/streaming/guests resolves to the guest
+   list rather than to Events, and /dashboard/streaming/<id>/scan still lights
+   up Events. Falls back to the overview. */
+export function sectionForPathname(pathname: string): DashboardSection {
+  let best: DashboardSection = "dashboard";
+  let bestLen = 0;
+  for (const section of dashboardSections) {
+    const route = sectionRoutes[section];
+    if ((pathname === route || pathname.startsWith(`${route}/`)) && route.length > bestLen) {
+      best = section;
+      bestLen = route.length;
+    }
+  }
+  return best;
+}
+
 export type SidebarItem = {
   section: DashboardSection;
   label: string;

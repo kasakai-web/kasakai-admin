@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { SCR_VIEW_LAYOUT } from "../ui";
 import { scrStatusBadge, backBtnStyle } from "./types";
-import { resolveImageUrl } from "@/lib/resolve-image";
+import Image from "next/image";
+import { resolveImageUrl, isOptimizableImageUrl } from "@/lib/resolve-image";
 import type { ApiScrEvent } from "@/lib/screening-api";
 
 function buildThingsToKnow(ev: ApiScrEvent): { label: string; warn?: boolean; icon: React.ReactNode }[] {
@@ -83,6 +84,11 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
   const [heroImgErr, setHeroImgErr] = useState(false);
   const badge = scrStatusBadge(ev.status);
 
+  // Resolved once — the hero renders the same file twice (blurred backdrop plus
+  // the contained poster on top).
+  const heroSrc = resolveImageUrl(ev.image);
+  const heroUnoptimized = !isOptimizableImageUrl(heroSrc);
+
   const firstShow = ev.shows?.[0];
   const dateLabel = firstShow
     ? new Date(firstShow.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
@@ -115,11 +121,21 @@ export function ScrViewEventPage({ ev, onBack, onManage, onViewAnalytics, onView
       <div className="relative mb-6 h-[340px] overflow-hidden rounded-2xl bg-[#090910]">
         {!heroImgErr && ev.image ? (
           <>
-            <img src={resolveImageUrl(ev.image)} alt={ev.title}
-              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-[10px]"
+            {/* Backdrop: the same file blurred to fill the letterbox behind the
+                poster. It is scaled and blurred past recognition, so a small
+                render is plenty — hence the deliberately tiny `sizes`. */}
+            <Image src={heroSrc} alt=""
+              fill
+              sizes="320px"
+              unoptimized={heroUnoptimized}
+              aria-hidden
+              className="scale-110 object-cover opacity-50 blur-[10px]"
               onError={() => setHeroImgErr(true)} />
-            <img src={resolveImageUrl(ev.image)} alt={ev.title}
-              className="relative block h-full w-full object-contain"
+            <Image src={heroSrc} alt={ev.title}
+              fill
+              sizes="(max-width: 900px) 100vw, 900px"
+              unoptimized={heroUnoptimized}
+              className="object-contain"
               onError={() => setHeroImgErr(true)} />
           </>
         ) : (

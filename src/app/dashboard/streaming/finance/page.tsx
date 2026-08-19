@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Streaming Finance | Kasa Kai Admin",
+  title: "Streaming Finance",
 };
 
 export default function StreamingFinancePage() {

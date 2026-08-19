@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Guest List | Kasa Kai Admin",
+  title: "Guest List",
 };
 
 export default function GuestListPage() {

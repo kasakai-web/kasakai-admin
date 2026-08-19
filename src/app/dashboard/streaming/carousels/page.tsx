@@ -5,6 +5,8 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import { scrApi } from "@/lib/screening-api";
 import { resolveImageUrl } from "@/lib/resolve-image";
+import { useClientPagination } from "@/components/admin/dashboard/shared/usePagination";
+import { Pagination } from "@/components/admin/dashboard/shared/Pagination";
 
 type SelectedFile = { file: File; url: string; uploadedUrl?: string };
 type UploadType = "banner" | "poster";
@@ -49,6 +51,9 @@ export default function Page() {
   const [loadingCarousels, setLoadingCarousels] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  // The endpoint returns every creative at once, so the page is sliced here.
+  const pager = useClientPagination(carousels, { defaultLimit: 10 });
 
   async function loadCarousels() {
     setLoadingCarousels(true);
@@ -322,7 +327,7 @@ export default function Page() {
           <p className={styles.empty}>No carousels uploaded yet.</p>
         ) : (
           <div className={styles.carouselList}>
-            {carousels.map((item) => (
+            {pager.rows.map((item) => (
               <div key={item._id} className={styles.carouselRow}>
                 <div className={styles.carouselPreview}>
                   <Image
@@ -351,6 +356,17 @@ export default function Page() {
               </div>
             ))}
           </div>
+        )}
+
+        {!loadingCarousels && (
+          <Pagination
+            page={pager.page}
+            limit={pager.limit}
+            total={pager.total}
+            onPageChange={pager.setPage}
+            onLimitChange={pager.setLimit}
+            label="carousels"
+          />
         )}
       </div>
 

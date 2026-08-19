@@ -1,18 +1,22 @@
 "use client";
-import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FILTER_SELECT, SEARCH_INPUT, TOOLBAR } from "../ui";
+import { usePagination } from "../shared/usePagination";
+import { Pagination } from "../shared/Pagination";
 import { scrApi, toUIScrEvent, type UIScrEvent } from "@/lib/screening-api";
 import { ScrEvent, scrStatusBadge } from "./types";
 import { ScrEventCard } from "./EventCard";
 
-function ScrHead({ total, onCreate }: { total: number; onCreate: () => void }) {
+function ScrHead({ total, filtered, onCreate }: { total: number; filtered: boolean; onCreate: () => void }) {
   return (
     <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
       <div>
         <p className="mb-[2px] text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent">Streaming</p>
         <h2 className="mb-1 text-[24px] font-extrabold text-fg">Screening Events</h2>
-        <p className="m-0 text-[13px] text-muted">{total} events across all statuses</p>
+        <p className="m-0 text-[13px] text-muted">
+          {total} {filtered ? "matching events" : "events across all statuses"}
+        </p>
       </div>
       <button
         type="button"
@@ -272,6 +276,7 @@ export function ScrEvents() {
   const router = useRouter();
 
   const [events, setEvents]         = useState<UIScrEvent[]>([]);
+  const [total, setTotal]           = useState(0);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
   const [search, setSearch]         = useState("");
@@ -281,33 +286,44 @@ export function ScrEvents() {
   const [deleteTarget, setDeleteTarget]     = useState<DeleteTarget | null>(null);
   const [successToast, setSuccessToast]     = useState<string | null>(null);
 
+  // ── Pagination — page + cards-per-page live in the URL (?page=2&limit=50) ──
+  const { page, limit, setPage, setLimit, resetPage } = usePagination({ defaultLimit: 10 });
+
+  // Debounced search — avoids one request per keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Search + status filtering happen on the server, so only the cards on screen
+  // are ever fetched — the endpoint already supported it.
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await scrApi.listAdmin();
+      const res = await scrApi.listAdmin({
+        search: debouncedSearch.trim() || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
+        page,
+        limit,
+      });
       setEvents(res.events.map(toUIScrEvent));
+      setTotal(res.total ?? res.events.length);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load events");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [debouncedSearch, statusFilter, page, limit]);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   const handleCreate       = useCallback(() => router.push("/dashboard/streaming/create-new-event"), [router]);
-  const handleSearch       = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value), []);
-  const handleStatusFilter = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as typeof statusFilter), []);
+  const handleSearch       = useCallback((e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value); resetPage(); }, [resetPage]);
+  const handleStatusFilter = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => { setStatusFilter(e.target.value as typeof statusFilter); resetPage(); }, [resetPage]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return events.filter(ev => {
-      const matchQ      = !q || [ev.title, ev.venue].join(" ").toLowerCase().includes(q);
-      const matchStatus = statusFilter === "all" || ev.status === statusFilter;
-      return matchQ && matchStatus;
-    });
-  }, [events, search, statusFilter]);
+  const isFiltered = statusFilter !== "all" || debouncedSearch.trim() !== "";
 
   const handleQuickPublish = useCallback(async (id: string) => {
     try {
@@ -375,7 +391,7 @@ export function ScrEvents() {
         </div>
       )}
 
-      <ScrHead total={events.length} onCreate={handleCreate} />
+      <ScrHead total={total} filtered={isFiltered} onCreate={handleCreate} />
 
       <div className={TOOLBAR}>
         <input className={SEARCH_INPUT} placeholder="Search events, venues…" value={search} onChange={handleSearch} />
@@ -403,16 +419,16 @@ export function ScrEvents() {
         </div>
       )}
 
-      {!loading && !error && filtered.length === 0 && (
+      {!loading && !error && events.length === 0 && (
         <div className="px-0 py-16 text-center text-[14px] text-muted">
           <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="var(--border2)" strokeWidth="1.5" strokeLinecap="round" className="mx-auto mb-3 block">
             <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
           </svg>
-          {events.length === 0 ? "No events yet. Create your first screening event." : "No events found."}
+          {isFiltered ? "No events found." : "No events yet. Create your first screening event."}
         </div>
       )}
 
-      {!loading && filtered.map(ev => (
+      {!loading && events.map(ev => (
         <ScrEventCard
           key={ev.id}
           ev={ev}
@@ -425,6 +441,17 @@ export function ScrEvents() {
           onDelete={(ev.status === "draft" || ev.status === "cancelled") ? () => setDeleteTarget({ id: ev.id, title: ev.title, status: ev.status }) : undefined}
         />
       ))}
+
+      {!loading && !error && (
+        <Pagination
+          page={page}
+          limit={limit}
+          total={total}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+          label="events"
+        />
+      )}
     </>
   );
 }
