@@ -11,6 +11,8 @@ import { API_BASE } from "../shared/api";
 import { useAdminFetch } from "../shared/useAdminFetch";
 import { useClientPagination, useResetPageOnFilterChange } from "../shared/usePagination";
 import { Pagination } from "../shared/Pagination";
+import { UserDetailModal } from "../shared/UserDetailModal";
+import { DeleteUserModal, DeletedToast } from "../shared/DeleteUserModal";
 import {
   formatDate, formatCurrency, formatStatusLabel, badgeClassForStatus,
 } from "../shared/format";
@@ -35,13 +37,15 @@ type OrganiserActions = {
   actionBusy: string | null;
   doAction: (id: string, action: "approve" | "reject" | "reactivate") => void;
   onSuspend: (o: AdminOrganiserRow) => void;
+  onViewDetails: (o: AdminOrganiserRow) => void;
+  onDelete: (o: AdminOrganiserRow) => void;
 };
 
 function ORow({ o, actions }: { o: AdminOrganiserRow; actions: OrganiserActions }) {
-  const { actionBusy, doAction, onSuspend } = actions;
+  const { actionBusy, doAction, onSuspend, onViewDetails, onDelete } = actions;
   const busy = actionBusy !== null;
   return (
-    <tr>
+    <tr onClick={() => onViewDetails(o)} className="cursor-pointer">
       <td>
         <div className="flex items-center gap-[10px]">
           <Avatar name={o.name} src={o.profileImage} size={36} />
@@ -85,8 +89,12 @@ function ORow({ o, actions }: { o: AdminOrganiserRow; actions: OrganiserActions 
       <td>
         <span className={`${BADGE} ${badgeClassForStatus(o.status)}`}>{formatStatusLabel(o.status)}</span>
       </td>
-      <td>
+      {/* Row click opens the drawer, so the buttons must not bubble into it. */}
+      <td onClick={(e) => e.stopPropagation()}>
         <div className={ACTIONS}>
+          <button className={ACTION_BTN} type="button" onClick={() => onViewDetails(o)}>
+            View Details
+          </button>
           {o.approvalStatus === "pending" && (
             <>
               <button
@@ -123,6 +131,14 @@ function ORow({ o, actions }: { o: AdminOrganiserRow; actions: OrganiserActions 
               {actionBusy === o.id + "reactivate" ? "…" : "Reactivate"}
             </button>
           )}
+          <button
+            className={`${ACTION_BTN} border-[rgba(239,68,68,0.4)]! text-danger!`}
+            type="button"
+            disabled={busy}
+            onClick={() => onDelete(o)}
+          >
+            Delete
+          </button>
         </div>
       </td>
     </tr>
@@ -159,6 +175,9 @@ export function Organisers() {
   const [actionError, setActionError]   = useState("");
   const [suspendTarget, setSuspendTarget] = useState<AdminOrganiserRow | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
+  const [detailId, setDetailId]           = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget]   = useState<AdminOrganiserRow | null>(null);
+  const [toast, setToast]                 = useState<string | null>(null);
 
   // Aliased: `doAction` below has its own local `data` for the mutation response.
   const { data: listBody, loading, error, refresh } = useAdminFetch<{ data?: AdminOrganiserRow[] }>(
@@ -234,7 +253,16 @@ export function Organisers() {
     actionBusy,
     doAction,
     onSuspend: (o) => { setSuspendTarget(o); setSuspendReason(""); },
+    onViewDetails: (o) => setDetailId(o.id),
+    onDelete: (o) => setDeleteTarget(o),
   };
+
+  function onDeleted(name: string) {
+    setDeleteTarget(null);
+    setToast(`${name} has been successfully deleted.`);
+    setTimeout(() => setToast(null), 3000);
+    refresh();
+  }
 
   return (
     <>
@@ -304,6 +332,31 @@ export function Organisers() {
           </div>
         </div>
       )}
+
+      {/* Organiser detail drawer — same route and same component the players
+          directory uses; /admin/users/:id/details serves both roles. */}
+      {detailId && (
+        <UserDetailModal userId={detailId} onClose={() => setDetailId(null)} />
+      )}
+
+      {/* Delete confirmation — the reason field is required by the API */}
+      {deleteTarget && (
+        <DeleteUserModal
+          target={{ id: deleteTarget.id, name: deleteTarget.name }}
+          label="Organiser"
+          extraWarning={
+            <>
+              Their games are <strong>not</strong> deleted — those stay, with no organiser
+              attached. Cancel any upcoming ones first so registered players are
+              refunded and notified.
+            </>
+          }
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={onDeleted}
+        />
+      )}
+
+      {toast && <DeletedToast message={toast} />}
     </>
   );
 }

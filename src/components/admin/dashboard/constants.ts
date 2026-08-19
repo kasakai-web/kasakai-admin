@@ -22,7 +22,7 @@ export type DashboardSection = (typeof dashboardSections)[number];
 
 export const sectionTitles: Record<DashboardSection, string> = {
   dashboard:     "Dashboard",
-  users:         "All Users",
+  users:         "Players",
   organisers:    "Organisers",
   games:         "Games & Events",
   payments:      "Payments",
@@ -42,7 +42,7 @@ export const sectionTitles: Record<DashboardSection, string> = {
 
 export const sectionPaths: Record<DashboardSection, string> = {
   dashboard:     "Overview",
-  users:         "People / Users",
+  users:         "People / Players",
   organisers:    "People / Organisers",
   games:         "Football / Games",
   payments:      "Football / Payments",
@@ -120,7 +120,7 @@ export const sidebarGroups: SidebarGroup[] = [
   {
     label: "People",
     items: [
-      { section: "users",      label: "All Users" },
+      { section: "users",      label: "Players" },
       { section: "organisers", label: "Organisers", badge: "pending", badgeTone: "red" },
     ],
   },
