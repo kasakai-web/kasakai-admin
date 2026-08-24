@@ -51,6 +51,12 @@ export function stalenessClass(days?: number | null) {
   return "text-danger";
 }
 
+// Compact form for headline numbers: "★ 4.3", or a dash when nothing was rated.
+// NA and 0 read the same here on purpose — neither is a score.
+export function starValue(rating?: number | null) {
+  return rating != null && rating > 0 ? `★ ${rating.toFixed(1)}` : "—";
+}
+
 export function starRating(rating?: number | null) {
   if (rating == null) return "—";
   const full = Math.min(Math.round(rating), 5);

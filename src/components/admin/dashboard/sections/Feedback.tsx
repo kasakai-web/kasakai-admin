@@ -10,7 +10,7 @@ import {
 import { useAdminFetch } from "../shared/useAdminFetch";
 import { usePagination } from "../shared/usePagination";
 import { Pagination } from "../shared/Pagination";
-import { formatDate, formatStatusLabel, starRating } from "../shared/format";
+import { formatDate, formatStatusLabel, starRating, starValue } from "../shared/format";
 import { Head } from "../shared/components";
 
 // Feedback
@@ -74,11 +74,6 @@ type PlayerRatingSummaryResponse = {
     filters?: { organisers?: string[]; games?: { key: string; label: string }[] };
   };
 };
-
-/** NA stars render as a dash rather than "★ 0.0". */
-function star(value: number | null | undefined) {
-  return value != null && value > 0 ? `★ ${value.toFixed(1)}` : "—";
-}
 
 export function Feedback() {
   const [tab, setTab] = useState<"player" | "organiser">("player");
@@ -507,8 +502,8 @@ export function Feedback() {
                         <div className="mt-[2px] text-[11px] text-muted">GK: {r.gkAffinity}/5</div>
                       )}
                     </td>
-                    <td className="font-semibold text-warning!">{star(r.conductRating)}</td>
-                    <td className="font-semibold text-warning!">{star(r.gameplayRating)}</td>
+                    <td className="font-semibold text-warning!">{starValue(r.conductRating)}</td>
+                    <td className="font-semibold text-warning!">{starValue(r.gameplayRating)}</td>
                     <td className="font-bold">
                       <span className={
                         r.avgRating == null ? "text-muted"
@@ -516,7 +511,7 @@ export function Feedback() {
                           : r.avgRating >= 3 ? "text-warning"
                           : "text-danger"
                       }>
-                        {star(r.avgRating)}
+                        {starValue(r.avgRating)}
                       </span>
                     </td>
                     <td>{formatDate(r.ratedAt)}</td>
