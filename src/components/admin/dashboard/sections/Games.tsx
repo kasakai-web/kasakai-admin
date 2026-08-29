@@ -17,6 +17,7 @@ import {
   starRating, starValue,
 } from "../shared/format";
 import { Head } from "../shared/components";
+import { PlayerInvitePanel } from "../PlayerInvitePanel";
 
 type AdminGameRow = {
   id: string; title: string; venue?: string | null; scheduledAt?: string | null;
@@ -401,6 +402,7 @@ export function Games() {
   return (
     <>
       <Head title="Games & Events" sub={loading ? "Loading…" : `${grandTotal} games across all organisers`} />
+      <PlayerInvitePanel />
       <div className={TOOLBAR}>
         <input className={SEARCH_INPUT} placeholder="Search games, venue, organiser…" value={search} onChange={(e) => { setSearch(e.target.value); resetPage(); }} />
         <select className={FILTER_SELECT} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); resetPage(); }}>
