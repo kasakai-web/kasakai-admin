@@ -51,3 +51,4 @@ export type AdminDashboardData = {
   activities: ActivityItem[];
   alerts: AlertItem[];
 };
+
