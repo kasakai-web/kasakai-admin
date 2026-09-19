@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useDashboard } from "@/context/dashboard-context";
 import { getAdminToken } from "@/lib/admin-session";
+import { resolveImageUrl, isOptimizableImageUrl } from "@/lib/resolve-image";
 import {
   SECTION_HEAD, SECTION_TITLE, SECTION_SUB, STATS_GRID, STAT_CARD, STAT_LABEL, STAT_VALUE,
   STAT_DELTA, UP, DOWN, NEUTRAL, BADGE, BADGE_GREEN, BADGE_AMBER, BADGE_RED, BADGE_GRAY, TOOLBAR,
@@ -23,6 +25,7 @@ type Turf = {
   surfaceType: string; numberOfPitches: number; pitchSizes: string[];
   hasFloodlights: boolean; hasChangingRooms: boolean; hasParking: boolean; hasRefreshments: boolean;
   contactPhone?: string; contactName?: string; googleMapsUrl?: string; parkingNotes?: string;
+  photos?: string[];
   isVerified: boolean; isActive: boolean; totalGamesHosted: number; averageRating: number; createdAt: string;
   // Derived from address.city by the backend (utils/metro.js). `metro` is the
   // travel region players browse by — "Delhi NCR", not "Gurgaon". Read-only here:
@@ -53,11 +56,149 @@ const EMPTY_TURF_FORM = {
   numberOfPitches: 1, pitchSizes: ["medium"],
   hasFloodlights: true, hasChangingRooms: false, hasParking: false, hasRefreshments: false,
   contactPhone: "", contactName: "", googleMapsUrl: "", parkingNotes: "",
+  photos: [] as string[],
   "address.line1": "", "address.line2": "", "address.area": "",
   "address.city": "", "address.state": "", "address.pincode": "",
 };
 
 type TurfForm = typeof EMPTY_TURF_FORM;
+
+const MAX_VENUE_PHOTOS = 8;
+const ACCEPTED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+// Matches MAX_UPLOAD_BYTES in the backend's utils/imageValidation.js. The server
+// still decides; rejecting here just saves the admin a pointless upload.
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Upload one photo and return its stored URL.
+ *
+ * One request per file rather than a multi-file POST, so a single rejected
+ * image reports its own reason without taking the rest of the batch with it.
+ */
+async function uploadVenuePhoto(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("photo", file);
+  const res = await fetch(`${API_BASE}/turfs/photos`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getAdminToken()}` },
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Upload failed");
+  return (data.data as { url: string }).url;
+}
+
+function VenuePhotoPicker({ photos, onChange, invalid }: {
+  photos: string[];
+  onChange: (next: string[]) => void;
+  invalid: boolean;
+}) {
+  const [busy, setBusy] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Kept in sync every render so the sequential loop below always appends to the
+  // current list rather than to a copy captured when the loop started.
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+
+  const handleFiles = async (fileList: FileList) => {
+    const room = MAX_VENUE_PHOTOS - photos.length;
+    const files = Array.from(fileList).slice(0, Math.max(0, room));
+    if (files.length === 0) {
+      setUploadError(`Up to ${MAX_VENUE_PHOTOS} photos.`);
+      return;
+    }
+    setUploadError(null);
+
+    for (const file of files) {
+      if (!ACCEPTED_PHOTO_TYPES.includes(file.type)) {
+        setUploadError(`"${file.name}" isn't a JPEG, PNG or WebP.`);
+        continue;
+      }
+      if (file.size > MAX_PHOTO_BYTES) {
+        setUploadError(`"${file.name}" is over 5 MB.`);
+        continue;
+      }
+      setBusy((n) => n + 1);
+      try {
+        const url = await uploadVenuePhoto(file);
+        onChange([...photosRef.current, url]);
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : "Upload failed");
+      } finally {
+        setBusy((n) => n - 1);
+      }
+    }
+  };
+
+  const full = photos.length >= MAX_VENUE_PHOTOS;
+
+  return (
+    <div className="mt-1">
+      <span className="mb-[6px] block text-[12px] uppercase tracking-[0.05em] text-muted">
+        Photos * <span className="normal-case tracking-normal opacity-60">({photos.length}/{MAX_VENUE_PHOTOS})</span>
+      </span>
+
+      {photos.length > 0 && (
+        <div className="mb-[10px] flex flex-wrap gap-[10px]">
+          {photos.map((url, i) => (
+            <div key={url} className="relative">
+              <Image
+                src={resolveImageUrl(url)}
+                alt={`Venue photo ${i + 1}`}
+                width={128}
+                height={88}
+                unoptimized={!isOptimizableImageUrl(resolveImageUrl(url))}
+                className="h-[88px] w-[128px] rounded-md border border-border-2 object-cover"
+              />
+              <button
+                type="button"
+                aria-label={`Remove photo ${i + 1}`}
+                onClick={() => onChange(photos.filter((p) => p !== url))}
+                className="absolute -right-[6px] -top-[6px] flex h-[20px] w-[20px] cursor-pointer items-center justify-center rounded-full border border-border-2 bg-[#0b1114] text-[11px] leading-none text-muted hover:border-danger hover:text-danger"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <label
+        className={`block rounded-[10px] border-[1.5px] border-dashed px-4 py-6 text-center transition-[border-color] duration-150 ${
+          full ? "cursor-not-allowed opacity-50" : busy > 0 ? "cursor-wait" : "cursor-pointer"
+        } ${invalid ? "border-danger" : "border-border-2"} bg-[#0b1114]`}
+      >
+        <input
+          type="file"
+          accept={ACCEPTED_PHOTO_TYPES.join(",")}
+          multiple
+          className="hidden"
+          disabled={full || busy > 0}
+          onChange={(e) => {
+            if (e.target.files?.length) handleFiles(e.target.files);
+            // Clear it so re-picking the same file fires change again.
+            e.target.value = "";
+          }}
+        />
+        {busy > 0 ? (
+          <p className="m-0 text-[13px] text-muted">Uploading {busy} photo{busy === 1 ? "" : "s"}…</p>
+        ) : full ? (
+          <p className="m-0 text-[13px] text-muted">Maximum {MAX_VENUE_PHOTOS} photos reached</p>
+        ) : (
+          <>
+            <p className="mb-1 text-[13px] font-semibold text-muted">
+              {photos.length === 0 ? "Click to upload venue photos" : "Add more photos"}
+            </p>
+            <p className="m-0 text-[11px] text-muted opacity-60">JPEG, PNG or WebP · up to 5 MB each</p>
+          </>
+        )}
+      </label>
+
+      {uploadError && <p className="mt-[6px] text-[11px] text-danger">{uploadError}</p>}
+    </div>
+  );
+}
 
 function TurfModal({ initial, onClose, onSaved }: { initial?: Turf | null; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState<TurfForm>(
@@ -69,6 +210,7 @@ function TurfModal({ initial, onClose, onSaved }: { initial?: Turf | null; onClo
           hasParking: initial.hasParking, hasRefreshments: initial.hasRefreshments,
           contactPhone: initial.contactPhone ?? "", contactName: initial.contactName ?? "",
           googleMapsUrl: initial.googleMapsUrl ?? "", parkingNotes: initial.parkingNotes ?? "",
+          photos: initial.photos ?? [],
           "address.line1": initial.address.line1, "address.line2": initial.address.line2 ?? "",
           "address.area": initial.address.area, "address.city": initial.address.city,
           "address.state": initial.address.state, "address.pincode": initial.address.pincode,
@@ -77,6 +219,12 @@ function TurfModal({ initial, onClose, onSaved }: { initial?: Turf | null; onClo
   );
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState("");
+  // Only set once Save has been pressed, so the two required fields are not
+  // flagged red before the admin has had a chance to fill them in.
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
+
+  const photosMissing = form.photos.length === 0;
+  const mapsUrlMissing = !form.googleMapsUrl.trim();
 
   // ── City → metro preview ──────────────────────────────────────────────────
   // The city typed here decides which city's browse list this venue's games show
@@ -125,15 +273,34 @@ function TurfModal({ initial, onClose, onSaved }: { initial?: Turf | null; onClo
     setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setError(""); setSaving(true);
+    e.preventDefault();
+    setError("");
+
+    // A venue with no photo and no map link is one a player can neither judge
+    // nor find, so neither can be left out. The server enforces this too — this
+    // is only so the admin is told before the round trip.
+    if (photosMissing || mapsUrlMissing) {
+      setShowFieldErrors(true);
+      setError(
+        photosMissing && mapsUrlMissing
+          ? "Add at least one photo and a location URL before saving."
+          : photosMissing
+          ? "Add at least one photo of the venue before saving."
+          : "Enter the venue's location URL before saving.",
+      );
+      return;
+    }
+
+    setSaving(true);
     const body = {
       name: form.name, shortName: form.shortName || undefined,
       surfaceType: form.surfaceType, numberOfPitches: Number(form.numberOfPitches),
       pitchSizes: form.pitchSizes, hasFloodlights: form.hasFloodlights,
       hasChangingRooms: form.hasChangingRooms, hasParking: form.hasParking,
       hasRefreshments: form.hasRefreshments, contactPhone: form.contactPhone || undefined,
-      contactName: form.contactName || undefined, googleMapsUrl: form.googleMapsUrl || undefined,
+      contactName: form.contactName || undefined, googleMapsUrl: form.googleMapsUrl.trim(),
       parkingNotes: form.parkingNotes || undefined,
+      photos: form.photos,
       address: {
         line1: form["address.line1"], line2: form["address.line2"] || "",
         area: form["address.area"], city: form["address.city"],
@@ -218,9 +385,30 @@ function TurfModal({ initial, onClose, onSaved }: { initial?: Turf | null; onClo
             <label className={FORM_LABEL}>Pitches<input className={inp} type="number" min={1} value={form.numberOfPitches} onChange={(e) => set("numberOfPitches", Number(e.target.value))} /></label>
             <label className={FORM_LABEL}>Contact Name<input className={inp} value={form.contactName} onChange={(e) => set("contactName", e.target.value)} /></label>
             <label className={FORM_LABEL}>Contact Phone<input className={inp} value={form.contactPhone} onChange={(e) => set("contactPhone", e.target.value)} /></label>
-            <label className={FORM_LABEL}>Google Maps URL<input className={inp} value={form.googleMapsUrl} onChange={(e) => set("googleMapsUrl", e.target.value)} /></label>
+            <label className={FORM_LABEL}>
+              Location URL *
+              <input
+                className={`${inp} ${showFieldErrors && mapsUrlMissing ? "border-danger!" : ""}`}
+                value={form.googleMapsUrl}
+                onChange={(e) => set("googleMapsUrl", e.target.value)}
+                placeholder="https://maps.app.goo.gl/…"
+                aria-invalid={showFieldErrors && mapsUrlMissing}
+              />
+              {showFieldErrors && mapsUrlMissing && <span className="mt-[6px] block text-[11.5px] text-danger!">Required — players use this to find the venue.</span>}
+            </label>
             <label className={FORM_LABEL}>Parking Notes<input className={inp} value={form.parkingNotes} onChange={(e) => set("parkingNotes", e.target.value)} /></label>
           </div>
+          <VenuePhotoPicker
+            photos={form.photos}
+            onChange={(next) => set("photos", next)}
+            invalid={showFieldErrors && photosMissing}
+          />
+          {showFieldErrors && photosMissing && (
+            <p className="mt-[6px] text-[11.5px] text-danger!">
+              Required — add at least one photo before saving.
+            </p>
+          )}
+
           <div className={CHECKBOX_ROW}>
             {(["hasFloodlights", "hasChangingRooms", "hasParking", "hasRefreshments"] as const).map((k) => (
               <label key={k} className={CHECK_LABEL}>
