@@ -4,6 +4,7 @@ export const dashboardSections = [
   "organisers",
   "games",
   "payments",
+  "checkouts",
   "finance",
   "wallet-admin",
   "passes",
@@ -26,6 +27,7 @@ export const sectionTitles: Record<DashboardSection, string> = {
   organisers:    "Organisers",
   games:         "Games & Events",
   payments:      "Payments",
+  checkouts:     "Checkouts",
   finance:        "Finance",
   "wallet-admin": "Player Wallets",
   passes:        "Pass Management",
@@ -46,6 +48,7 @@ export const sectionPaths: Record<DashboardSection, string> = {
   organisers:    "People / Organisers",
   games:         "Football / Games",
   payments:      "Football / Payments",
+  checkouts:     "Football / Checkouts",
   finance:        "Football / Finance",
   "wallet-admin": "Football / Wallets",
   passes:        "Football / Passes",
@@ -69,6 +72,7 @@ export const sectionRoutes: Record<DashboardSection, string> = {
   organisers:    "/dashboard/organisers",
   games:         "/dashboard/games",
   payments:      "/dashboard/payments",
+  checkouts:     "/dashboard/checkouts",
   finance:       "/dashboard/finance",
   "wallet-admin": "/dashboard/wallets",
   passes:        "/dashboard/passes",
@@ -129,6 +133,10 @@ export const sidebarGroups: SidebarGroup[] = [
     items: [
       { section: "games",         label: "Games & Events" },
       { section: "payments",      label: "Payments" },
+      // Where a booking paid for at the gateway can get stuck between "paid"
+      // and "booked". Badged red because every row in its default view is
+      // somebody's money sitting in the wrong place.
+      { section: "checkouts",     label: "Checkouts", badgeTone: "red" },
       { section: "finance",       label: "Finance" },
       { section: "wallet-admin", label: "Wallets" },
       { section: "passes",       label: "Passes" },
