@@ -11,18 +11,26 @@ import { usePagination } from "../shared/usePagination";
 import { Pagination } from "../shared/Pagination";
 import { formatCurrency, formatDateTime } from "../shared/format";
 
-// Booking checkouts — the state a wallet-only payment never had.
+// Booking checkouts — the state a wallet-only payment never had. DRAINING.
 //
-// A wallet booking was one atomic thing: the money moved and the seat was
-// taken, or neither happened. Collecting at the gateway puts a human and their
-// UPI app in the middle of it, so a booking now has a middle, and this is the
-// screen for the rows stuck in it.
+// A wallet booking is one atomic thing: the money moves and the seat is taken,
+// or neither happens. For one release the shortfall was collected at the
+// gateway instead, which put a human and their UPI app in the middle of it, and
+// this is the screen for the rows stuck in that middle.
+//
+// Bookings are funded from the wallet again, so nothing new lands here — but the
+// attempts already out there still settle or refund, and until the last of them
+// is resolved this is where support finds them. The page goes when they do.
 //
 // It opens on the exceptions, not on a list of everything. "Paid but never
-// booked" and "refund started but not landed" are the two questions support
-// actually arrives with, and they are the two nothing else can answer — a
-// successful checkout leaves an ordinary wallet transaction on the Payments
+// booked" and "wallet credit started but not landed" are the two questions
+// support actually arrives with, and they are the two nothing else can answer —
+// a successful checkout leaves an ordinary wallet transaction on the Payments
 // page and needs nothing here.
+//
+// Money never goes back to a card, so there is no gateway refund to chase: a
+// failed booking credits the player's wallet, which is why "Refund" here means
+// a wallet credit and why the only gateway IDs shown are the ones we sent.
 
 type AttemptRow = {
   id: string;
@@ -34,7 +42,6 @@ type AttemptRow = {
   refundStatus: string; refundReason?: string | null; refundedPaise: number;
   razorpayOrderId?: string | null;
   razorpayPaymentId?: string | null;
-  razorpayRefundId?: string | null;
   walletEarmarked: boolean;
   expiresAt: string; paidAt?: string | null; settledAt?: string | null;
   createdAt: string; note?: string | null;
@@ -121,14 +128,14 @@ export function Checkouts() {
           <div className={`${SUMMARY_VALUE} ${summary.paidUnbooked > 0 ? "text-danger!" : "text-success!"}`}>
             {summary.paidUnbooked}
           </div>
-          <div className={PAY_SUB}>Money taken, no spot, no refund</div>
+          <div className={PAY_SUB}>Money taken, no spot, nothing credited back</div>
         </div>
         <div className={SUMMARY_ITEM}>
           <div className={STAT_LABEL}>Refund outstanding</div>
           <div className={`${SUMMARY_VALUE} ${summary.refundPending > 0 ? "text-warning!" : "text-success!"}`}>
             {summary.refundPending}
           </div>
-          <div className={PAY_SUB}>Started, not confirmed by the gateway</div>
+          <div className={PAY_SUB}>Wallet credit started, not confirmed</div>
         </div>
         <div className={SUMMARY_ITEM}>
           <div className={STAT_LABEL}>In flight</div>
@@ -140,7 +147,7 @@ export function Checkouts() {
       <div className={TOOLBAR}>
         <input
           className={SEARCH_INPUT}
-          placeholder="Search order, payment or refund ID…"
+          placeholder="Search order or payment ID…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); resetPage(); }}
         />
@@ -172,7 +179,7 @@ export function Checkouts() {
               <tr>
                 <td colSpan={12} className="p-6! text-center text-muted!">
                   {view === "exceptions"
-                    ? "Nothing needs attention — every payment either booked a spot or was refunded."
+                    ? "Nothing needs attention — every payment either booked a spot or went back to a wallet."
                     : "No checkouts found."}
                 </td>
               </tr>
@@ -210,7 +217,6 @@ export function Checkouts() {
                 <td className="max-w-[180px] font-mono text-[10px] text-muted">
                   {a.razorpayOrderId   && <div>{a.razorpayOrderId}</div>}
                   {a.razorpayPaymentId && <div>{a.razorpayPaymentId}</div>}
-                  {a.razorpayRefundId  && <div>{a.razorpayRefundId}</div>}
                   {!a.razorpayOrderId && !a.razorpayPaymentId && <span>—</span>}
                 </td>
                 <td className="text-[12px]">{formatDateTime(a.createdAt)}</td>

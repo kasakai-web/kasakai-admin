@@ -47,14 +47,13 @@ const TXN_TYPE_LABEL: Record<string, { label: string; cls: string }> = {
   pass_cover:  { label: "Pass Cover",  cls: BADGE_GRAY   },
   // A booking paid for at the gateway rather than out of an already-funded
   // wallet. The credit arrives and the 'debit' beside it spends the whole
-  // total, which is why that debit is larger than the balance movement. The
-  // refund does not move the balance at all — that money goes back to the card.
+  // total, which is why that debit is larger than the balance movement. Money
+  // coming back from a failed booking is an ordinary "Refund" — it lands in
+  // the wallet, never on the card.
   direct_credit: { label: "Paid Online",   cls: BADGE_BLUE   },
-  direct_refund: { label: "Card Refund",   cls: BADGE_VIOLET },
 };
 
-// Which side of the ledger a row sits on. `direct_refund` is in neither: it
-// records money returned to a card, and the wallet balance does not move.
+// Which side of the ledger a row sits on.
 const CREDIT_TYPES = ["refund", "unlock", "bonus", "topup", "direct_credit"];
 const DEBIT_TYPES  = ["debit", "lock", "backout_fee", "withdrawal"];
 
@@ -139,7 +138,6 @@ export function Payments() {
           <option value="bonus">Bonus</option>
           <option value="withdrawal">Withdrawal</option>
           <option value="direct_credit">Paid Online</option>
-          <option value="direct_refund">Card Refund</option>
         </select>
         <select className={FILTER_SELECT} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); resetPage(); }}>
           <option value="all">All Status</option>
