@@ -12,6 +12,7 @@
  * the preview panel beside this one runs the real engine over real games. */
 
 import { Rule, FIELD, FIELD_LABEL, BTN, toPaise, toRs } from "./shared";
+import { MetroCityPicker, TurfPicker } from "./RulePickers";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const FORMATS = ["5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"];
@@ -137,62 +138,39 @@ export function RuleBuilder({
           </div>
         </div>
 
-        {/* ── Where ── */}
-        <div className="grid grid-cols-2 gap-3 max-[900px]:grid-cols-1">
-          <div>
-            <label className={FIELD_LABEL}>Metros (slugs, comma-separated)</label>
-            <input
-              className={FIELD}
-              placeholder="delhi-ncr, bengaluru"
-              value={showList(rule.metros)}
-              onChange={(e) => set({ metros: parseList(e.target.value) })}
-            />
-          </div>
-          <div>
-            <label className={FIELD_LABEL}>Cities (slugs)</label>
-            <input
-              className={FIELD}
-              placeholder="gurugram, manesar"
-              value={showList(rule.citySlugs)}
-              onChange={(e) => set({ citySlugs: parseList(e.target.value) })}
-            />
-          </div>
-          <div>
-            <label className={FIELD_LABEL}>Venue ids — only these</label>
-            <input
-              className={FIELD}
-              value={showList(rule.turfs)}
-              onChange={(e) => set({ turfs: parseList(e.target.value) })}
-            />
-          </div>
-          <div>
-            {/* An exclusion always beats an inclusion. "Everywhere in Delhi NCR
-                except the two premium venues" is one of the first things asked
-                for, and an allow-list of nineteen venues rots the moment a
-                twentieth opens. */}
-            <label className={FIELD_LABEL}>Venue ids — never these</label>
-            <input
-              className={FIELD}
-              value={showList(rule.turfsExclude)}
-              onChange={(e) => set({ turfsExclude: parseList(e.target.value) })}
-            />
-          </div>
-          <div>
-            <label className={FIELD_LABEL}>Organiser ids — only these</label>
-            <input
-              className={FIELD}
-              value={showList(rule.organisers)}
-              onChange={(e) => set({ organisers: parseList(e.target.value) })}
-            />
-          </div>
-          <div>
-            <label className={FIELD_LABEL}>Organiser ids — never these</label>
-            <input
-              className={FIELD}
-              value={showList(rule.organisersExclude)}
-              onChange={(e) => set({ organisersExclude: parseList(e.target.value) })}
-            />
-          </div>
+        {/* ── Where ──
+            Picked from the real registries rather than typed. A mistyped slug
+            or a mis-pasted venue id does not fail loudly — the rule saves and
+            the preview reports zero matches, which looks exactly like a city
+            that simply has no games this month.
+
+            One control per value, cycling off → include → exclude, because an
+            exclusion beats an inclusion in the engine: a value sitting in both
+            lists is unrepresentable here rather than merely discouraged. */}
+        <MetroCityPicker
+          metros={rule.metros}
+          metrosExclude={rule.metrosExclude}
+          citySlugs={rule.citySlugs}
+          citySlugsExclude={rule.citySlugsExclude}
+          onChange={(patch) => set(patch as Partial<Rule>)}
+        />
+
+        <TurfPicker
+          turfs={rule.turfs}
+          turfsExclude={rule.turfsExclude}
+          onChange={(patch) => set(patch as Partial<Rule>)}
+        />
+
+        <div>
+          {/* Organisers stay ids for now: there is no small, admin-readable
+              organiser list endpoint to pick from, and inventing one for a rule
+              dimension nobody has asked for yet is more than this needs. */}
+          <label className={FIELD_LABEL}>Organiser ids — only these (optional)</label>
+          <input
+            className={FIELD}
+            value={showList(rule.organisers)}
+            onChange={(e) => set({ organisers: parseList(e.target.value) })}
+          />
         </div>
 
         {/* ── What ── */}
