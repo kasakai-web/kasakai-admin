@@ -28,6 +28,11 @@ export function resolveImageUrl(img?: string | null): string {
  * Anything else is R2 and gets optimized. Pass the negation as `unoptimized`:
  * those images still render through `<Image>` — sized, lazy-loaded and free of
  * layout shift — just served as-is instead of re-encoded.
+ *
+ * NOTE: `images.unoptimized: true` in next.config.ts currently switches the
+ * optimizer off for EVERY image (Vercel bills for it), and the config beats a
+ * per-image `unoptimized={false}`. This answer only matters again if that is
+ * ever removed.
  */
 export function isOptimizableImageUrl(url: string): boolean {
   if (!url) return false;
