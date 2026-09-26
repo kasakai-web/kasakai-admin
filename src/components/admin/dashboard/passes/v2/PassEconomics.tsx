@@ -91,8 +91,17 @@ const WINDOWS = [
   { key: "all", label: "All time", days: 0 },
 ] as const;
 
-const sinceISO = (days: number) =>
-  days > 0 ? new Date(Date.now() - days * 86400000).toISOString() : null;
+/* Floored to IST midnight, and that is load-bearing: this string is part of the
+ * fetch path, and `useAdminFetch` refetches whenever the path changes. A raw
+ * `Date.now()` differs on every render, so each response re-rendered the page,
+ * minted a new path and fetched again — the table reloaded forever. */
+const IST_OFFSET_MS = 330 * 60000;
+const DAY_MS = 86400000;
+const sinceISO = (days: number) => {
+  if (days <= 0) return null;
+  const istMidnight = Math.floor((Date.now() + IST_OFFSET_MS) / DAY_MS) * DAY_MS - IST_OFFSET_MS;
+  return new Date(istMidnight - days * DAY_MS).toISOString();
+};
 
 const pct = (v: number | null) => (v == null ? "—" : `${v}%`);
 const signed = (paise: number) => `${paise < 0 ? "−" : ""}${rupees(Math.abs(paise))}`;
