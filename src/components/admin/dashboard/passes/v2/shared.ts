@@ -153,7 +153,12 @@ export type Product = {
   benefit: Benefit;
   limits: Limits;
   rules: Rule[];
-  funding: { model: "organiser" | "platform" | "shared"; organiserSharePercent: number };
+  funding: {
+    model: "organiser" | "platform" | "shared";
+    organiserSharePercent: number;
+    /** Platform-funded only: seat holders even on games that opted out (§9). */
+    overridesConsent?: boolean;
+  };
   inventory?: { maxIssued: number; issuedCount: number; maxPerPlayer: number };
   described?: Described;
   stats?: ProductStats | null;
@@ -209,5 +214,5 @@ export const emptyProduct = (): Product => ({
   // An unconditional pass must SAY so: one empty rule means "any game", and the
   // server refuses a product with no rules at all rather than inferring it.
   rules: [{}],
-  funding: { model: "organiser", organiserSharePercent: 0 },
+  funding: { model: "organiser", organiserSharePercent: 0, overridesConsent: false },
 });

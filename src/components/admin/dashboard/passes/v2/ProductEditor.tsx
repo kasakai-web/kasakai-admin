@@ -331,6 +331,26 @@ export function ProductEditor({
                 )}
               </div>
 
+              {/* The organiser's opt-out, and the one case for overriding it.
+                  Only offered on a platform-funded product, because only there
+                  is the organiser paid in full — the server refuses it on the
+                  other two rather than relying on this being hidden. */}
+              {draft.funding.model === "platform" && (
+                <label className="mt-3 flex cursor-pointer items-start gap-2 text-[12px] text-body">
+                  <input type="checkbox" className="mt-[3px]"
+                    checked={!!draft.funding.overridesConsent}
+                    onChange={(e) => set({ funding: { ...draft.funding, overridesConsent: e.target.checked } })} />
+                  <span>
+                    Seat holders even on games whose organiser turned passes off
+                    <span className="mt-[2px] block text-[11px] text-muted">
+                      They are reimbursed in full, so the seat costs them nothing — but it is still their
+                      pitch, and this takes their exit away. Off unless you mean it. A block on THIS
+                      product still stands.
+                    </span>
+                  </span>
+                </label>
+              )}
+
               <div className="mt-4 flex flex-wrap gap-4 text-[12px] text-body">
                 <label className="flex cursor-pointer items-center gap-2">
                   <input type="checkbox" checked={draft.purchasable}

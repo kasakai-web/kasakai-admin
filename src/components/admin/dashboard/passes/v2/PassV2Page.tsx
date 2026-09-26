@@ -2,9 +2,10 @@
 
 /* Pass management.
  *
- * Four screens where v1 had one list: the catalogue an admin composes passes in,
- * the passes actually issued, the redemption ledger, and — until the cut-over —
- * the legacy screen that still writes `Player.pass`.
+ * Six screens where v1 had one list: the catalogue an admin composes passes in,
+ * the passes actually issued, bulk grants by segment, the redemption ledger, the
+ * economics on top of it, and — until the cut-over — the legacy screen that
+ * still writes `Player.pass`.
  *
  * That last tab is not decoration. `Player.pass` remains the DECIDING engine
  * until PASS_V2_ENABLED is flipped; both engines answer every booking and any
@@ -14,13 +15,17 @@
 import { useState } from "react";
 import { PassCatalogue } from "./PassCatalogue";
 import { IssuedPasses } from "./IssuedPasses";
+import { BulkGrant } from "./BulkGrant";
 import { RedemptionLedger } from "./RedemptionLedger";
+import { PassEconomics } from "./PassEconomics";
 import { PassPage } from "../PassPage";
 
 const TABS = [
   { key: "catalogue",   label: "Catalogue" },
   { key: "issued",      label: "Issued passes" },
+  { key: "bulk",        label: "Bulk grants" },
   { key: "redemptions", label: "Redemptions" },
+  { key: "economics",   label: "Economics" },
   { key: "legacy",      label: "Legacy (v1)" },
 ] as const;
 
@@ -50,7 +55,9 @@ export function PassV2Page() {
 
       {tab === "catalogue"   && <PassCatalogue />}
       {tab === "issued"      && <IssuedPasses />}
+      {tab === "bulk"        && <BulkGrant />}
       {tab === "redemptions" && <RedemptionLedger />}
+      {tab === "economics"   && <PassEconomics />}
       {tab === "legacy"      && <PassPage />}
     </div>
   );

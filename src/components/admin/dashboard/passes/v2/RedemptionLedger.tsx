@@ -37,12 +37,6 @@ type LedgerRow = {
 type Page = { rows: LedgerRow[]; total: number; page: number; limit: number };
 
 type Analytics = {
-  rows: {
-    _id: string; code: string; name: string; status: string; pricePaise: number;
-    issued: number; live: number; paid: number; revenuePaise: number;
-    redemptions: number; benefitPaise: number; reimbursementPaise: number;
-    valueRatio: number | null;
-  }[];
   totals: {
     issued: number; live: number; redemptions: number;
     revenuePaise: number; benefitPaise: number; reimbursementPaise: number;
@@ -91,34 +85,15 @@ export function RedemptionLedger() {
             />
           </div>
 
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-[12px]">
-              <thead>
-                <tr className="border-b border-border text-[10px] uppercase tracking-[0.08em] text-muted">
-                  <th className="py-2">Product</th>
-                  <th>Issued</th>
-                  <th>Redeemed</th>
-                  <th>Revenue</th>
-                  <th>Value given</th>
-                  <th>Value / price</th>
-                  <th>Reimbursable</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analytics.rows.map((r) => (
-                  <tr key={r._id} className="border-b border-border text-body">
-                    <td className="py-2 text-fg">{r.name}</td>
-                    <td className="font-mono">{r.issued}</td>
-                    <td className="font-mono">{r.redemptions}</td>
-                    <td className="font-mono">{rupees(r.revenuePaise)}</td>
-                    <td className="font-mono">{rupees(r.benefitPaise)}</td>
-                    <td className="font-mono">{r.valueRatio != null ? `${r.valueRatio}×` : "—"}</td>
-                    <td className="font-mono">{rupees(r.reimbursementPaise)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* The per-product breakdown lives on the Economics tab, where it can
+              be windowed and where "net" is split by who actually bears it.
+              Printing an all-time copy of it here as well would give the two
+              tabs different numbers for the same question. */}
+          <p className="mt-4 text-[11.5px] leading-relaxed text-muted">
+            All-time, across every product. The <strong className="text-body">Economics</strong> tab
+            breaks this down by product, city and organiser over a window, and says who bears each
+            covered seat.
+          </p>
         </div>
       )}
 
