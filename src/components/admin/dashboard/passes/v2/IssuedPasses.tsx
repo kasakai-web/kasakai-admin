@@ -9,7 +9,7 @@
  * Every destructive action asks for a reason, because "why does this player
  * have a free pass?" has to stay answerable a month later. */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAdminFetch } from "../../shared/useAdminFetch";
 import {
   adminFetch, Product, rupees, shortDate, BTN, BTN_PRIMARY, BTN_DANGER,
@@ -205,7 +205,8 @@ function GrantDialog({
   onClose: () => void;
   onGranted: (message: string) => void;
 }) {
-  const [playerId, setPlayerId] = useState("");
+  const [player, setPlayer] = useState<PickedPlayer | null>(null);
+  const playerId = player?.id || "";
   const [productId, setProductId] = useState(products[0]?._id || "");
   const [reason, setReason] = useState("");
   const [err, setErr] = useState("");
@@ -231,8 +232,8 @@ function GrantDialog({
 
         <div className="flex flex-col gap-3">
           <div>
-            <label className={FIELD_LABEL}>Player id</label>
-            <input className={FIELD} value={playerId} onChange={(e) => setPlayerId(e.target.value.trim())} />
+            <label className={FIELD_LABEL}>Player</label>
+            <PlayerPicker value={player} onChange={setPlayer} />
           </div>
           <div>
             <label className={FIELD_LABEL}>Pass</label>
@@ -255,6 +256,105 @@ function GrantDialog({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+type PickedPlayer = { id: string; name: string; phone: string; email: string | null };
+
+const OBJECT_ID = /^[0-9a-f]{24}$/i;
+
+/* Search by name, phone or email over the same `/admin/players` search the
+ * Players page uses. A pasted 24-hex id is still accepted, because support
+ * tickets and logs quote ids and making someone translate one back into a name
+ * to type it in again is how the wrong Rahul gets a pass. */
+function PlayerPicker({
+  value,
+  onChange,
+}: {
+  value: PickedPlayer | null;
+  onChange: (p: PickedPlayer | null) => void;
+}) {
+  const [search, setSearch] = useState("");
+  // Results are keyed by the term that produced them, so "still loading" is
+  // derived (the answer on hand is for a different term) rather than set.
+  const [found, setFound] = useState<{ term: string; rows: PickedPlayer[]; err: string }>({
+    term: "", rows: [], err: "",
+  });
+
+  const term = search.trim();
+  const isId = OBJECT_ID.test(term);
+  const searchable = !value && term.length >= 2 && !isId;
+  const current = found.term === term;
+  const loading = searchable && !current;
+  const results = current ? found.rows : [];
+  const err = current ? found.err : "";
+
+  useEffect(() => {
+    if (!searchable) return;
+    // A slower earlier response must not overwrite a newer one.
+    let stale = false;
+    const t = setTimeout(async () => {
+      const params = new URLSearchParams({ search: term, limit: "8" });
+      const res = await adminFetch<PickedPlayer[]>(`/admin/players?${params.toString()}`);
+      if (stale) return;
+      setFound(res.ok
+        ? { term, rows: res.data || [], err: "" }
+        : { term, rows: [], err: res.message || "Search failed." });
+    }, 300);
+    return () => { stale = true; clearTimeout(t); };
+  }, [term, searchable]);
+
+  if (value) {
+    return (
+      <div className={`${FIELD} flex items-center justify-between gap-3`}>
+        <div className="min-w-0">
+          <div className="truncate text-[13px] font-semibold text-fg">{value.name || "Unnamed player"}</div>
+          <div className="truncate text-[11px] text-muted">
+            {[value.phone, value.email].filter(Boolean).join(" · ") || value.id}
+          </div>
+        </div>
+        <button type="button" className="shrink-0 text-[12px] text-muted underline"
+          onClick={() => { onChange(null); setSearch(""); }}>
+          Change
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <input className={FIELD} value={search} autoFocus
+        placeholder="Name, phone or email — or paste a player id"
+        onChange={(e) => setSearch(e.target.value)} />
+
+      {isId && (
+        <button type="button" className="mt-2 text-[12px] text-muted underline"
+          onClick={() => onChange({ id: term, name: "Player " + term.slice(-6), phone: "", email: null })}>
+          Use id {term}
+        </button>
+      )}
+
+      {err && <div className="mt-2 text-[12px] text-danger">{err}</div>}
+
+      {searchable && (
+        <div className="mt-2 max-h-[240px] overflow-y-auto rounded-[10px] border border-border">
+          {loading && results.length === 0 && (
+            <div className="p-3 text-[12px] text-muted">Searching…</div>
+          )}
+          {!loading && !err && results.length === 0 && (
+            <div className="p-3 text-[12px] text-muted">No players match that.</div>
+          )}
+          {results.map((p) => (
+            <button key={p.id} type="button"
+              className="block w-full border-b border-border px-3 py-2 text-left last:border-b-0 hover:bg-surface"
+              onClick={() => onChange(p)}>
+              <div className="text-[13px] font-semibold text-fg">{p.name || "Unnamed player"}</div>
+              <div className="text-[11px] text-muted">{[p.phone, p.email].filter(Boolean).join(" · ")}</div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
