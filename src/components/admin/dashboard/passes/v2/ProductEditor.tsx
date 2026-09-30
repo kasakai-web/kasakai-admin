@@ -230,11 +230,11 @@ export function ProductEditor({
             {/* ── Limits ── */}
             <div className={CARD}>
               <label className={FIELD_LABEL}>
-                Limits — 0 is unlimited. maxBenefitPaise is the one that actually controls cost.
+                Limits — 0 (or blank) is unlimited. The total value cap is the one that actually controls cost.
               </label>
               <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
                 {([
-                  ["maxRedemptions", "Total games"],
+                  ["maxRedemptions", "Total games — 0 for unlimited"],
                   ["maxPerDay", "Per day"],
                   ["maxPerWeek", "Per week"],
                   ["maxPerMonth", "Per month"],
@@ -243,13 +243,13 @@ export function ProductEditor({
                 ] as const).map(([key, label]) => (
                   <div key={key}>
                     <label className={FIELD_LABEL}>{label}</label>
-                    <input className={FIELD} value={draft.limits[key]}
+                    <input className={FIELD} value={draft.limits[key]} placeholder="0 = unlimited"
                       onChange={(e) => set({ limits: { ...draft.limits, [key]: Number(e.target.value || 0) } })} />
                   </div>
                 ))}
                 <div className="col-span-2">
-                  <label className={FIELD_LABEL}>Total value cap (₹)</label>
-                  <input className={FIELD} value={toRs(draft.limits.maxBenefitPaise)}
+                  <label className={FIELD_LABEL}>Total value cap (₹) — 0 for unlimited</label>
+                  <input className={FIELD} value={toRs(draft.limits.maxBenefitPaise)} placeholder="0 = unlimited"
                     onChange={(e) => set({ limits: { ...draft.limits, maxBenefitPaise: toPaise(e.target.value) } })} />
                 </div>
               </div>
