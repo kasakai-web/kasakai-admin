@@ -9,7 +9,7 @@
  * Every destructive action asks for a reason, because "why does this player
  * have a free pass?" has to stay answerable a month later. */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAdminFetch } from "../../shared/useAdminFetch";
 import {
   adminFetch, Product, rupees, shortDate, BTN, BTN_PRIMARY, BTN_DANGER,
@@ -36,6 +36,11 @@ type IssuedRow = {
 type Page = { rows: IssuedRow[]; total: number; page: number; limit: number };
 type IssuedResponse = { success: boolean; data: Page };
 type ProductsResponse = { success: boolean; data: Product[] };
+
+// One row of GET /admin/players — the search the Legacy (v1) screen runs, so a
+// player is found here exactly as they are found there.
+type PlayerHit = { id: string; name: string; phone: string; email: string | null; location: string | null };
+type PlayersResponse = { success: boolean; data: PlayerHit[] };
 
 export function IssuedPasses() {
   const [status, setStatus] = useState("");
@@ -105,7 +110,7 @@ export function IssuedPasses() {
       <div className="mb-4 flex flex-wrap items-center gap-[10px]">
         <input
           className="min-w-[220px] flex-1 border border-border-2 bg-surface px-3 py-2 font-mono text-[13px] text-fg"
-          placeholder="Search by pass name or code"
+          placeholder="Search by player name, phone or pass name"
           value={q}
           onChange={(e) => { setQ(e.target.value); setPageNo(1); }}
         />
@@ -193,9 +198,26 @@ export function IssuedPasses() {
   );
 }
 
-/* Granting takes a player id, a product and a REASON. The reason is required by
+const MIN_SEARCH = 2;
+const MAX_HITS = 8;
+
+// A number arrives pasted from WhatsApp as "+91 99306 04869", and is stored with
+// or without the +91. Its last ten digits are a substring of either, so a
+// phone-shaped entry is searched by those; anything else is sent as typed.
+function searchTerm(raw: string) {
+  const term = raw.trim();
+  if (!/^[\d\s+()-]+$/.test(term)) return term;
+  const digits = term.replace(/\D/g, "");
+  return digits.length > 10 ? digits.slice(-10) : digits;
+}
+
+/* Granting takes a player, a product and a REASON. The reason is required by
  * the server, not merely by this form — it is the field v1's passHistory never
- * had, and the whole point of keeping the row. */
+ * had, and the whole point of keeping the row.
+ *
+ * The player is FOUND rather than typed: the server grants by id, and no admin
+ * screen shows one. The search is the Legacy (v1) screen's own, so name, phone
+ * and email all work here the way they do there. */
 function GrantDialog({
   products,
   onClose,
@@ -205,22 +227,46 @@ function GrantDialog({
   onClose: () => void;
   onGranted: (message: string) => void;
 }) {
-  const [playerId, setPlayerId] = useState("");
+  const [player, setPlayer] = useState<PlayerHit | null>(null);
+  const [search, setSearch] = useState("");
+  const [debounced, setDebounced] = useState("");
   const [productId, setProductId] = useState(products[0]?._id || "");
   const [reason, setReason] = useState("");
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Debounced, as on the legacy screen — one request per pause, not per keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(searchTerm(search)), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const searching = !player && debounced.length >= MIN_SEARCH;
+  const { data: found, loading: finding, error: findErr } = useAdminFetch<PlayersResponse>(
+    searching
+      ? `/admin/players?${new URLSearchParams({ search: debounced, limit: String(MAX_HITS) }).toString()}`
+      : null,
+    { errorMessage: "Could not search players." },
+  );
+  const hits = searching ? found?.data ?? [] : [];
+
+  const choose = (hit: PlayerHit) => {
+    setPlayer(hit);
+    setSearch("");
+    setDebounced("");
+  };
+
   const grant = async () => {
+    if (!player) return;
     setSaving(true);
     setErr("");
     const res = await adminFetch("/admin/player-passes", {
       method: "POST",
-      body: JSON.stringify({ playerId, productId, reason }),
+      body: JSON.stringify({ playerId: player.id, productId, reason }),
     });
     setSaving(false);
     if (!res.ok) { setErr([res.message, ...(res.details || [])].filter(Boolean).join(" ")); return; }
-    onGranted("Pass granted.");
+    onGranted(`Pass granted to ${player.name}.`);
   };
 
   return (
@@ -231,8 +277,53 @@ function GrantDialog({
 
         <div className="flex flex-col gap-3">
           <div>
-            <label className={FIELD_LABEL}>Player id</label>
-            <input className={FIELD} value={playerId} onChange={(e) => setPlayerId(e.target.value.trim())} />
+            <label className={FIELD_LABEL}>Player</label>
+            {player ? (
+              <div className="flex items-center justify-between gap-3 rounded-md border border-border-2 bg-surface-2 px-2 py-[6px]">
+                <div className="min-w-0">
+                  <div className="truncate text-[13px] font-semibold text-fg">{player.name}</div>
+                  <div className="truncate font-mono text-[11px] text-muted">
+                    {player.phone}{player.email ? ` · ${player.email}` : ""}
+                  </div>
+                </div>
+                <button type="button" className={BTN} onClick={() => setPlayer(null)}>Change</button>
+              </div>
+            ) : (
+              <>
+                <input
+                  className={FIELD}
+                  value={search}
+                  placeholder="Search by name, phone or email…"
+                  autoFocus
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {searching && (
+                  <div className="mt-2 max-h-[240px] divide-y divide-border overflow-y-auto rounded-md border border-border-2">
+                    {findErr && <div className="px-3 py-2 text-[12px] text-danger">{findErr}</div>}
+                    {!findErr && hits.length === 0 && (
+                      <div className="px-3 py-2 text-[12px] text-muted">
+                        {finding ? "Searching…" : "No players match that."}
+                      </div>
+                    )}
+                    {hits.map((hit) => (
+                      <button
+                        key={hit.id}
+                        type="button"
+                        className="block w-full cursor-pointer bg-transparent px-3 py-2 text-left hover:bg-surface-2"
+                        onClick={() => choose(hit)}
+                      >
+                        <div className="text-[13px] font-semibold text-fg">{hit.name}</div>
+                        <div className="font-mono text-[11px] text-muted">
+                          {hit.phone}
+                          {hit.email ? ` · ${hit.email}` : ""}
+                          {hit.location ? ` · ${hit.location}` : ""}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
           <div>
             <label className={FIELD_LABEL}>Pass</label>
@@ -250,7 +341,7 @@ function GrantDialog({
         <div className="mt-5 flex justify-end gap-3">
           <button type="button" className={BTN} onClick={onClose}>Cancel</button>
           <button type="button" className={`${BTN} ${BTN_PRIMARY}`}
-            disabled={saving || !playerId || !productId || !reason} onClick={grant}>
+            disabled={saving || !player || !productId || !reason} onClick={grant}>
             {saving ? "Granting…" : "Grant"}
           </button>
         </div>
