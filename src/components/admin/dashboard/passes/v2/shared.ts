@@ -31,6 +31,14 @@ export const toPaise = (rs: string) => Math.round(Number(rs || 0) * 100);
 export const toRs = (paise: number | null | undefined) =>
   paise ? String(Math.round(paise) / 100) : "";
 
+// Pass validity dates are whole IST days. A <input type="date"> speaks
+// YYYY-MM-DD, so convert at the edge: an instant → its IST day for display,
+// and an IST day → that day's IST midnight for the API.
+export const istDayInput = (iso?: string | null) =>
+  iso ? new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) : "";
+export const istDayToISO = (ymd: string) =>
+  ymd ? new Date(`${ymd}T00:00:00+05:30`).toISOString() : null;
+
 export const shortDate = (iso?: string | null) =>
   iso
     ? new Date(iso).toLocaleDateString("en-IN", {
