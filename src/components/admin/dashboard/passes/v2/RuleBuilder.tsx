@@ -12,7 +12,7 @@
  * the preview panel beside this one runs the real engine over real games. */
 
 import { Rule, FIELD, FIELD_LABEL, BTN, toPaise, toRs } from "./shared";
-import { MetroCityPicker, TurfPicker } from "./RulePickers";
+import { MetroCityPicker, OrganiserPicker, TurfPicker } from "./RulePickers";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const FORMATS = ["5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"];
@@ -39,13 +39,6 @@ function toggle<T>(list: T[] | undefined, value: T): T[] | undefined {
   // "constrained to nothing" can never be confused.
   return next.length ? next : undefined;
 }
-
-/** Comma-separated ids or slugs → a list, and back. */
-const parseList = (raw: string): string[] | undefined => {
-  const items = raw.split(",").map((s) => s.trim()).filter(Boolean);
-  return items.length ? items : undefined;
-};
-const showList = (list?: string[]) => (list || []).join(", ");
 
 export function RuleBuilder({
   rule,
@@ -161,17 +154,11 @@ export function RuleBuilder({
           onChange={(patch) => set(patch as Partial<Rule>)}
         />
 
-        <div>
-          {/* Organisers stay ids for now: there is no small, admin-readable
-              organiser list endpoint to pick from, and inventing one for a rule
-              dimension nobody has asked for yet is more than this needs. */}
-          <label className={FIELD_LABEL}>Organiser ids — only these (optional)</label>
-          <input
-            className={FIELD}
-            value={showList(rule.organisers)}
-            onChange={(e) => set({ organisers: parseList(e.target.value) })}
-          />
-        </div>
+        <OrganiserPicker
+          organisers={rule.organisers}
+          organisersExclude={rule.organisersExclude}
+          onChange={(patch) => set(patch as Partial<Rule>)}
+        />
 
         {/* ── What ── */}
         <div>

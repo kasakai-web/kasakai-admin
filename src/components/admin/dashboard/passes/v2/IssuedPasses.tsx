@@ -207,7 +207,12 @@ function GrantDialog({
 }) {
   const [player, setPlayer] = useState<PickedPlayer | null>(null);
   const playerId = player?.id || "";
-  const [productId, setProductId] = useState(products[0]?._id || "");
+  // Derived, not seeded: the products can arrive after the dialog opens, and a
+  // seeded "" left the select showing the first pass while Grant stayed disabled.
+  const [pickedProductId, setProductId] = useState("");
+  const productId = products.some((p) => p._id === pickedProductId)
+    ? pickedProductId
+    : products[0]?._id || "";
   const [reason, setReason] = useState("");
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);

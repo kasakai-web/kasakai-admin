@@ -18,9 +18,9 @@
  * owns the rule, and the preview panel beside the builder is what says whether
  * the result matches any real games. */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAdminFetch } from "../../shared/useAdminFetch";
-import { FIELD, FIELD_LABEL } from "./shared";
+import { adminFetch, FIELD, FIELD_LABEL } from "./shared";
 
 type CityOptions = {
   success: boolean;
@@ -287,6 +287,118 @@ export function TurfPicker({
         exclude={turfsExclude}
         labelFor={(v) => rows.find((t) => t._id === v)?.name || v}
         everything="Every venue"
+      />
+    </div>
+  );
+}
+
+// ── Organisers ───────────────────────────────────────────────────────────────
+
+type OrganiserOption = { id: string; name: string; phone: string | null; email: string | null; status: string };
+
+/* Organisers are searched on the server rather than listed up front: there can
+ * be far more of them than venues, and `GET /admin/organisers/options` returns
+ * a picker's slice (id, name, contact) instead of the stats-heavy cards list.
+ * Chosen organisers are resolved by id so a saved rule shows names, and they
+ * stay on screen whatever the search says, the same as a chosen venue. */
+export function OrganiserPicker({
+  organisers, organisersExclude, onChange,
+}: {
+  organisers?: string[];
+  organisersExclude?: string[];
+  onChange: (patch: Record<string, string[] | undefined>) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [known, setKnown] = useState<Record<string, OrganiserOption>>({});
+  // Keyed by the term that produced it, so "searching" is derived, not set.
+  const [found, setFound] = useState<{ term: string; ids: string[]; err: string }>({ term: "", ids: [], err: "" });
+
+  const picked = useMemo(
+    () => [...(organisers || []), ...(organisersExclude || [])],
+    [organisers, organisersExclude],
+  );
+  const term = q.trim();
+  const searchable = term.length >= 2;
+  const loading = searchable && found.term !== term;
+  const results = searchable && found.term === term ? found.ids : [];
+  const err = searchable && found.term === term ? found.err : "";
+
+  // Names for ids already on the rule (e.g. when editing a saved product).
+  const unknown = picked.filter((id) => !known[id]).join(",");
+  useEffect(() => {
+    if (!unknown) return;
+    let stale = false;
+    adminFetch<OrganiserOption[]>(`/admin/organisers/options?ids=${encodeURIComponent(unknown)}`).then((res) => {
+      if (stale || !res.ok) return;
+      setKnown((k) => {
+        const next = { ...k };
+        for (const o of res.data || []) next[o.id] = o;
+        return next;
+      });
+    });
+    return () => { stale = true; };
+  }, [unknown]);
+
+  useEffect(() => {
+    if (!searchable) return;
+    let stale = false;
+    const t = setTimeout(async () => {
+      const res = await adminFetch<OrganiserOption[]>(`/admin/organisers/options?search=${encodeURIComponent(term)}`);
+      if (stale) return;
+      if (!res.ok) { setFound({ term, ids: [], err: res.message || "Search failed." }); return; }
+      const rows = res.data || [];
+      setKnown((k) => {
+        const next = { ...k };
+        for (const o of rows) next[o.id] = o;
+        return next;
+      });
+      setFound({ term, ids: rows.map((o) => o.id), err: "" });
+    }, 300);
+    return () => { stale = true; clearTimeout(t); };
+  }, [term, searchable]);
+
+  const shown = [...picked, ...results.filter((id) => !picked.includes(id))];
+  const labelFor = (id: string) => known[id]?.name || `Organiser ${id.slice(-6)}`;
+
+  return (
+    <div>
+      <label className={FIELD_LABEL}>
+        Organisers — click once to include, twice to exclude, again to clear
+      </label>
+      <input
+        className={`${FIELD} mb-[8px]`}
+        placeholder="Search organisers by name, phone or email"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
+      <div className="flex max-h-[180px] flex-wrap gap-[6px] overflow-y-auto">
+        {shown.map((id) => {
+          const o = known[id];
+          const status = o && o.status !== "approved" ? ` · ${o.status}` : "";
+          return (
+            <Tri
+              key={id}
+              label={`${labelFor(id)}${status}`}
+              title={[o?.phone, o?.email, id].filter(Boolean).join(" · ")}
+              state={stateOf(id, organisers, organisersExclude)}
+              onCycle={() => {
+                const next = cycleValue(id, organisers, organisersExclude);
+                onChange({ organisers: next.include, organisersExclude: next.exclude });
+              }}
+            />
+          );
+        })}
+        {loading && <span className="text-[11px] text-muted">Searching…</span>}
+        {err && <span className="text-[11px] text-danger">{err}</span>}
+        {searchable && !loading && !err && !results.length && (
+          <span className="text-[11px] text-muted">No organisers match that.</span>
+        )}
+      </div>
+      <ScopeLine
+        include={organisers}
+        exclude={organisersExclude}
+        labelFor={labelFor}
+        everything="Every organiser"
       />
     </div>
   );
