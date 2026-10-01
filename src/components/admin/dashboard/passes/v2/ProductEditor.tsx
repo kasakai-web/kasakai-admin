@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   adminFetch, Product, Rule, emptyProduct, emptyRule,
   BTN, BTN_PRIMARY, FIELD, FIELD_LABEL, CARD, ERROR_BOX, WARN_BOX,
-  toPaise, toRs,
+  toPaise, toRs, istDayInput, istDayToISO,
 } from "./shared";
 import { RuleBuilder } from "./RuleBuilder";
 import { RulePreview } from "./RulePreview";
@@ -24,6 +24,16 @@ type Validation = {
   errors: string[];
   warnings: string[];
   described: { summary: string };
+  // The window a pass issued now would get — computed by the same engine that
+  // issues it, so the preview and the real pass cannot disagree.
+  window?: {
+    example: string;
+    from: string;
+    until: string | null;
+    days: number | null;
+    deadOnArrival: boolean;
+    notes: string[];
+  };
 };
 
 export function ProductEditor({
@@ -230,11 +240,11 @@ export function ProductEditor({
             {/* ── Limits ── */}
             <div className={CARD}>
               <label className={FIELD_LABEL}>
-                Limits — 0 is unlimited. maxBenefitPaise is the one that actually controls cost.
+                Limits — 0 (or blank) is unlimited. The total value cap is the one that actually controls cost.
               </label>
               <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
                 {([
-                  ["maxRedemptions", "Total games"],
+                  ["maxRedemptions", "Total games — 0 for unlimited"],
                   ["maxPerDay", "Per day"],
                   ["maxPerWeek", "Per week"],
                   ["maxPerMonth", "Per month"],
@@ -243,13 +253,13 @@ export function ProductEditor({
                 ] as const).map(([key, label]) => (
                   <div key={key}>
                     <label className={FIELD_LABEL}>{label}</label>
-                    <input className={FIELD} value={draft.limits[key]}
+                    <input className={FIELD} value={draft.limits[key]} placeholder="0 = unlimited"
                       onChange={(e) => set({ limits: { ...draft.limits, [key]: Number(e.target.value || 0) } })} />
                   </div>
                 ))}
                 <div className="col-span-2">
-                  <label className={FIELD_LABEL}>Total value cap (₹)</label>
-                  <input className={FIELD} value={toRs(draft.limits.maxBenefitPaise)}
+                  <label className={FIELD_LABEL}>Total value cap (₹) — 0 for unlimited</label>
+                  <input className={FIELD} value={toRs(draft.limits.maxBenefitPaise)} placeholder="0 = unlimited"
                     onChange={(e) => set({ limits: { ...draft.limits, maxBenefitPaise: toPaise(e.target.value) } })} />
                 </div>
               </div>
@@ -285,6 +295,23 @@ export function ProductEditor({
                     </select>
                   </div>
                 )}
+                {draft.validity.mode === "absolute" && (
+                  <>
+                    <div>
+                      <label className={FIELD_LABEL}>From (blank = when issued)</label>
+                      <input className={FIELD} type="date" value={istDayInput(draft.validity.startsAt)}
+                        onChange={(e) => set({ validity: { ...draft.validity, startsAt: istDayToISO(e.target.value) } })} />
+                    </div>
+                    <div>
+                      {/* Blank here is a pass that never expires — the engine
+                          allows it and warns, so say it where it is typed. */}
+                      <label className={FIELD_LABEL}>Until, inclusive (blank = never expires)</label>
+                      <input className={FIELD} type="date" value={istDayInput(draft.validity.endsAt)}
+                        min={istDayInput(draft.validity.startsAt) || undefined}
+                        onChange={(e) => set({ validity: { ...draft.validity, endsAt: istDayToISO(e.target.value) } })} />
+                    </div>
+                  </>
+                )}
                 {draft.validity.mode === "half_month" && (
                   <div>
                     <label className={FIELD_LABEL}>Half</label>
@@ -306,6 +333,21 @@ export function ProductEditor({
                   </select>
                 </div>
               </div>
+
+              {check?.window && (
+                <div className={`mt-3 ${check.window.deadOnArrival ? WARN_BOX : "rounded-[10px] border border-border p-3"} text-[12px] text-body`}>
+                  <div className="text-fg">
+                    <b>{check.window.example}:</b> covers games kicking off from{" "}
+                    <b>{check.window.from}</b> to{" "}
+                    <b>{check.window.until ?? "no end date — never expires"}</b> (IST)
+                    {check.window.days != null && <> — {check.window.days} day{check.window.days === 1 ? "" : "s"}</>}.
+                  </div>
+                  {check.window.deadOnArrival && (
+                    <div className="mt-1">A pass issued today would already be over — it covers nothing.</div>
+                  )}
+                  {check.window.notes.map((n) => <div key={n} className="mt-1">{n}</div>)}
+                </div>
+              )}
 
               <div className="mt-4 grid grid-cols-3 gap-3 max-[900px]:grid-cols-1">
                 <div>

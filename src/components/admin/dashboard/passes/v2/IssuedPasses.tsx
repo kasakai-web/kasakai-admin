@@ -37,11 +37,6 @@ type Page = { rows: IssuedRow[]; total: number; page: number; limit: number };
 type IssuedResponse = { success: boolean; data: Page };
 type ProductsResponse = { success: boolean; data: Product[] };
 
-// One row of GET /admin/players — the search the Legacy (v1) screen runs, so a
-// player is found here exactly as they are found there.
-type PlayerHit = { id: string; name: string; phone: string; email: string | null; location: string | null };
-type PlayersResponse = { success: boolean; data: PlayerHit[] };
-
 export function IssuedPasses() {
   const [status, setStatus] = useState("");
   const [product, setProduct] = useState("");
@@ -110,7 +105,7 @@ export function IssuedPasses() {
       <div className="mb-4 flex flex-wrap items-center gap-[10px]">
         <input
           className="min-w-[220px] flex-1 border border-border-2 bg-surface px-3 py-2 font-mono text-[13px] text-fg"
-          placeholder="Search by player name, phone or pass name"
+          placeholder="Search by pass name or code"
           value={q}
           onChange={(e) => { setQ(e.target.value); setPageNo(1); }}
         />
@@ -198,26 +193,9 @@ export function IssuedPasses() {
   );
 }
 
-const MIN_SEARCH = 2;
-const MAX_HITS = 8;
-
-// A number arrives pasted from WhatsApp as "+91 99306 04869", and is stored with
-// or without the +91. Its last ten digits are a substring of either, so a
-// phone-shaped entry is searched by those; anything else is sent as typed.
-function searchTerm(raw: string) {
-  const term = raw.trim();
-  if (!/^[\d\s+()-]+$/.test(term)) return term;
-  const digits = term.replace(/\D/g, "");
-  return digits.length > 10 ? digits.slice(-10) : digits;
-}
-
-/* Granting takes a player, a product and a REASON. The reason is required by
+/* Granting takes a player id, a product and a REASON. The reason is required by
  * the server, not merely by this form — it is the field v1's passHistory never
- * had, and the whole point of keeping the row.
- *
- * The player is FOUND rather than typed: the server grants by id, and no admin
- * screen shows one. The search is the Legacy (v1) screen's own, so name, phone
- * and email all work here the way they do there. */
+ * had, and the whole point of keeping the row. */
 function GrantDialog({
   products,
   onClose,
@@ -227,46 +205,28 @@ function GrantDialog({
   onClose: () => void;
   onGranted: (message: string) => void;
 }) {
-  const [player, setPlayer] = useState<PlayerHit | null>(null);
-  const [search, setSearch] = useState("");
-  const [debounced, setDebounced] = useState("");
-  const [productId, setProductId] = useState(products[0]?._id || "");
+  const [player, setPlayer] = useState<PickedPlayer | null>(null);
+  const playerId = player?.id || "";
+  // Derived, not seeded: the products can arrive after the dialog opens, and a
+  // seeded "" left the select showing the first pass while Grant stayed disabled.
+  const [pickedProductId, setProductId] = useState("");
+  const productId = products.some((p) => p._id === pickedProductId)
+    ? pickedProductId
+    : products[0]?._id || "";
   const [reason, setReason] = useState("");
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Debounced, as on the legacy screen — one request per pause, not per keystroke.
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(searchTerm(search)), 300);
-    return () => clearTimeout(t);
-  }, [search]);
-
-  const searching = !player && debounced.length >= MIN_SEARCH;
-  const { data: found, loading: finding, error: findErr } = useAdminFetch<PlayersResponse>(
-    searching
-      ? `/admin/players?${new URLSearchParams({ search: debounced, limit: String(MAX_HITS) }).toString()}`
-      : null,
-    { errorMessage: "Could not search players." },
-  );
-  const hits = searching ? found?.data ?? [] : [];
-
-  const choose = (hit: PlayerHit) => {
-    setPlayer(hit);
-    setSearch("");
-    setDebounced("");
-  };
-
   const grant = async () => {
-    if (!player) return;
     setSaving(true);
     setErr("");
     const res = await adminFetch("/admin/player-passes", {
       method: "POST",
-      body: JSON.stringify({ playerId: player.id, productId, reason }),
+      body: JSON.stringify({ playerId, productId, reason }),
     });
     setSaving(false);
     if (!res.ok) { setErr([res.message, ...(res.details || [])].filter(Boolean).join(" ")); return; }
-    onGranted(`Pass granted to ${player.name}.`);
+    onGranted("Pass granted.");
   };
 
   return (
@@ -278,52 +238,7 @@ function GrantDialog({
         <div className="flex flex-col gap-3">
           <div>
             <label className={FIELD_LABEL}>Player</label>
-            {player ? (
-              <div className="flex items-center justify-between gap-3 rounded-md border border-border-2 bg-surface-2 px-2 py-[6px]">
-                <div className="min-w-0">
-                  <div className="truncate text-[13px] font-semibold text-fg">{player.name}</div>
-                  <div className="truncate font-mono text-[11px] text-muted">
-                    {player.phone}{player.email ? ` · ${player.email}` : ""}
-                  </div>
-                </div>
-                <button type="button" className={BTN} onClick={() => setPlayer(null)}>Change</button>
-              </div>
-            ) : (
-              <>
-                <input
-                  className={FIELD}
-                  value={search}
-                  placeholder="Search by name, phone or email…"
-                  autoFocus
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                {searching && (
-                  <div className="mt-2 max-h-[240px] divide-y divide-border overflow-y-auto rounded-md border border-border-2">
-                    {findErr && <div className="px-3 py-2 text-[12px] text-danger">{findErr}</div>}
-                    {!findErr && hits.length === 0 && (
-                      <div className="px-3 py-2 text-[12px] text-muted">
-                        {finding ? "Searching…" : "No players match that."}
-                      </div>
-                    )}
-                    {hits.map((hit) => (
-                      <button
-                        key={hit.id}
-                        type="button"
-                        className="block w-full cursor-pointer bg-transparent px-3 py-2 text-left hover:bg-surface-2"
-                        onClick={() => choose(hit)}
-                      >
-                        <div className="text-[13px] font-semibold text-fg">{hit.name}</div>
-                        <div className="font-mono text-[11px] text-muted">
-                          {hit.phone}
-                          {hit.email ? ` · ${hit.email}` : ""}
-                          {hit.location ? ` · ${hit.location}` : ""}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
+            <PlayerPicker value={player} onChange={setPlayer} />
           </div>
           <div>
             <label className={FIELD_LABEL}>Pass</label>
@@ -341,11 +256,110 @@ function GrantDialog({
         <div className="mt-5 flex justify-end gap-3">
           <button type="button" className={BTN} onClick={onClose}>Cancel</button>
           <button type="button" className={`${BTN} ${BTN_PRIMARY}`}
-            disabled={saving || !player || !productId || !reason} onClick={grant}>
+            disabled={saving || !playerId || !productId || !reason} onClick={grant}>
             {saving ? "Granting…" : "Grant"}
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+type PickedPlayer = { id: string; name: string; phone: string; email: string | null };
+
+const OBJECT_ID = /^[0-9a-f]{24}$/i;
+
+/* Search by name, phone or email over the same `/admin/players` search the
+ * Players page uses. A pasted 24-hex id is still accepted, because support
+ * tickets and logs quote ids and making someone translate one back into a name
+ * to type it in again is how the wrong Rahul gets a pass. */
+function PlayerPicker({
+  value,
+  onChange,
+}: {
+  value: PickedPlayer | null;
+  onChange: (p: PickedPlayer | null) => void;
+}) {
+  const [search, setSearch] = useState("");
+  // Results are keyed by the term that produced them, so "still loading" is
+  // derived (the answer on hand is for a different term) rather than set.
+  const [found, setFound] = useState<{ term: string; rows: PickedPlayer[]; err: string }>({
+    term: "", rows: [], err: "",
+  });
+
+  const term = search.trim();
+  const isId = OBJECT_ID.test(term);
+  const searchable = !value && term.length >= 2 && !isId;
+  const current = found.term === term;
+  const loading = searchable && !current;
+  const results = current ? found.rows : [];
+  const err = current ? found.err : "";
+
+  useEffect(() => {
+    if (!searchable) return;
+    // A slower earlier response must not overwrite a newer one.
+    let stale = false;
+    const t = setTimeout(async () => {
+      const params = new URLSearchParams({ search: term, limit: "8" });
+      const res = await adminFetch<PickedPlayer[]>(`/admin/players?${params.toString()}`);
+      if (stale) return;
+      setFound(res.ok
+        ? { term, rows: res.data || [], err: "" }
+        : { term, rows: [], err: res.message || "Search failed." });
+    }, 300);
+    return () => { stale = true; clearTimeout(t); };
+  }, [term, searchable]);
+
+  if (value) {
+    return (
+      <div className={`${FIELD} flex items-center justify-between gap-3`}>
+        <div className="min-w-0">
+          <div className="truncate text-[13px] font-semibold text-fg">{value.name || "Unnamed player"}</div>
+          <div className="truncate text-[11px] text-muted">
+            {[value.phone, value.email].filter(Boolean).join(" · ") || value.id}
+          </div>
+        </div>
+        <button type="button" className="shrink-0 text-[12px] text-muted underline"
+          onClick={() => { onChange(null); setSearch(""); }}>
+          Change
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <input className={FIELD} value={search} autoFocus
+        placeholder="Name, phone or email — or paste a player id"
+        onChange={(e) => setSearch(e.target.value)} />
+
+      {isId && (
+        <button type="button" className="mt-2 text-[12px] text-muted underline"
+          onClick={() => onChange({ id: term, name: "Player " + term.slice(-6), phone: "", email: null })}>
+          Use id {term}
+        </button>
+      )}
+
+      {err && <div className="mt-2 text-[12px] text-danger">{err}</div>}
+
+      {searchable && (
+        <div className="mt-2 max-h-[240px] overflow-y-auto rounded-[10px] border border-border">
+          {loading && results.length === 0 && (
+            <div className="p-3 text-[12px] text-muted">Searching…</div>
+          )}
+          {!loading && !err && results.length === 0 && (
+            <div className="p-3 text-[12px] text-muted">No players match that.</div>
+          )}
+          {results.map((p) => (
+            <button key={p.id} type="button"
+              className="block w-full border-b border-border px-3 py-2 text-left last:border-b-0 hover:bg-surface"
+              onClick={() => onChange(p)}>
+              <div className="text-[13px] font-semibold text-fg">{p.name || "Unnamed player"}</div>
+              <div className="text-[11px] text-muted">{[p.phone, p.email].filter(Boolean).join(" · ")}</div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
