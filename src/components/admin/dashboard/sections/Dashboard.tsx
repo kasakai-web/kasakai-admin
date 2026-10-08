@@ -72,6 +72,7 @@ export function Dashboard() {
         <div className={PANEL}>
           <div className={STAT_LABEL}>Quick Links</div>
           <div className={FEED}>
+            <div className={FEED_ROW}><div><div className={FEED_TITLE}>Analytics</div><div className={FEED_SUB}>How the platform is performing</div></div><button className={ACTION_BTN} onClick={() => onNavigate("analytics")} type="button">Go</button></div>
             <div className={FEED_ROW}><div><div className={FEED_TITLE}>Finance Overview</div><div className={FEED_SUB}>Player wallets &amp; organiser earnings</div></div><button className={ACTION_BTN} onClick={() => onNavigate("finance")} type="button">Go</button></div>
             <div className={FEED_ROW}><div><div className={FEED_TITLE}>Games &amp; Events</div><div className={FEED_SUB}>View registrations &amp; details</div></div><button className={ACTION_BTN} onClick={() => onNavigate("games")} type="button">Go</button></div>
             <div className={FEED_ROW}><div><div className={FEED_TITLE}>Notifications</div><div className={FEED_SUB}>Platform-wide notification log</div></div><button className={ACTION_BTN} onClick={() => onNavigate("notifications")} type="button">Go</button></div>
