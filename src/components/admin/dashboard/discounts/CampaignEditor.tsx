@@ -49,7 +49,9 @@ export function CampaignEditor({
   onClose: () => void;
   onSaved: (message: string) => void;
 }) {
-  const [draft, setDraft] = useState<Campaign>(() => (initial ? structuredClone(initial) : emptyCampaign()));
+  // A campaign with no scope comes back with no `scope` key at all — Mongoose
+  // drops the empty object on save — so default it, or step 4 reads undefined.
+  const [draft, setDraft] = useState<Campaign>(() => (initial ? { ...structuredClone(initial), scope: initial.scope || {} } : emptyCampaign()));
   const [step, setStep] = useState(0);
   const [check, setCheck] = useState<Validation | null>(null);
   const [saving, setSaving] = useState(false);
