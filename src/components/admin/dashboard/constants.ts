@@ -1,5 +1,6 @@
 export const dashboardSections = [
   "dashboard",
+  "analytics",
   "users",
   "organisers",
   "games",
@@ -23,6 +24,7 @@ export type DashboardSection = (typeof dashboardSections)[number];
 
 export const sectionTitles: Record<DashboardSection, string> = {
   dashboard:     "Dashboard",
+  analytics:     "Analytics",
   users:         "Players",
   organisers:    "Organisers",
   games:         "Games & Events",
@@ -44,6 +46,7 @@ export const sectionTitles: Record<DashboardSection, string> = {
 
 export const sectionPaths: Record<DashboardSection, string> = {
   dashboard:     "Overview",
+  analytics:     "Overview / Analytics",
   users:         "People / Players",
   organisers:    "People / Organisers",
   games:         "Football / Games",
@@ -68,6 +71,7 @@ export const sectionPaths: Record<DashboardSection, string> = {
    through it, and the layout reads the active section back off the URL. */
 export const sectionRoutes: Record<DashboardSection, string> = {
   dashboard:     "/dashboard",
+  analytics:     "/dashboard/analytics",
   users:         "/dashboard/users",
   organisers:    "/dashboard/organisers",
   games:         "/dashboard/games",
@@ -119,7 +123,11 @@ export type SidebarGroup = {
 export const sidebarGroups: SidebarGroup[] = [
   {
     label: "Overview",
-    items: [{ section: "dashboard", label: "Dashboard" }],
+    items: [
+      { section: "dashboard", label: "Dashboard" },
+      // How the platform is performing — verdicts first, the numbers behind them second.
+      { section: "analytics", label: "Analytics" },
+    ],
   },
   {
     label: "People",
