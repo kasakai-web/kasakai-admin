@@ -3,6 +3,7 @@ export const dashboardSections = [
   "analytics",
   "users",
   "organisers",
+  "hosts",
   "games",
   "payments",
   "checkouts",
@@ -28,6 +29,7 @@ export const sectionTitles: Record<DashboardSection, string> = {
   analytics:     "Analytics",
   users:         "Players",
   organisers:    "Organisers",
+  hosts:         "Hosts",
   games:         "Games & Events",
   payments:      "Payments",
   checkouts:     "Checkouts",
@@ -51,6 +53,7 @@ export const sectionPaths: Record<DashboardSection, string> = {
   analytics:     "Overview / Analytics",
   users:         "People / Players",
   organisers:    "People / Organisers",
+  hosts:         "People / Hosts",
   games:         "Football / Games",
   payments:      "Football / Payments",
   checkouts:     "Football / Checkouts",
@@ -77,6 +80,7 @@ export const sectionRoutes: Record<DashboardSection, string> = {
   analytics:     "/dashboard/analytics",
   users:         "/dashboard/users",
   organisers:    "/dashboard/organisers",
+  hosts:         "/dashboard/hosts",
   games:         "/dashboard/games",
   payments:      "/dashboard/payments",
   checkouts:     "/dashboard/checkouts",
@@ -138,6 +142,9 @@ export const sidebarGroups: SidebarGroup[] = [
     items: [
       { section: "users",      label: "Players" },
       { section: "organisers", label: "Organisers", badge: "pending", badgeTone: "red" },
+      // Players an organiser recommended to run their games — the admin is who
+      // approves them, so the queue lives here beside the organisers'.
+      { section: "hosts",      label: "Hosts", badge: "pending", badgeTone: "red" },
     ],
   },
   {

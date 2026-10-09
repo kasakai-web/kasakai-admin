@@ -30,6 +30,7 @@ const TYPE_ICON: Record<string, string> = {
   wallet_topup:           "💰",
   wallet_debit:           "💸",
   wallet_refund:          "💚",
+  host_recommended:       "🎖️",
   system:                 "ℹ️",
 };
 
