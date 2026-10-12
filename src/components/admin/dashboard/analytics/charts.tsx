@@ -13,14 +13,14 @@
    Colour, validated with the dataviz palette checker on the admin's dark surface
    #121a1f (adjacent CVD ΔE ≥ 17, normal-vision ΔE ≥ 24, all ≥ 3:1). A colour
    belongs to an ENTITY, never a rank, and is the same on every chart:
-     healthy game → blue · underperforming → orange · auto-cancelled → violet
+     completed (played) game → blue · underperforming → orange · auto-cancelled → violet
      upcoming → aqua · other cancellations / not marked → neutral grey
    Text is never painted in a series colour; every multi-series chart has a legend. */
 
 import { useLayoutEffect, useRef, useState } from "react";
 
 export const SERIES = {
-  healthy: "#3987e5",
+  completed: "#3987e5",
   under: "#d95926",
   auto: "#9085e9",
   upcoming: "#199e70",
@@ -166,7 +166,7 @@ export type StackSeries = { key: string; label: string; color: string };
 /* Columns never shrink below MIN_COL; a long series scrolls sideways under a
    fixed y-axis and opens with `focus` (today, on the per-day chart) centred. */
 export function StackedColumns({
-  rows, series, height = 190, unit = "games", onSelect, focus,
+  rows, series, height = 190, unit = "games", onSelect, focus, selected = null,
 }: {
   rows: { label: string; fullLabel: string; values: Record<string, number> }[];
   series: StackSeries[];
@@ -175,6 +175,8 @@ export function StackedColumns({
   onSelect?: (index: number) => void;
   /** The column to centre when the chart is wider than its panel. */
   focus?: number;
+  /** Dims every other column — for a chart whose click picks a column. */
+  selected?: number | null;
 }) {
   const { ref: tipRef, show, hide, node: tipNode } = useTip();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -211,14 +213,17 @@ export function StackedColumns({
             <div className="flex items-end gap-[3px] border-b border-border-2" style={{ height: height - 20 }}>
               {rows.map((r, i) => {
                 const visible = shown.filter((s) => (r.values[s.key] || 0) > 0);
-                const lines = [r.fullLabel, ...shown.filter((s) => r.values[s.key]).map((s) => `${s.label}: ${r.values[s.key]}`), `Total: ${totals[i]} ${unit}`];
+                // "Completed: 5 of 8" — each stack read against the whole column.
+                const of = shown.length > 1 ? ` of ${totals[i]}` : "";
+                const lines = [r.fullLabel, ...shown.filter((s) => r.values[s.key]).map((s) => `${s.label}: ${r.values[s.key]}${of}`), `Total: ${totals[i]} ${unit}`];
                 const p = markProps({ show, hide }, lines, onSelect && (() => onSelect(i)));
                 return (
                   <button
                     key={r.label + i}
                     {...p}
                     data-col
-                    className={`${p.className} flex h-full min-w-[10px] flex-1 flex-col-reverse items-stretch gap-[2px] border-none bg-transparent p-0 outline-none hover:bg-[rgba(255,255,255,0.04)] focus-visible:bg-[rgba(255,255,255,0.06)]`}
+                    aria-pressed={selected == null ? undefined : selected === i}
+                    className={`${p.className} ${selected != null && selected !== i ? "opacity-35" : ""} flex h-full min-w-[10px] flex-1 flex-col-reverse items-stretch gap-[2px] border-none bg-transparent p-0 outline-none hover:bg-[rgba(255,255,255,0.04)] focus-visible:bg-[rgba(255,255,255,0.06)]`}
                   >
                     {visible.map((s, j) => (
                       <span
@@ -253,7 +258,7 @@ export function StackedColumns({
 // ── Line (0–100%) over play months ───────────────────────────────────────────
 
 export function PercentLine({
-  points, height = 170, color = SERIES.healthy, label, nUnit = "finished games", onSelect,
+  points, height = 170, color = SERIES.completed, label, nUnit = "finished games", onSelect,
 }: {
   points: { label: string; fullLabel: string; value: number | null; n: number; extra?: string }[];
   height?: number;
@@ -478,7 +483,7 @@ export function SlotHeatmap({
 
 // ── Inline meter for tables ──────────────────────────────────────────────────
 
-export function Meter({ value, color = SERIES.healthy }: { value: number | null; color?: string }) {
+export function Meter({ value, color = SERIES.completed }: { value: number | null; color?: string }) {
   return (
     <div className="flex items-center gap-2">
       <span className="relative h-[6px] w-20 overflow-hidden rounded-[3px] bg-surface-2">

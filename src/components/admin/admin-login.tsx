@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAdminSession, saveAdminSession } from "@/lib/admin-session";
+import { GoogleSignInButton, useGoogleAvailable } from "./GoogleSignInButton";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
@@ -15,6 +16,9 @@ export function AdminLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  // Google is the way in; the password form is the superadmin break-glass.
+  const [passwordMode, setPasswordMode] = useState(false);
+  const googleAvailable = useGoogleAvailable();
 
   useEffect(() => {
     if (getAdminSession()) {
@@ -23,21 +27,14 @@ export function AdminLogin() {
     } else setReady(true);
   }, [router]);
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
+  const signIn = async (path: string, body: object) => {
     setError("");
-
-    if (!email.trim() || !password.trim()) {
-      setError("Email and password are required.");
-      return;
-    }
-
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/admin/login`, {
+      const res = await fetch(`${API_BASE}${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
@@ -62,6 +59,17 @@ export function AdminLogin() {
       setLoading(false);
     }
   };
+
+  const handleSubmit = async (e: React.SubmitEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      setError("Email and password are required.");
+      return;
+    }
+    await signIn("/admin/login", { email: email.trim().toLowerCase(), password });
+  };
+
+  const linkClass = "mt-4 w-full cursor-pointer border-0 bg-transparent text-[0.84rem] text-muted underline";
 
   if (!ready) return null;
 
@@ -124,9 +132,25 @@ export function AdminLogin() {
           <div className="w-full rounded-[1.2rem] border border-[#24313b] bg-[rgba(16,24,30,0.9)] p-6">
             <h2 className="font-display text-[1.6rem]">Sign in</h2>
             <p className="mb-[1.2rem] mt-[0.6rem] text-muted">
-              Use your admin credentials to open the dashboard.
+              {googleAvailable && !passwordMode
+                ? "Sign in with the Google account your admin access is on."
+                : "Superadmin password login, for when Google sign-in is unavailable."}
             </p>
 
+            {error && (
+              <div className="mb-4 rounded-[0.8rem] border border-[rgba(241,118,127,0.36)] bg-[rgba(178,39,52,0.2)] px-[0.7rem] py-[0.58rem] text-[0.88rem] text-[#ffd2d6]">
+                {error}
+              </div>
+            )}
+
+            {googleAvailable && !passwordMode ? (
+              <>
+                <GoogleSignInButton onCredential={(credential) => signIn("/admin/google", { credential })} />
+                <button type="button" className={linkClass} onClick={() => { setError(""); setPasswordMode(true); }}>
+                  Superadmin password login
+                </button>
+              </>
+            ) : (
             <form onSubmit={handleSubmit}>
               <label
                 htmlFor="admin-email"
@@ -162,12 +186,6 @@ export function AdminLogin() {
                 className="mb-4 w-full rounded-[0.8rem] border border-[#2f3f4c] bg-[rgba(10,16,21,0.88)] px-[0.9rem] py-[0.72rem] text-[#ecfffa] outline-none focus:border-[rgba(73,148,245,0.8)] focus:shadow-[0_0_0_4px_rgba(73,148,245,0.18)]"
               />
 
-              {error && (
-                <div className="mb-4 rounded-[0.8rem] border border-[rgba(241,118,127,0.36)] bg-[rgba(178,39,52,0.2)] px-[0.7rem] py-[0.58rem] text-[0.88rem] text-[#ffd2d6]">
-                  {error}
-                </div>
-              )}
-
               <button
                 type="submit"
                 disabled={loading}
@@ -175,7 +193,13 @@ export function AdminLogin() {
               >
                 {loading ? "Signing in…" : "Login to dashboard"}
               </button>
+              {googleAvailable && (
+                <button type="button" className={linkClass} onClick={() => { setError(""); setPasswordMode(false); }}>
+                  Back to Google sign-in
+                </button>
+              )}
             </form>
+            )}
           </div>
         </section>
       </div>
