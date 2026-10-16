@@ -10,6 +10,7 @@ import { usePagination } from "../shared/usePagination";
 import { Pagination } from "../shared/Pagination";
 import { UserDetailModal } from "../shared/UserDetailModal";
 import { DeleteUserModal, DeletedToast } from "../shared/DeleteUserModal";
+import { AddLogDetail } from "../shared/AddLogDetail";
 import {
   formatDate, formatCurrency, formatStatusLabel, badgeClassForStatus,
   daysAgoLabel, stalenessClass,
@@ -56,6 +57,7 @@ export function Users() {
   }, [search]);
 
   const [deleteTarget, setDeleteTarget] = useState<AdminUserRow | null>(null);
+  const [logTarget, setLogTarget]       = useState<AdminUserRow | null>(null);
   const [toast, setToast]               = useState<string | null>(null);
 
   const params = new URLSearchParams({
@@ -201,6 +203,13 @@ export function Users() {
                     >
                       Delete
                     </button>
+                    <button
+                      className={ACTION_BTN}
+                      type="button"
+                      onClick={() => setLogTarget(u)}
+                    >
+                      Log Details
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -232,6 +241,11 @@ export function Users() {
           onClose={() => setDeleteTarget(null)}
           onDeleted={onDeleted}
         />
+      )}
+
+      {/* Internal admin notes — never shown to the player */}
+      {logTarget && (
+        <AddLogDetail player={{ id: logTarget.id, name: logTarget.name }} onClose={() => setLogTarget(null)} />
       )}
 
       {toast && <DeletedToast message={toast} />}
