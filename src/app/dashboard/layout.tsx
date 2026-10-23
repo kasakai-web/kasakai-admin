@@ -8,7 +8,6 @@ import { Topbar } from "@/components/admin/dashboard/topbar";
 import { DetailPanel } from "@/components/admin/dashboard/detail-panel";
 import { DashboardContext } from "@/context/dashboard-context";
 import { sectionForPathname, sectionRoutes } from "@/components/admin/dashboard/constants";
-import { API_BASE } from "@/components/admin/dashboard/shared/api";
 import type { DashboardSection } from "@/components/admin/dashboard/constants";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -28,23 +27,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const session = getAdminSession();
     if (!session) { router.replace("/login"); return; }
     setUsername(session.name || session.email);
-
-    /* The backend re-checks the admin on EVERY request, so a removed or
-       deactivated admin gets a 401 on their next call — or within a minute while
-       idle, from the notification bell's poll. Sections call fetch directly, so
-       this is the one place that sees every response: any 401 from our API ends
-       the session here and now, instead of leaving a dashboard of errors. */
-    const original = window.fetch;
-    window.fetch = async (input, init) => {
-      const res = await original(input, init);
-      const url = input instanceof Request ? input.url : String(input);
-      if (res.status === 401 && url.startsWith(API_BASE)) {
-        clearAdminSession();
-        router.replace("/login");
-      }
-      return res;
-    };
-    return () => { window.fetch = original; };
   }, [router]);
 
   const handleNavigate = useCallback((section: DashboardSection) => {

@@ -49,7 +49,7 @@ const SORTS = [
   ["worst", "Worst first"], ["best", "Best first"], ["newest", "Newest first"], ["oldest", "Oldest first"], ["waitlist", "Most waitlisted"],
 ] as const;
 const OUTCOMES = [
-  ["", "All outcomes"], ["completed", "Completed"], ["under", "Under-filled"], ["auto", "Auto-cancelled"],
+  ["", "All outcomes"], ["healthy", "Healthy"], ["under", "Under-filled"], ["auto", "Auto-cancelled"],
   ["organiser", "Cancelled by organiser"], ["atRisk", "Below minimum"], ["upcoming", "Upcoming"],
 ] as const;
 
@@ -66,7 +66,7 @@ function Verdict({ g }: { g: DrillRow }) {
   if (g.status === "cancelled") return <span className={`${BADGE} ${BADGE_GRAY}`}>Cancelled by organiser</span>;
   if (g.atRisk) return <span className={`${BADGE} ${BADGE_AMBER}`}>Below minimum</span>;
   if (g.under) return <span className={`${BADGE} ${BADGE_RED}`}>Under-filled</span>;
-  if (g.status === "completed") return <span className={`${BADGE} ${BADGE_GREEN}`}>Completed</span>;
+  if (g.status === "completed") return <span className={`${BADGE} ${BADGE_GREEN}`}>Healthy</span>;
   if (g.upcoming) return <span className={`${BADGE} ${BADGE_BLUE}`}>Upcoming</span>;
   return <span className={`${BADGE} ${BADGE_GRAY}`}>{g.status}</span>;
 }
@@ -200,7 +200,7 @@ export function GameListDrawer({
                     </div>
                     <div className="flex flex-col items-end gap-[6px]">
                       <Verdict g={g} />
-                      <Meter value={g.fillPct} color={g.under || g.atRisk ? SERIES.under : SERIES.completed} />
+                      <Meter value={g.fillPct} color={g.under || g.atRisk ? SERIES.under : SERIES.healthy} />
                       <div className="font-mono text-[11.5px] text-muted">
                         {g.seats}/{g.totalSlots} seats · min {g.minPlayers}
                         {g.waitlistEntries ? ` · ${g.waitlistEntries} waitlisted` : ""}

@@ -155,7 +155,7 @@ function NewPlayers({ onPlayer }: { onPlayer: (id: string) => void }) {
 
 type MonthMetric = "signups" | "firstGames" | "active";
 const MONTH_METRIC: Record<MonthMetric, { label: string; unit: string; color: string; kind: PlayerListKind }> = {
-  signups: { label: "Signups", unit: "signups", color: SERIES.completed, kind: "monthSignups" },
+  signups: { label: "Signups", unit: "signups", color: SERIES.healthy, kind: "monthSignups" },
   firstGames: { label: "First game", unit: "new players", color: SERIES.upcoming, kind: "monthFirst" },
   active: { label: "Active players", unit: "players", color: SERIES.auto, kind: "monthActive" },
 };
@@ -381,12 +381,12 @@ function Overview({ range, setRange, onPlayer }: {
             <Block title="Games played per player"
               sub={ranged ? "Accounts that existed by the end of this view, by games played in it." : "Every account, by games actually played."}
               onExport={() => downloadSheets("kasakai-games-per-player", [playerSheets.gamesDistribution(d)])}>
-              <Columns unit="players" rows={d.gamesDistribution.map((b) => ({ label: b.label, value: b.players, color: b.key === "0" ? SERIES.neutral : SERIES.completed }))} />
+              <Columns unit="players" rows={d.gamesDistribution.map((b) => ({ label: b.label, value: b.players, color: b.key === "0" ? SERIES.neutral : SERIES.healthy }))} />
             </Block>
             <Block id="pl-ratings" title="Gameplay ratings"
               sub="Each rated player's average across the organisers who rated them. A standing rating — the date range does not change it."
               onExport={() => downloadSheets("kasakai-gameplay-ratings", [playerSheets.ratings(d)])}>
-              <Columns unit="players" rows={d.ratingDistribution.map((b) => ({ label: b.label, value: b.players, color: b.key === "1" ? SERIES.under : SERIES.completed }))} />
+              <Columns unit="players" rows={d.ratingDistribution.map((b) => ({ label: b.label, value: b.players, color: b.key === "1" ? SERIES.under : SERIES.healthy }))} />
             </Block>
           </div>
 

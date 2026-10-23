@@ -1,6 +1,4 @@
-import { Fragment } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { DashboardSection } from "./constants";
 import { sidebarGroups, sectionRoutes } from "./constants";
 
@@ -42,7 +40,6 @@ const BADGE_AMBER = "border-[rgba(245,158,11,0.2)] bg-[rgba(245,158,11,0.08)] te
 const BADGE_RED = "border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] text-danger";
 
 export function Sidebar({ activeSection, open, onClose, onLogout }: SidebarProps) {
-  const pathname = usePathname();
   return (
     <>
       {open ? (
@@ -91,42 +88,23 @@ export function Sidebar({ activeSection, open, onClose, onLogout }: SidebarProps
                 const isActive = item.section === activeSection;
                 const accent = NAV_ACCENT[item.accent ?? "default"];
                 return (
-                  <Fragment key={item.section}>
-                    <Link
-                      href={sectionRoutes[item.section]}
-                      className={`${NAV_BASE} ${accent.hover} ${isActive ? accent.active : ""}`}
-                      onClick={onClose}
-                      aria-current={isActive ? "page" : undefined}
-                      {...(item.accent ? { "data-accent": item.accent } : {})}
-                    >
-                      {item.label}
-                      {item.children ? (
-                        <span aria-hidden className={`ml-auto font-mono text-[11px] transition-transform duration-150 ${isActive ? "rotate-90" : ""}`}>▸</span>
-                      ) : null}
-                      {item.badge ? (
-                        <span
-                          className={`${BADGE_BASE} ${item.badgeTone === "red" ? BADGE_RED : BADGE_AMBER}`}
-                        >
-                          {item.badge}
-                        </span>
-                      ) : null}
-                    </Link>
-                    {item.children && isActive ? (
-                      <div className="mb-1 ml-[18px] flex flex-col border-l border-border pl-2">
-                        {item.children.map((c) => (
-                          <Link
-                            key={c.href}
-                            href={c.href}
-                            onClick={onClose}
-                            aria-current={pathname === c.href ? "page" : undefined}
-                            className={`${NAV_BASE} py-[6px] text-[13px] ${accent.hover} ${pathname === c.href ? "bg-[rgba(255,255,255,0.07)] text-fg" : ""}`}
-                          >
-                            {c.label}
-                          </Link>
-                        ))}
-                      </div>
+                  <Link
+                    key={item.section}
+                    href={sectionRoutes[item.section]}
+                    className={`${NAV_BASE} ${accent.hover} ${isActive ? accent.active : ""}`}
+                    onClick={onClose}
+                    aria-current={isActive ? "page" : undefined}
+                    {...(item.accent ? { "data-accent": item.accent } : {})}
+                  >
+                    {item.label}
+                    {item.badge ? (
+                      <span
+                        className={`${BADGE_BASE} ${item.badgeTone === "red" ? BADGE_RED : BADGE_AMBER}`}
+                      >
+                        {item.badge}
+                      </span>
                     ) : null}
-                  </Fragment>
+                  </Link>
                 );
               })}
             </div>

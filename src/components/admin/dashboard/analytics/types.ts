@@ -11,7 +11,7 @@ export type Severity = "good" | "watch" | "concern" | "info";
 /** Which evidence block a finding points at — the panel scrolls to it. */
 export type EvidenceSection =
   | "daily" | "monthly" | "status" | "fill" | "metros" | "venues"
-  | "organisers" | "slots";
+  | "organisers" | "slots" | "upcoming";
 
 /** A drill-down filter — the games one number is made of. */
 export type Slice = {
