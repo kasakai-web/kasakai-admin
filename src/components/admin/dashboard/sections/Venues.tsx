@@ -17,6 +17,7 @@ import { useAdminFetch } from "../shared/useAdminFetch";
 import { useClientPagination, useResetPageOnFilterChange } from "../shared/usePagination";
 import { Pagination } from "../shared/Pagination";
 import { surfaceLabel } from "../shared/format";
+import { EntityTagsModal } from "../tags/EntityTagsModal";
 
 // Turf
 type TurfAddress = { line1: string; line2?: string; area: string; city: string; state: string; pincode: string; country?: string };
@@ -433,6 +434,8 @@ function TurfModal({ initial, onClose, onSaved }: { initial?: Turf | null; onClo
 export function Venues() {
   const { onOpenDetail } = useDashboard();
   const [modalTurf, setModalTurf]   = useState<Turf | null | "new">(null);
+  // Venues have no detail drawer, so their behaviour tags open in a modal of their own.
+  const [tagsTurf, setTagsTurf]     = useState<Turf | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [search, setSearch]         = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "discontinued">("all");
@@ -561,6 +564,7 @@ export function Venues() {
                           : <button className={ACTION_BTN} type="button" disabled={busy} onClick={() => adminAction(`/turfs/${t._id}/reactivate`)}>Reactivate</button>
                         }
                         <button className={ACTION_BTN} type="button" onClick={() => onOpenDetail(t.name)}>View</button>
+                        <button className={ACTION_BTN} type="button" onClick={() => setTagsTurf(t)}>Tags</button>
                       </div>
                     </td>
                   </tr>
@@ -584,6 +588,10 @@ export function Venues() {
 
       {modalTurf !== null && (
         <TurfModal initial={modalTurf === "new" ? null : modalTurf} onClose={() => setModalTurf(null)} onSaved={() => { setModalTurf(null); refresh(); }} />
+      )}
+
+      {tagsTurf && (
+        <EntityTagsModal entityType="turf" entityId={tagsTurf._id} title={tagsTurf.name} onClose={() => setTagsTurf(null)} />
       )}
     </>
   );

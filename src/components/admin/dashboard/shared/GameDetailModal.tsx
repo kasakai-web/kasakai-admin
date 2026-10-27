@@ -15,6 +15,7 @@ import {
   formatDate, formatCurrency, formatDateTime, formatStatusLabel, badgeClassForStatus,
   starRating, starValue,
 } from "./format";
+import { EntityTagPanel } from "../tags/EntityTagPanel";
 
 // Game detail
 type GameRegistration = {
@@ -173,6 +174,9 @@ export function GameDetailModal({ gameId, onClose }: { gameId: string; onClose: 
                 </div>
               )}
             </div>
+
+            {/* Behaviour tags — when it ran, its price band, how it filled */}
+            <EntityTagPanel entityType="game" entityId={gameId} />
 
             {/* Player ratings — what the players said about this game. The form
                 only opens once the game is completed, so a game that has not been
