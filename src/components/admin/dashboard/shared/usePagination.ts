@@ -43,7 +43,7 @@ function toInt(raw: string | null, fallback: number, max = Number.MAX_SAFE_INTEG
 
 /** Patch the query string in place. `null` removes a key, so a URL only ever
  *  carries the values that differ from the defaults. */
-function writeParams(patch: Record<string, string | null>, mode: "push" | "replace") {
+export function writeParams(patch: Record<string, string | null>, mode: "push" | "replace") {
   if (typeof window === "undefined") return;
   const params = new URLSearchParams(window.location.search);
   for (const [k, v] of Object.entries(patch)) {

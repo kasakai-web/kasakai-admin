@@ -1,6 +1,7 @@
 export const dashboardSections = [
   "dashboard",
   "analytics",
+  "tags",
   "users",
   "organisers",
   "hosts",
@@ -27,6 +28,7 @@ export type DashboardSection = (typeof dashboardSections)[number];
 export const sectionTitles: Record<DashboardSection, string> = {
   dashboard:     "Dashboard",
   analytics:     "Analytics",
+  tags:          "Behaviour Tags",
   users:         "Players",
   organisers:    "Organisers",
   hosts:         "Hosts",
@@ -51,6 +53,7 @@ export const sectionTitles: Record<DashboardSection, string> = {
 export const sectionPaths: Record<DashboardSection, string> = {
   dashboard:     "Overview",
   analytics:     "Overview / Analytics",
+  tags:          "Overview / Tags",
   users:         "People / Players",
   organisers:    "People / Organisers",
   hosts:         "People / Hosts",
@@ -78,6 +81,7 @@ export const sectionPaths: Record<DashboardSection, string> = {
 export const sectionRoutes: Record<DashboardSection, string> = {
   dashboard:     "/dashboard",
   analytics:     "/dashboard/analytics",
+  tags:          "/dashboard/tags",
   users:         "/dashboard/users",
   organisers:    "/dashboard/organisers",
   hosts:         "/dashboard/hosts",
@@ -135,6 +139,8 @@ export const sidebarGroups: SidebarGroup[] = [
       { section: "dashboard", label: "Dashboard" },
       // How the platform is performing — verdicts first, the numbers behind them second.
       { section: "analytics", label: "Analytics" },
+      // Behaviour tags: who plays where, when and how often — and segments of them.
+      { section: "tags", label: "Tags" },
     ],
   },
   {

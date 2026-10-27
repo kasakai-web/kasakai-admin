@@ -17,6 +17,7 @@ import {
   daysAgoLabel, stalenessClass,
 } from "./format";
 import { Avatar, InfoCell } from "./components";
+import { EntityTagPanel } from "../tags/EntityTagPanel";
 
 // ── User detail drawer (GET /admin/users/:id/details) ────────────────────────
 type UserDetailGame = {
@@ -172,6 +173,9 @@ export function UserDetailModal({ userId, onClose }: { userId: string; onClose: 
                 </>
               )}
             </div>
+
+            {/* Behaviour tags — what they do on KasaKai, with the evidence */}
+            <EntityTagPanel entityType={isPlayer ? "player" : "organiser"} entityId={userId} />
 
             {/* Profile */}
             <div className={BLOCK_TITLE}>Profile</div>
