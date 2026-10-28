@@ -6,7 +6,9 @@
    tertiles per metro, organiser size), what it skipped and any errors.
 
    "Dry run now" counts what tonight's run would do and writes only this log —
-   the way to sanity-check a change without waiting for 03:00. */
+   the way to sanity-check a change without waiting for 03:00. "Live run now"
+   does what tonight's run does, writes included; it is offered only while
+   tagging is live, and the server refuses it otherwise. */
 
 import { Fragment, useState } from "react";
 import {
@@ -116,10 +118,15 @@ export function RunLog({ runs, loading, error, live, canManage, starting, onStar
   live: boolean | undefined;
   canManage: boolean;
   starting: boolean;
-  onStart: () => void;
+  onStart: (live: boolean) => void;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const running = runs.some((r) => r.status === "running");
+
+  const startLive = () => {
+    if (!window.confirm("Start a LIVE run now? It adds and expires tags exactly as the nightly run does. Manual tags are not touched.")) return;
+    onStart(true);
+  };
 
   return (
     <div>
@@ -134,9 +141,20 @@ export function RunLog({ runs, loading, error, live, canManage, starting, onStar
           </div>
         </div>
         {canManage && (
-          <button type="button" className={`${BTN} ${BTN_PRIMARY}`} disabled={starting || running} onClick={onStart}>
-            {running ? "A run is in progress…" : starting ? "Starting…" : "Dry run now"}
-          </button>
+          running ? (
+            <button type="button" className={BTN} disabled>A run is in progress…</button>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className={BTN} disabled={starting} onClick={() => onStart(false)}>
+                {starting ? "Starting…" : "Dry run now"}
+              </button>
+              {live && (
+                <button type="button" className={`${BTN} ${BTN_PRIMARY}`} disabled={starting} onClick={startLive}>
+                  Live run now
+                </button>
+              )}
+            </div>
+          )
         )}
       </div>
 
@@ -144,7 +162,7 @@ export function RunLog({ runs, loading, error, live, canManage, starting, onStar
       {loading && runs.length === 0 ? (
         <div className={LOADING_STATE}>Loading runs…</div>
       ) : runs.length === 0 ? (
-        <div className={LOADING_STATE}>No run yet. The first one happens after 03:00 IST{canManage ? ", or start a dry run now" : ""}.</div>
+        <div className={LOADING_STATE}>No run yet. The first one happens after 03:00 IST{canManage ? ", or start one now" : ""}.</div>
       ) : (
         <div className={TABLE_WRAP}>
           <table className={TABLE}>

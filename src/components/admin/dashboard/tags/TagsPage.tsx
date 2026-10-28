@@ -119,12 +119,16 @@ export function TagsPage() {
     : null;
   const from = seed.value?.from ?? null;
 
-  const startRun = async () => {
+  const startRun = async (live: boolean) => {
     setStarting(true);
     setMsg("");
-    const res = await adminFetch<TagRun>("/admin/tags/runs", { method: "POST" });
+    const res = await adminFetch<TagRun>("/admin/tags/runs", { method: "POST", body: JSON.stringify({ live }) });
     setStarting(false);
-    setMsg(res.ok ? "Dry run started — it writes only the run log. This page updates when it finishes." : res.message || "Could not start a run.");
+    setMsg(res.ok
+      ? live
+        ? "Live run started — it writes tags. This page updates when it finishes."
+        : "Dry run started — it writes only the run log. This page updates when it finishes."
+      : res.message || "Could not start a run.");
     runsRes.refresh();
   };
 
