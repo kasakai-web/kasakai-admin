@@ -4,9 +4,9 @@
 
    Three lists: tags they must ALL have, tags they need at least ONE of, tags
    they must NOT have. A term ending ":*" matches any tag that starts with it
-   ("venue:loyal:*" = loyal to any venue). Count shows how many match and a
-   sample of 20; Export downloads the full list as CSV with masked phones;
-   Save keeps the expression for a campaign to use.
+   ("venue:loyal:*" = loyal to any venue). Count shows how many match and the
+   whole list, a page at a time, each row with its tags; Export downloads it as
+   CSV with masked phones; Save keeps the expression for a campaign to use.
 
    The server validates every expression — including refusing one with no
    positive term, because "NOT churned" alone matches everyone without that tag,
@@ -43,8 +43,38 @@ function describe(t: Terms): string {
   return parts.join(" AND ");
 }
 
-export async function previewSegment(segment: Segment) {
-  return adminFetch<SegmentPreview>("/admin/tags/segments/preview", { method: "POST", body: JSON.stringify(segment) });
+/** Rows per page of who-matches, in the segment result and the tag drawer. */
+export const HOLDERS_PAGE_SIZE = 50;
+
+export async function previewSegment(segment: Segment, page = 1) {
+  return adminFetch<SegmentPreview>("/admin/tags/segments/preview", {
+    method: "POST",
+    body: JSON.stringify({ ...segment, page, pageSize: HOLDERS_PAGE_SIZE }),
+  });
+}
+
+/** "51–100 of 952", Previous / Next. Nothing when it all fits on one page. */
+export function Pager({ preview, busy, onPage }: {
+  preview: SegmentPreview;
+  busy: boolean;
+  onPage: (page: number) => void;
+}) {
+  const page = preview.page ?? 1;
+  const pages = preview.pages ?? 1;
+  if (pages <= 1) return null;
+  const from = (page - 1) * (preview.pageSize ?? HOLDERS_PAGE_SIZE) + 1;
+  const to = from + preview.sample.length - 1;
+  const n = (x: number) => x.toLocaleString("en-IN");
+  return (
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[12px] text-muted">
+      <span className="font-mono">{n(from)}–{n(to)} of {n(preview.count)}</span>
+      <div className="flex items-center gap-2">
+        <button type="button" className={BTN} disabled={busy || page <= 1} onClick={() => onPage(page - 1)}>‹ Previous</button>
+        <span className="font-mono">Page {n(page)} of {n(pages)}</span>
+        <button type="button" className={BTN} disabled={busy || page >= pages} onClick={() => onPage(page + 1)}>Next ›</button>
+      </div>
+    </div>
+  );
 }
 
 function TermBox({ label, hint, terms, onChange, listId, tone }: {
@@ -102,10 +132,17 @@ export function SampleTable({ entityType, rows, onOpen }: {
     game:      [["Kick-off", (r) => shortDateTime(r.scheduledAt)], ["Status", (r) => r.status || "—"], ["Venue", (r) => r.venue || "—"]],
     turf:      [["Slug", (r) => r.slug || "— (no slug yet)"], ["Metro", (r) => r.metro || "—"], ["Active", (r) => (r.active ? "yes" : "no")]],
   };
+  const withTags = rows.some((r) => r.tags !== undefined);
   return (
     <div className={TABLE_WRAP}>
       <table className={TABLE}>
-        <thead><tr><th>{ENTITY_ONE[entityType]}</th>{cols[entityType].map(([h]) => <th key={h}>{h}</th>)}</tr></thead>
+        <thead>
+          <tr>
+            <th>{ENTITY_ONE[entityType]}</th>
+            {cols[entityType].map(([h]) => <th key={h}>{h}</th>)}
+            {withTags && <th>Tags</th>}
+          </tr>
+        </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.id}>
@@ -116,6 +153,15 @@ export function SampleTable({ entityType, rows, onOpen }: {
                 </button>
               </td>
               {cols[entityType].map(([h, cell]) => <td key={h}>{cell(r)}</td>)}
+              {withTags && (
+                <td className="min-w-[220px]">
+                  <div className="flex flex-wrap gap-1">
+                    {(r.tags ?? []).map((k) => (
+                      <span key={k} className="rounded-[3px] border border-border px-[5px] py-[1px] font-mono text-[11px] text-muted">{k}</span>
+                    ))}
+                  </div>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -159,6 +205,16 @@ export function Segments({ defs, seenKeys, seed, onOpenEntity }: {
     if (!res.ok || !res.data) { setError(res.message || "Could not count."); setResult(null); return; }
     setResult(res.data);
     setCountedFor(JSON.stringify(seg));
+  };
+
+  // Another page of the segment that was COUNTED, even if the boxes have been edited since.
+  const turnPage = async (page: number) => {
+    if (!result) return;
+    setBusy(true); setError("");
+    const res = await previewSegment(result.segment, page);
+    setBusy(false);
+    if (!res.ok || !res.data) { setError(res.message || "Could not load that page."); return; }
+    setResult(res.data);
   };
 
   const exportCsv = async () => {
@@ -303,10 +359,11 @@ export function Segments({ defs, seenKeys, seed, onOpenEntity }: {
           ) : (
             <>
               <div className="mb-2 text-[12px] text-muted">
-                {result.sample.length < result.count ? `A sample of ${result.sample.length}. Export for everyone.` : "Everyone who matches."} Click a name to open it.
+                Everyone who matches{(result.pages ?? 1) > 1 ? `, ${HOLDERS_PAGE_SIZE} per page` : ""}, with their tags. Click a name to open it.
               </div>
               <SampleTable entityType={result.segment.entityType} rows={result.sample}
                 onOpen={(r) => onOpenEntity(result.segment.entityType, r.id, r.name)} />
+              <Pager preview={result} busy={busy} onPage={turnPage} />
             </>
           )}
         </div>
