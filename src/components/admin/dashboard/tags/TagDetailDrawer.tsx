@@ -1,7 +1,7 @@
 "use client";
 
 /* One tag, opened from the Explorer: what it means in full, how many hold it,
-   and a sample of who — without leaving the Explorer. The table and its filters
+   and everyone who does, a page at a time — without leaving the Explorer. The table and its filters
    stay underneath. ✕, Escape or the browser's Back closes it, because the open
    tag lives in the URL (useTagsUrl).
 
@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { BADGE, BADGE_AMBER, BADGE_BLUE, BADGE_GRAY, BADGE_VIOLET, LOADING_STATE, FORM_ERROR, TOPBAR_BTN, TOPBAR_BTN_PRIMARY } from "../shared/styles";
-import { previewSegment, SampleTable } from "./Segments";
+import { HOLDERS_PAGE_SIZE, Pager, previewSegment, SampleTable } from "./Segments";
 import { RuleExplain } from "./RuleExplain";
 import {
   ENTITY_LABEL, definitionFor, explainFor, pct,
@@ -42,6 +42,7 @@ export function TagDetailDrawer({ entityType, tagKey, row, defs, layerOpen, onCl
   onOpenEntity: (entityType: EntityType, id: string, name: string) => void;
 }) {
   const [holders, setHolders] = useState<Holders>({ loading: true, preview: null, error: "" });
+  const [paging, setPaging] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -73,6 +74,15 @@ export function TagDetailDrawer({ entityType, tagKey, row, defs, layerOpen, onCl
 
   const p = holders.preview;
   const n = (x: number) => x.toLocaleString("en-IN");
+
+  const turnPage = async (page: number) => {
+    setPaging(true);
+    const res = await previewSegment({ entityType, all: [tagKey], any: [], none: [] }, page);
+    setPaging(false);
+    setHolders((h) => (res.ok && res.data
+      ? { loading: false, preview: res.data, error: "" }
+      : { ...h, error: res.message || "Could not load that page." }));
+  };
 
   return (
     <>
@@ -161,10 +171,11 @@ export function TagDetailDrawer({ entityType, tagKey, row, defs, layerOpen, onCl
             ) : (
               <>
                 <div className="mb-2 text-[12px] text-muted">
-                  {p.sample.length < p.count ? `A sample of ${p.sample.length}. Build a segment to export everyone.` : "Everyone who holds it."}{" "}
+                  Everyone who holds it{(p.pages ?? 1) > 1 ? `, ${HOLDERS_PAGE_SIZE} per page` : ""}, with their other tags.
                   Click a name to open it.
                 </div>
                 <SampleTable entityType={entityType} rows={p.sample} onOpen={(r) => onOpenEntity(entityType, r.id, r.name)} />
+                <Pager preview={p} busy={paging} onPage={turnPage} />
               </>
             )}
           </section>

@@ -138,6 +138,8 @@ export type SampleRow = {
   slug?: string | null;
   metro?: string;
   active?: boolean;
+  /** The entity's live tags. */
+  tags?: string[];
 };
 
 export type SegmentPreview = {
@@ -145,7 +147,11 @@ export type SegmentPreview = {
   describe: string;
   count: number;
   truncated: boolean;
+  /** The requested page of who matches (named "sample" from when it was only ever the first 20). */
   sample: SampleRow[];
+  page?: number;
+  pageSize?: number;
+  pages?: number;
 };
 
 export type SavedSegment = {
