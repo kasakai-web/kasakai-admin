@@ -35,7 +35,7 @@ import {
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "explorer", label: "Explorer" },
-  { key: "segments", label: "Segments" },
+  { key: "segments", label: "Find holders" },
   { key: "runs", label: "Run log" },
 ];
 

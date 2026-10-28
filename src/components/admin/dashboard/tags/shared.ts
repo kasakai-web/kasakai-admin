@@ -20,13 +20,13 @@ export const ENTITY_LABEL: Record<EntityType, string> = {
   player: "Players",
   game: "Games",
   organiser: "Organisers",
-  turf: "Venues",
+  turf: "Turfs",
 };
 export const ENTITY_ONE: Record<EntityType, string> = {
   player: "player",
   game: "game",
   organiser: "organiser",
-  turf: "venue",
+  turf: "turf",
 };
 export const ENTITY_TYPES: EntityType[] = ["player", "game", "organiser", "turf"];
 
