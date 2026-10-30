@@ -125,6 +125,8 @@ export type SidebarItem = {
   badge?: string;
   badgeTone?: "default" | "red";
   accent?: "teal" | "blue" | "amber";
+  /** Sub-links shown under the item while its section is open. */
+  children?: { href: string; label: string }[];
 };
 
 export type SidebarGroup = {
@@ -138,7 +140,14 @@ export const sidebarGroups: SidebarGroup[] = [
     items: [
       { section: "dashboard", label: "Dashboard" },
       // How the platform is performing — verdicts first, the numbers behind them second.
-      { section: "analytics", label: "Analytics" },
+      {
+        section: "analytics",
+        label: "Analytics",
+        children: [
+          { href: "/dashboard/analytics/games", label: "Games" },
+          { href: "/dashboard/analytics/players", label: "Players" },
+        ],
+      },
       // Behaviour tags: who plays where, when and how often — and segments of them.
       { section: "tags", label: "Tags" },
     ],

@@ -178,7 +178,7 @@ function outcomeOf(g: DrillRow, line: number) {
   if (g.status === "cancelled") return "Cancelled by organiser";
   if (g.atRisk) return "Below minimum";
   if (g.under) return `Played under ${line}% full`;
-  if (g.status === "completed") return "Healthy";
+  if (g.status === "completed") return "Completed";
   if (g.upcoming) return "Upcoming";
   return g.status;
 }
