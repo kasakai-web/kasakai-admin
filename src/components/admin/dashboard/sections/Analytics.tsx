@@ -37,7 +37,7 @@ import {
 import { useAdminFetch } from "../shared/useAdminFetch";
 import { Head } from "../shared/components";
 import type {
-  AnalyticsResponse, AnalyticsData, EvidenceSection, BreakdownRow, PageFilters, Slice,
+  AnalyticsResponse, AnalyticsData, EvidenceSection, BreakdownRow, PageFilters, Slice, DayRow,
 } from "../analytics/types";
 import {
   SERIES, StackedColumns, PercentLine, Columns, SlotHeatmap, Meter, Empty, MetricSwitch,
@@ -53,6 +53,7 @@ import { PlayersAnalytics } from "../analytics/PlayersAnalytics";
 import { PRESETS, dayDate, istYMD, monthRange, presetRange, type Preset } from "../analytics/range";
 
 const dayLabel = (ymd: string) => dayDate(ymd).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" });
+const dayShort = (ymd: string) => dayDate(ymd).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short" });
 const dayFull = (ymd: string) =>
   dayDate(ymd).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short", year: "numeric" });
 
@@ -62,28 +63,28 @@ const DAYPART_PLURAL: Record<string, string> = { morning: "mornings", afternoon:
 const SECTION_ID: Record<EvidenceSection, string> = {
   daily: "ev-daily", monthly: "ev-monthly", status: "ev-status", fill: "ev-fill",
   metros: "ev-metros", venues: "ev-venues", organisers: "ev-organisers", slots: "ev-slots",
-  upcoming: "ev-upcoming",
 };
 
-/** Which evidence block each verdict card scrolls to. Upcoming has no block — its card opens the games. */
+/** Which evidence block each verdict card scrolls to. */
 const AREA_SECTION: Record<string, EvidenceSection> = {
   growth: "monthly", demand: "fill", cancellations: "status",
 };
 
 const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-/** The same five stacks on the per-day and per-month charts. */
-const gameSeries = (underLine: number): StackSeries[] => [
-  { key: "healthy", label: "Healthy", color: SERIES.healthy },
-  { key: "under", label: `Under ${underLine}% full`, color: SERIES.under },
+/* The same four stacks on the per-week, per-day and per-month charts. Blue is
+   every game PLAYED, however full, so blue against the whole column reads
+   "played out of all games" and matches the Completed tile under Outcomes. How
+   full they were is the "% struggled" view and the fill block. */
+const GAME_SERIES: StackSeries[] = [
+  { key: "completed", label: "Completed", color: SERIES.completed },
   { key: "auto", label: "Auto-cancelled", color: SERIES.auto },
   { key: "cancelled", label: "Cancelled by organiser", color: SERIES.neutral },
   { key: "upcoming", label: "Upcoming / not closed", color: SERIES.upcoming },
 ];
 
-const stackValues = (r: { games: number; completed: number; cancelled: number; autoCancelled: number; underCompleted: number }) => ({
-  healthy: Math.max(0, r.completed - r.underCompleted),
-  under: r.underCompleted,
+const stackValues = (r: { games: number; completed: number; cancelled: number; autoCancelled: number }) => ({
+  completed: r.completed,
   auto: r.autoCancelled,
   cancelled: Math.max(0, r.cancelled - r.autoCancelled),
   upcoming: Math.max(0, r.games - r.completed - r.cancelled),
@@ -98,14 +99,7 @@ function Conclusions({ data, onDrill, onPlayers }: {
     <Verdict
       label="How games are doing"
       conclusions={data.conclusions}
-      onArea={(key) => {
-        if (AREA_SECTION[key]) scrollToId(SECTION_ID[AREA_SECTION[key]]);
-        else if (key === "upcoming") {
-          onDrill(data.games.upcoming.atRisk
-            ? { slice: { upcoming: true, atRisk: true }, label: "Upcoming games below minimum" }
-            : { slice: { upcoming: true }, label: "Upcoming games" });
-        }
-      }}
+      onArea={(key) => { if (AREA_SECTION[key]) scrollToId(SECTION_ID[AREA_SECTION[key]]); }}
       footnote={<>
         {data.comparison.none
           ? "Looking ahead by play date — nothing earlier to compare"
@@ -133,7 +127,7 @@ function Conclusions({ data, onDrill, onPlayers }: {
             <button type="button" className={ACTION_BTN} onClick={() => onPlayers({ compare: true, label: i.title })}>
               See evidence →
             </button>
-          ) : i.section === "upcoming" ? null : (
+          ) : (
             <button type="button" className={ACTION_BTN} onClick={() => scrollToId(SECTION_ID[i.section])}>
               See evidence ↓
             </button>
@@ -395,18 +389,33 @@ function GamesEvidence({ data, minGames, view, onDrill, onNarrow, onPlayers }: {
   const v = { data, view };
   /** A block's Excel button: its sheets, built only when clicked. */
   const save = (file: string, sheets: () => Sheet[]) => () => downloadSheets(`kasakai-${file}`, sheets());
-  const series = gameSeries(underLine);
   const [dayMetric, setDayMetric] = useState<DayMetric>("games");
   const [monthMetric, setMonthMetric] = useState<MonthMetric>("games");
   const [fillAt, setFillAt] = useState<FillAt>("end");
   const [heatMetric, setHeatMetric] = useState<HeatMetric>("under");
 
-  // Per day
+  // Per week (Monday–Sunday IST), rolled up from the gap-free per-day series;
+  // clicking a week opens its days underneath, and a day opens its games.
   const days = g.daily.days;
   const hosted = days.reduce((s, d) => s + d.games - d.cancelled, 0);
   const seatsSold = days.reduce((s, d) => s + d.seatsSold, 0);
-  const drillDay = (i: number) => {
-    const d = days[i];
+  const weeks: { start: string; days: DayRow[] }[] = [];
+  for (const d of days) {
+    const monday = dayDate(d.day);
+    monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
+    const start = istYMD(monday);
+    if (weeks.at(-1)?.start !== start) weeks.push({ start, days: [] });
+    weeks.at(-1)!.days.push(d);
+  }
+  const [week, setWeek] = useState<string | null>(null);
+  const openWeek = weeks.find((w) => w.start === week) ?? null;
+  const weekLabel = (w: { days: DayRow[] }) => `${dayLabel(w.days[0].day)} – ${dayFull(w.days.at(-1)!.day)}`;
+  const sum = (rows: DayRow[], k: "games" | "completed" | "cancelled" | "autoCancelled" | "seatsSold") => rows.reduce((s, d) => s + d[k], 0);
+  const periodValues = (rows: DayRow[]) => dayMetric === "games"
+    ? stackValues({ games: sum(rows, "games"), completed: sum(rows, "completed"), cancelled: sum(rows, "cancelled"), autoCancelled: sum(rows, "autoCancelled") })
+    : { seats: sum(rows, "seatsSold") };
+  const periodSeries = dayMetric === "games" ? GAME_SERIES : [{ key: "seats", label: "Seats sold (games that ran)", color: SERIES.completed }];
+  const drillDay = (d: DayRow) => {
     if (!d.games) return;
     const name = dayFull(d.day);
     onDrill({ slice: { day: d.day }, label: name, narrowLabel: name });
@@ -423,7 +432,7 @@ function GamesEvidence({ data, minGames, view, onDrill, onNarrow, onPlayers }: {
   };
 
   const bucketColor = (key: string) =>
-    key === "auto" ? SERIES.auto : key === "under" ? SERIES.under : key === "cancelled" ? SERIES.neutral : SERIES.healthy;
+    key === "auto" ? SERIES.auto : key === "under" ? SERIES.under : key === "cancelled" ? SERIES.neutral : SERIES.completed;
   const organiserCancelled = Math.max(0, g.totals.cancelled - g.totals.autoCancelled);
 
   return (
@@ -461,16 +470,16 @@ function GamesEvidence({ data, minGames, view, onDrill, onNarrow, onPlayers }: {
 
       <Block
         id="ev-daily"
-        title="Games per day"
+        title="Games per week"
         sub={days.length
-          ? `Avg ${(hosted / days.length).toFixed(1)} games hosted and ${Math.round(seatsSold / days.length)} seats sold a day over ${days.length} days (cancelled games excluded)` +
+          ? `Avg ${((hosted / days.length) * 7).toFixed(1)} games hosted and ${Math.round((seatsSold / days.length) * 7)} seats sold a week over ${weeks.length} weeks (cancelled games excluded)` +
             (g.daily.capped ? ` — the ${data.comparison.none ? "first" : "latest"} ${days.length} days of this view` : "") +
-            ". Click a day for its games; click a legend item to hide it."
+            ". Blue is the games played; the whole column is every game. Click a week to see it day by day; click a legend item to hide it."
           : "No games in this view."}
         onExport={save("games-per-day", () => [gameSheets.daily(v)])}
         action={
           <MetricSwitch<DayMetric>
-            label="Daily metric"
+            label="Weekly metric"
             value={dayMetric}
             onChange={setDayMetric}
             options={[{ key: "games", label: "Games" }, { key: "seats", label: "Seats sold" }]}
@@ -478,16 +487,27 @@ function GamesEvidence({ data, minGames, view, onDrill, onNarrow, onPlayers }: {
         }
       >
         <StackedColumns
-          rows={days.map((d) => ({
-            label: dayLabel(d.day),
-            fullLabel: dayFull(d.day),
-            values: dayMetric === "games" ? stackValues(d) : { seats: d.seatsSold },
-          }))}
-          series={dayMetric === "games" ? series : [{ key: "seats", label: "Seats sold (games that ran)", color: SERIES.healthy }]}
+          rows={weeks.map((w) => ({ label: dayLabel(w.start), fullLabel: `Week ${weekLabel(w)}`, values: periodValues(w.days) }))}
+          series={periodSeries}
           unit={dayMetric === "games" ? "games" : "seats"}
-          onSelect={drillDay}
-          focus={days.findLastIndex((d) => d.day <= istYMD(new Date()))}
+          onSelect={(i) => setWeek((cur) => (cur === weeks[i].start ? null : weeks[i].start))}
+          selected={openWeek ? weeks.indexOf(openWeek) : null}
+          focus={weeks.findLastIndex((w) => w.start <= istYMD(new Date()))}
         />
+        {openWeek ? (
+          <div className="mt-4 border-t border-border pt-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <span className="font-mono text-[12px] text-fg">Week {weekLabel(openWeek)} — day by day. Click a day for its games.</span>
+              <button type="button" className={ACTION_BTN} onClick={() => setWeek(null)}>Close</button>
+            </div>
+            <StackedColumns
+              rows={openWeek.days.map((d) => ({ label: dayShort(d.day), fullLabel: dayFull(d.day), values: periodValues([d]) }))}
+              series={periodSeries}
+              unit={dayMetric === "games" ? "games" : "seats"}
+              onSelect={(i) => drillDay(openWeek.days[i])}
+            />
+          </div>
+        ) : null}
       </Block>
 
       <Block
@@ -513,13 +533,13 @@ function GamesEvidence({ data, minGames, view, onDrill, onNarrow, onPlayers }: {
           <StackedColumns
             rows={g.monthly.map((m) => ({ label: shortMonth(m.month), fullLabel: monthLabel(m.month, true), values: stackValues(m) }))}
             onSelect={(i) => drillMonth(i)}
-            series={series}
+            series={GAME_SERIES}
           />
         ) : (
           <PercentLine
             label={monthMetric === "under" ? "Struggled" : monthMetric === "cancelled" ? "Cancelled" : "Typical fill"}
             nUnit={monthMetric === "median" ? "games played" : "games played or cancelled"}
-            color={monthMetric === "under" ? SERIES.under : monthMetric === "cancelled" ? SERIES.auto : SERIES.healthy}
+            color={monthMetric === "under" ? SERIES.under : monthMetric === "cancelled" ? SERIES.auto : SERIES.completed}
             onSelect={(i) => drillMonth(i, monthMetric === "under" ? { under: true } : monthMetric === "cancelled" ? { status: "cancelled" } : {})}
             points={g.monthly.map((m) => {
               const n = monthMetric === "median" ? m.filled : m.judged;
@@ -568,7 +588,7 @@ function GamesEvidence({ data, minGames, view, onDrill, onNarrow, onPlayers }: {
           />
         ) : (
           <Columns
-            rows={g.fill.buckets24.map((b) => ({ label: b.label, value: b.games, color: b.under ? SERIES.under : SERIES.healthy }))}
+            rows={g.fill.buckets24.map((b) => ({ label: b.label, value: b.games, color: b.under ? SERIES.under : SERIES.completed }))}
             onSelect={(i) => {
               const b = g.fill.buckets24[i];
               onDrill({ slice: { bucket24: b.key }, label: `24h before kick-off: ${b.label}` });
@@ -811,15 +831,17 @@ const TOPICS = [
   },
 ];
 
-export function Analytics() {
-  const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
+/** `topic` (from the sidebar's Games / Players links) shows that topic alone, already open. */
+export function Analytics({ topic }: { topic?: string }) {
+  const [opened, setOpened] = useState<ReadonlySet<string>>(() => new Set(topic ? [topic] : []));
   return (
     <>
       <Head title="Analytics" sub="Open a topic — each starts with the verdict, then the numbers behind it." />
       <div className="flex flex-col gap-3">
-        {TOPICS.map(({ key, title, sub, Component }) => (
+        {TOPICS.filter((t) => !topic || t.key === topic).map(({ key, title, sub, Component }) => (
           <details
             key={key}
+            open={key === topic}
             name="analytics-topic" // one topic open at a time — the browser closes the other
             className={`${PANEL} group p-0!`}
             onToggle={(e) => {

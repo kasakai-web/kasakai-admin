@@ -122,7 +122,7 @@ export function PlayerReport({ id }: { id: string }) {
               rows={d.monthly.map((x) => ({
                 label: multiYear ? `${monthLabel(x.month)} ${x.month.slice(2, 4)}` : monthLabel(x.month),
                 value: x.games,
-                color: SERIES.healthy,
+                color: SERIES.completed,
               }))}
             />
           </div>
