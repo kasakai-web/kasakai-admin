@@ -11,7 +11,7 @@ export type Severity = "good" | "watch" | "concern" | "info";
 /** Which evidence block a finding points at — the panel scrolls to it. */
 export type EvidenceSection =
   | "daily" | "monthly" | "status" | "fill" | "metros" | "venues"
-  | "organisers" | "slots" | "upcoming";
+  | "organisers" | "slots";
 
 /** A drill-down filter — the games one number is made of. */
 export type Slice = {
@@ -306,6 +306,7 @@ export type PlayerReportData = {
     topUpPaise: number; topUps: number; lastTopUpAt: string | null; bonusPaise: number;
     adminCreditPaise: number; adminDebitPaise: number; directPaise: number; gameSpendPaise: number;
     refundPaise: number; backoutFeePaise: number; netGameSpendPaise: number; passPurchasePaise: number;
+    passPurchaseDirectPaise: number; passPurchases: number; passPaymentCreditedPaise: number;
     discountSavedPaise: number; discountedGames: number; passCoveredPaise: number; passCoveredGames: number;
     balancePaise: number; lockedPaise: number;
   };

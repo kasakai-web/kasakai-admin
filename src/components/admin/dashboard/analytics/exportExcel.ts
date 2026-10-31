@@ -178,7 +178,7 @@ function outcomeOf(g: DrillRow, line: number) {
   if (g.status === "cancelled") return "Cancelled by organiser";
   if (g.atRisk) return "Below minimum";
   if (g.under) return `Played under ${line}% full`;
-  if (g.status === "completed") return "Healthy";
+  if (g.status === "completed") return "Completed";
   if (g.upcoming) return "Upcoming";
   return g.status;
 }
@@ -545,6 +545,8 @@ export const reportSheets = {
       ["Booked (gross)", rupees(m.gameSpendPaise)], ["Refunded", rupees(m.refundPaise)],
       ["Spent on games (net)", rupees(m.netGameSpendPaise)], ["Backout fees paid", rupees(m.backoutFeePaise)],
       ["Recharge bonus earned", rupees(m.bonusPaise)], ["Spent on passes", rupees(m.passPurchasePaise)],
+      ["Passes bought", m.passPurchases], ["Passes paid by card/UPI", rupees(m.passPurchaseDirectPaise)],
+      ["Pass payments credited to wallet", rupees(m.passPaymentCreditedPaise)],
       ["Paid at checkout (old flow)", rupees(m.directPaise)],
       ["Discount saved", rupees(m.discountSavedPaise)], ["Discounted games", m.discountedGames],
       ["Pass covered", rupees(m.passCoveredPaise)], ["Pass-covered games", m.passCoveredGames],

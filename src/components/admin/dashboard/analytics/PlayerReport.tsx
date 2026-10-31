@@ -122,7 +122,7 @@ export function PlayerReport({ id }: { id: string }) {
               rows={d.monthly.map((x) => ({
                 label: multiYear ? `${monthLabel(x.month)} ${x.month.slice(2, 4)}` : monthLabel(x.month),
                 value: x.games,
-                color: SERIES.healthy,
+                color: SERIES.completed,
               }))}
             />
           </div>
@@ -148,7 +148,10 @@ export function PlayerReport({ id }: { id: string }) {
           <InfoCell label="Refunded" value={formatCurrency(m.refundPaise)} tone="text-success" />
           <InfoCell label="Backout fees paid" value={formatCurrency(m.backoutFeePaise)} tone={m.backoutFeePaise ? "text-warning" : undefined} />
           <InfoCell label="Recharge bonus earned" value={formatCurrency(m.bonusPaise)} />
-          <InfoCell label="Spent on passes" value={formatCurrency(m.passPurchasePaise)} />
+          <InfoCell label="Spent on passes" value={<>{formatCurrency(m.passPurchasePaise)}<div className="text-[11px] text-muted">{m.passPurchases} passes · {formatCurrency(m.passPurchaseDirectPaise)} by card/UPI</div></>} />
+          {m.passPaymentCreditedPaise > 0 && (
+            <InfoCell label="Pass payments to wallet" value={formatCurrency(m.passPaymentCreditedPaise)} tone="text-warning" />
+          )}
           <InfoCell label="Paid at checkout (old flow)" value={formatCurrency(m.directPaise)} />
           <InfoCell label="Discount saved" value={<>{formatCurrency(m.discountSavedPaise)}<div className="text-[11px] text-muted">{m.discountedGames} games</div></>} />
           <InfoCell label="Pass covered" value={<>{formatCurrency(m.passCoveredPaise)}<div className="text-[11px] text-muted">{m.passCoveredGames} games</div></>} />
