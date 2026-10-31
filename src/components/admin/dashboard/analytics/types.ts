@@ -306,6 +306,7 @@ export type PlayerReportData = {
     topUpPaise: number; topUps: number; lastTopUpAt: string | null; bonusPaise: number;
     adminCreditPaise: number; adminDebitPaise: number; directPaise: number; gameSpendPaise: number;
     refundPaise: number; backoutFeePaise: number; netGameSpendPaise: number; passPurchasePaise: number;
+    passPurchaseDirectPaise: number; passPurchases: number; passPaymentCreditedPaise: number;
     discountSavedPaise: number; discountedGames: number; passCoveredPaise: number; passCoveredGames: number;
     balancePaise: number; lockedPaise: number;
   };

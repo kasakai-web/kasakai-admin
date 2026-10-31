@@ -545,6 +545,8 @@ export const reportSheets = {
       ["Booked (gross)", rupees(m.gameSpendPaise)], ["Refunded", rupees(m.refundPaise)],
       ["Spent on games (net)", rupees(m.netGameSpendPaise)], ["Backout fees paid", rupees(m.backoutFeePaise)],
       ["Recharge bonus earned", rupees(m.bonusPaise)], ["Spent on passes", rupees(m.passPurchasePaise)],
+      ["Passes bought", m.passPurchases], ["Passes paid by card/UPI", rupees(m.passPurchaseDirectPaise)],
+      ["Pass payments credited to wallet", rupees(m.passPaymentCreditedPaise)],
       ["Paid at checkout (old flow)", rupees(m.directPaise)],
       ["Discount saved", rupees(m.discountSavedPaise)], ["Discounted games", m.discountedGames],
       ["Pass covered", rupees(m.passCoveredPaise)], ["Pass-covered games", m.passCoveredGames],
