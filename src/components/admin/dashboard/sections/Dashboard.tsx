@@ -10,6 +10,9 @@ import {
 } from "../shared/styles";
 import { API_BASE } from "../shared/api";
 import { formatCurrency } from "../shared/format";
+import { RevenueBox } from "../finance/RevenueBox";
+import { ActivityBoxes } from "../overview/ActivityBoxes";
+import { TurfIncome } from "../overview/TurfIncome";
 
 // Platform stats
 type PlatformStats = {
@@ -59,6 +62,15 @@ export function Dashboard() {
           <div className={`${STAT_DELTA} ${NEUTRAL}`}>All player balances</div>
         </div>
       </div>
+
+      {/* Activity — the Finance page's revenue box (Today / This week / This month /
+          Last month), then games per day and active players, counted as Analytics counts them */}
+      <div className={STATS_GRID}>
+        <RevenueBox className="col-span-2 max-[900px]:col-span-1" />
+        <ActivityBoxes />
+      </div>
+
+      <TurfIncome />
 
       <div className={TWO_COL}>
         <div className={`${PANEL} ${PANEL_WARN}`}>

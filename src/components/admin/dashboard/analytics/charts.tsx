@@ -327,35 +327,43 @@ export function PercentLine({
 
 /** `selected` dims every other column — for a chart whose click picks a column. */
 export function Columns({
-  rows, height = 160, unit = "games", onSelect, selected = null,
+  rows, height = 160, unit = "games", onSelect, selected = null, format = String, dense = false,
 }: {
   rows: { label: string; value: number; color: string; note?: string }[];
   height?: number;
   unit?: string;
   onSelect?: (index: number) => void;
   selected?: number | null;
+  /** How a value is printed, above its column and in the tooltip — e.g. as rupees. */
+  format?: (v: number) => string;
+  /** Many columns: no figure above each one, and only every nth label underneath. */
+  dense?: boolean;
 }) {
   const { ref: tipRef, show, hide, node: tipNode } = useTip();
   const max = Math.max(1, ...rows.map((r) => r.value));
   const total = rows.reduce((s, r) => s + r.value, 0);
   if (!total) return <Empty />;
+  const every = dense ? Math.max(1, Math.ceil(rows.length / 12)) : 1;
+  const gap = dense ? "gap-px" : "gap-2";
+  const column = dense ? "min-w-0 flex-1" : "flex-1";
+  const label = dense ? "w-0 flex-1 whitespace-nowrap" : "flex-1";
   return (
     <div ref={tipRef} className="relative">
-      <div className="flex items-end gap-2 border-b border-border-2" style={{ height }}>
+      <div className={`flex items-end ${gap} border-b border-border-2`} style={{ height }}>
         {rows.map((r, i) => {
           const p = markProps(
             { show, hide },
-            [r.label, `${r.value} ${unit}`, `${Math.round((r.value / total) * 100)}% of total`, ...(r.note ? [r.note] : [])],
+            [r.label, `${format(r.value)} ${unit}`, `${Math.round((r.value / total) * 100)}% of total`, ...(r.note ? [r.note] : [])],
             onSelect && r.value ? () => onSelect(i) : undefined,
           );
           return (
             <button
-              key={r.label}
+              key={`${i}-${r.label}`}
               {...p}
               aria-pressed={selected == null ? undefined : selected === i}
-              className={`${p.className} flex h-full flex-1 flex-col justify-end border-none bg-transparent p-0 hover:bg-[rgba(255,255,255,0.04)]`}
+              className={`${p.className} flex h-full ${column} flex-col justify-end border-none bg-transparent p-0 hover:bg-[rgba(255,255,255,0.04)]`}
             >
-              <span className="mb-1 text-center font-mono text-[11px] text-body">{r.value}</span>
+              {dense ? null : <span className="mb-1 text-center font-mono text-[11px] text-body">{format(r.value)}</span>}
               <span
                 className="rounded-t-[4px] transition-opacity"
                 style={{ background: r.color, height: `${(r.value / max) * (height - 22)}px`, opacity: selected == null || selected === i ? 1 : 0.35 }}
@@ -364,9 +372,11 @@ export function Columns({
           );
         })}
       </div>
-      <div className="flex gap-2 pt-1">
-        {rows.map((r) => (
-          <span key={r.label} className="flex-1 text-center font-mono text-[10.5px] text-muted-2">{r.label}</span>
+      <div className={`flex ${gap} pt-1`}>
+        {rows.map((r, i) => (
+          <span key={`${i}-${r.label}`} className={`${label} text-center font-mono text-[10.5px] text-muted-2`}>
+            {i % every === 0 ? r.label : ""}
+          </span>
         ))}
       </div>
       {tipNode}

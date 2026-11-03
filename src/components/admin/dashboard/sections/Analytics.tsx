@@ -67,7 +67,7 @@ const SECTION_ID: Record<EvidenceSection, string> = {
 
 /** Which evidence block each verdict card scrolls to. */
 const AREA_SECTION: Record<string, EvidenceSection> = {
-  growth: "monthly", demand: "fill", cancellations: "status",
+  growth: "monthly", perDay: "daily", demand: "fill", cancellations: "status",
 };
 
 const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });

@@ -37,12 +37,13 @@ export function StatusChip({ status }: { status: AreaStatus | Severity }) {
 /** ▲/▼ coloured by whether the move is good — a rise in underperformance is red. */
 export function ChangeTag({ change }: { change: Area["change"] }) {
   if (!change) return null;
-  const v = Math.round(change.value);
+  const digits = change.digits ?? 0;
+  const v = Math.round(change.value * 10 ** digits) / 10 ** digits;
   const good = change.better === "lower" ? v < 0 : v > 0;
   const tone = v === 0 ? "text-muted" : good ? "text-success" : "text-danger";
   return (
     <span className={`font-mono text-[12px] ${tone}`}>
-      {v === 0 ? "■" : v > 0 ? "▲" : "▼"} {v > 0 ? "+" : ""}{v}{change.unit} <span className="text-muted">vs {change.against}</span>
+      {v === 0 ? "■" : v > 0 ? "▲" : "▼"} {v > 0 ? "+" : ""}{v.toFixed(digits)}{change.unit} <span className="text-muted">vs {change.against}</span>
     </span>
   );
 }
