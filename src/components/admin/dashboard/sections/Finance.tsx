@@ -11,6 +11,8 @@ import { Pagination } from "../shared/Pagination";
 import { formatDate, formatCurrency } from "../shared/format";
 import { Head } from "../shared/components";
 import { RechargeOfferPanel } from "../RechargeOfferPanel";
+import { RevenueBox } from "../finance/RevenueBox";
+import { RevenueTab } from "../finance/RevenueTab";
 
 // Finance
 type WalletRow = {
@@ -37,10 +39,10 @@ type OrganiserEarningRow = {
   totalRevenuePaise: number; totalGuestSlots: number; totalPaidRegistrations: number;
 };
 
-type FinanceTab = "wallets" | "earnings";
+type FinanceTab = "revenue" | "wallets" | "earnings";
 
 export function Finance() {
-  const [tab, setTab] = useState<FinanceTab>("wallets");
+  const [tab, setTab] = useState<FinanceTab>("revenue");
 
   /* Two independent lists on one route, so each pager namespaces its own URL
      keys — ?walletsPage=3&earningsPage=2 addresses both tabs at once. */
@@ -106,8 +108,9 @@ export function Finance() {
     <>
       <Head title="Finance" sub="Player wallets, organiser earnings & platform revenue" />
 
-      {/* Summary */}
+      {/* Summary — the revenue box takes the left half, the wallet figures the right */}
       <div className={STATS_GRID}>
+        <RevenueBox className="col-span-2 row-span-2 max-[900px]:col-span-1 max-[900px]:row-span-1" />
         <div className={STAT_CARD}><div className={STAT_LABEL}>Platform Balance</div><div className={STAT_VALUE}>{formatCurrency(walletSum.totalBalancePaise)}</div><div className={`${STAT_DELTA} ${NEUTRAL}`}>All player wallets combined</div></div>
         <div className={STAT_CARD}><div className={STAT_LABEL}>Total Top-ups</div><div className={STAT_VALUE}>{formatCurrency(walletSum.totalTopUpPaise)}</div><div className={`${STAT_DELTA} ${UP}`}>Lifetime recharges</div></div>
         <div className={STAT_CARD}><div className={STAT_LABEL}>Total Spent</div><div className={STAT_VALUE}>{formatCurrency(walletSum.totalSpentPaise)}</div><div className={`${STAT_DELTA} ${DOWN}`}>Game registrations</div></div>
@@ -116,6 +119,9 @@ export function Finance() {
 
       {/* Tabs */}
       <div className={TAB_BAR}>
+        <button className={`${TAB} ${tab === "revenue" ? TAB_ACTIVE : ""}`} onClick={() => setTab("revenue")} type="button">
+          Revenue
+        </button>
         <button className={`${TAB} ${tab === "wallets" ? TAB_ACTIVE : ""}`} onClick={() => setTab("wallets")} type="button">
           Player Wallets ({walletTotal})
         </button>
@@ -123,6 +129,8 @@ export function Finance() {
           Organiser Earnings ({earningsTotal})
         </button>
       </div>
+
+      {tab === "revenue" && <RevenueTab />}
 
       {/* Player Wallets */}
       {tab === "wallets" && (

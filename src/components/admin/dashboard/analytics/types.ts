@@ -41,7 +41,8 @@ export type Area = {
   figure: number | null;
   figureLabel: string | null;
   figureUnit?: "%";
-  change: { value: number; unit: "%" | "pp"; against: string; better: "higher" | "lower" } | null;
+  /** `digits` decimal places — "+2.7 a day"; whole numbers when absent. */
+  change: { value: number; unit: "%" | "pp" | " a day"; digits?: number; against: string; better: "higher" | "lower" } | null;
   summary: string;
 };
 
@@ -171,6 +172,8 @@ export type AnalyticsData = {
     none: boolean;
     label: string;
     recentLabel: string;
+    /** Length of each comparison window, in days. */
+    days: number;
     recent: { games: CompactGames; start: string; end: string };
     prior: { games: CompactGames; start: string; end: string };
   };
