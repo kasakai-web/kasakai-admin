@@ -13,6 +13,7 @@ import { formatCurrency } from "../shared/format";
 import { RevenueBox } from "../finance/RevenueBox";
 import { ActivityBoxes } from "../overview/ActivityBoxes";
 import { TurfIncome } from "../overview/TurfIncome";
+import { PowerPlayers } from "../overview/PowerPlayers";
 
 // Platform stats
 type PlatformStats = {
@@ -69,6 +70,8 @@ export function Dashboard() {
         <RevenueBox className="col-span-2 max-[900px]:col-span-1" />
         <ActivityBoxes />
       </div>
+
+      <PowerPlayers />
 
       <TurfIncome />
 
