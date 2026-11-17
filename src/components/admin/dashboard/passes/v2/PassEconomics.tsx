@@ -177,6 +177,11 @@ export function PassEconomics() {
               ceiling on how bad this can get, and it is the figure that stays true however the funding
               models are set.
             </p>
+            <p className="mt-2 text-[11.5px] leading-relaxed text-muted">
+              Value is what each covered seat actually cost: on a game with early-bird pricing that is the
+              early price, not the full fee. So value given and reimbursement per seat fall as organisers
+              add early-bird ladders — that is the seats getting cheaper, not passes being used less.
+            </p>
           </div>
 
           {/* ── The metric that decides whether the programme is working ── */}
