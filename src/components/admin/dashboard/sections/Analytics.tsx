@@ -50,6 +50,7 @@ import {
 } from "../analytics/exportExcel";
 import { Verdict, Kpi, Block, ExportButton } from "../analytics/verdicts";
 import { PlayersAnalytics } from "../analytics/PlayersAnalytics";
+import { EarlyBirdAnalytics } from "../analytics/EarlyBirdAnalytics";
 import { PRESETS, dayDate, istYMD, monthRange, presetRange, type Preset } from "../analytics/range";
 
 const dayLabel = (ymd: string) => dayDate(ymd).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" });
@@ -828,6 +829,12 @@ const TOPICS = [
     title: "Players",
     sub: "Signups, who actually plays, who comes back, ratings — and a full report on any one player.",
     Component: PlayersAnalytics,
+  },
+  {
+    key: "early-bird",
+    title: "Early-bird pricing",
+    sub: "Do price ladders get games booked earlier and cancelled less — without costing organisers? Laddered vs flat games.",
+    Component: EarlyBirdAnalytics,
   },
 ];
 
