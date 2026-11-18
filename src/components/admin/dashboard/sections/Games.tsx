@@ -15,6 +15,7 @@ import { formatCurrency, formatDateTime, formatStatusLabel, badgeClassForStatus 
 import { Head } from "../shared/components";
 import { PlayerInvitePanel } from "../PlayerInvitePanel";
 import { SeatPricingPanel } from "../SeatPricingPanel";
+import { TestToolsPanel } from "../TestToolsPanel";
 import { GameDetailModal } from "../shared/GameDetailModal";
 
 type AdminGameRow = {
@@ -95,6 +96,8 @@ export function Games() {
   return (
     <>
       <Head title="Games & Events" sub={loading ? "Loading…" : `${grandTotal} games across all organisers`} />
+      {/* Test server only — renders nothing on production (Test_Speedups_Plan.md). */}
+      <TestToolsPanel />
       <PlayerInvitePanel />
       <SeatPricingPanel />
       <div className={TOOLBAR}>
