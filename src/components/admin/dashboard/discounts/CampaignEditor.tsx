@@ -77,14 +77,6 @@ export function CampaignEditor({
     set({ ...patch, code: r.code });
   };
 
-  const chooseUnique = () => {
-    // A unique code is generated, never typed — make one unless this campaign
-    // already has its own.
-    const keep = draft.codeMode === "unique" && draft.trigger === "code" && Boolean(draft.code);
-    if (keep) set({ trigger: "code", codeMode: "unique" });
-    else fillCode({ trigger: "code", codeMode: "unique" });
-  };
-
   const copyCode = async () => {
     if (!draft.code) return;
     try {
@@ -236,8 +228,9 @@ export function CampaignEditor({
                     <Choice on={isCode && draft.codeMode === "shared"}
                       onClick={() => !codeLocked && set({ trigger: "code", codeMode: "shared" })}
                       title="One shared code" sub="A code you choose, like FIRST50 — or generate one" />
-                    <Choice on={isCode && draft.codeMode === "unique"} onClick={() => !codeLocked && chooseUnique()}
-                      title="Unique code" sub="Made from your name, e.g. UJJWAL3R4EW — expires after a set number of uses" />
+                    <Choice on={isCode && draft.codeMode === "unique"}
+                      onClick={() => !codeLocked && set({ trigger: "code", codeMode: "unique" })}
+                      title="Unique code" sub="A code you choose, like DIWALI50 — expires after a set number of uses" />
                   </div>
                 </div>
                 {isCode && draft.codeMode === "shared" && (
@@ -259,17 +252,12 @@ export function CampaignEditor({
                     <div>
                       <label className={FIELD_LABEL}>The code</label>
                       <div className="flex gap-2">
-                        <div className={`${FIELD} select-all font-mono tracking-[0.06em] text-fg`}>
-                          {codeBusy ? "Generating…" : draft.code || "—"}
-                        </div>
+                        <input className={`${FIELD} uppercase font-mono tracking-[0.06em]`} value={draft.code || ""}
+                          maxLength={24} readOnly={codeLocked} placeholder="DIWALI50"
+                          onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "") })} />
                         <button type="button" className={BTN} disabled={!draft.code} onClick={copyCode}>
                           {copied ? "Copied" : "Copy"}
                         </button>
-                        {!codeLocked && (
-                          <button type="button" className={BTN} disabled={codeBusy} onClick={() => fillCode()}>
-                            Regenerate
-                          </button>
-                        )}
                       </div>
                     </div>
                     <NumField label="Number of uses" value={draft.limits.totalUses}
@@ -277,7 +265,7 @@ export function CampaignEditor({
                     <div className={`${HINT} col-span-full`}>
                       {codeLocked
                         ? "This code has gone live, so it cannot change — players may already have it. For a new code, create a new campaign."
-                        : `It works ${draft.limits.totalUses || "N"} time${draft.limits.totalUses === 1 ? "" : "s"} in all${draft.limits.perPlayer === 1 ? ", once per player" : ""}. When every use is spent, the campaign archives itself.`}
+                        : `Letters and numbers only, 3–24 long. It works ${draft.limits.totalUses || "N"} time${draft.limits.totalUses === 1 ? "" : "s"} in all${draft.limits.perPlayer === 1 ? ", once per player" : ""}. When every use is spent, the campaign archives itself.`}
                     </div>
                   </div>
                 )}
