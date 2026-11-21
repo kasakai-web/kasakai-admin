@@ -14,6 +14,7 @@ import { Pagination } from "../shared/Pagination";
 import { formatCurrency, formatDateTime, formatStatusLabel, badgeClassForStatus } from "../shared/format";
 import { Head } from "../shared/components";
 import { PlayerInvitePanel } from "../PlayerInvitePanel";
+import { SeatPricingPanel } from "../SeatPricingPanel";
 import { GameDetailModal } from "../shared/GameDetailModal";
 
 type AdminGameRow = {
@@ -95,6 +96,7 @@ export function Games() {
     <>
       <Head title="Games & Events" sub={loading ? "Loading…" : `${grandTotal} games across all organisers`} />
       <PlayerInvitePanel />
+      <SeatPricingPanel />
       <div className={TOOLBAR}>
         <input className={SEARCH_INPUT} placeholder="Search games, venue, organiser…" value={search} onChange={(e) => { setSearch(e.target.value); resetPage(); }} />
         <select className={FILTER_SELECT} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); resetPage(); }}>
