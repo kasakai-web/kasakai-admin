@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getAdminToken } from "@/lib/admin-session";
 import {
-  SECTION_TITLE, BADGE, BADGE_GRAY, TOOLBAR, SEARCH_INPUT, FILTER_SELECT, TABLE_WRAP, TABLE,
+  SECTION_TITLE, BADGE, BADGE_GRAY, BADGE_VIOLET, TOOLBAR, SEARCH_INPUT, FILTER_SELECT, TABLE_WRAP, TABLE,
   ACTION_BTN, ACTIONS, FORM_ERROR, LOADING_STATE, MODAL_OVERLAY, MODAL, MODAL_HEAD, MODAL_CLOSE,
   MODAL_ACTIONS, FORM_LABEL,
 } from "../shared/styles";
@@ -18,11 +18,12 @@ import { SosAutoPanel } from "../SosAutoPanel";
 import { SeatPricingPanel } from "../SeatPricingPanel";
 import { TestToolsPanel } from "../TestToolsPanel";
 import { GameDetailModal } from "../shared/GameDetailModal";
+import { LadderBookingsModal } from "../LadderBookingsModal";
 
 type AdminGameRow = {
   id: string; title: string; venue?: string | null; scheduledAt?: string | null;
   format?: string | null; players: { registered: number; totalSlots: number };
-  feeInPaise?: number; organiserName?: string; status: string;
+  feeInPaise?: number; organiserName?: string; status: string; laddered?: boolean;
 };
 
 
@@ -30,6 +31,7 @@ export function Games() {
   const [search, setSearch]         = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [detailGameId, setDetailGameId] = useState<string | null>(null);
+  const [ladderGameId, setLadderGameId] = useState<string | null>(null);
 
   const [cancelTarget, setCancelTarget] = useState<AdminGameRow | null>(null);
   const [cancelReason, setCancelReason] = useState("");
@@ -126,7 +128,14 @@ export function Games() {
             {!loading && filtered.length === 0 && <tr><td colSpan={9} className="p-6! text-center text-muted!">No games found.</td></tr>}
             {filtered.map((g) => (
               <tr key={g.id}>
-                <td>{g.title}</td>
+                <td>
+                  {g.title}
+                  {g.laddered && (
+                    <button type="button" className={`${BADGE} ${BADGE_VIOLET} ml-2 cursor-pointer`} title="See tiers and who booked at each price" onClick={() => setLadderGameId(g.id)}>
+                      Ladder price
+                    </button>
+                  )}
+                </td>
                 <td>{g.venue || "—"}</td>
                 <td>{formatDateTime(g.scheduledAt)}</td>
                 <td><span className={`${BADGE} ${BADGE_GRAY}`}>{g.format || "—"}</span></td>
@@ -164,6 +173,8 @@ export function Games() {
         onLimitChange={setLimit}
         label="games"
       />
+
+      {ladderGameId && <LadderBookingsModal gameId={ladderGameId} onClose={() => setLadderGameId(null)} />}
 
       {detailGameId && (
         <GameDetailModal gameId={detailGameId} onClose={() => setDetailGameId(null)} />
