@@ -14,7 +14,9 @@ import { Pagination } from "../shared/Pagination";
 import { formatCurrency, formatDateTime, formatStatusLabel, badgeClassForStatus } from "../shared/format";
 import { Head } from "../shared/components";
 import { PlayerInvitePanel } from "../PlayerInvitePanel";
+import { SosAutoPanel } from "../SosAutoPanel";
 import { SeatPricingPanel } from "../SeatPricingPanel";
+import { TestToolsPanel } from "../TestToolsPanel";
 import { GameDetailModal } from "../shared/GameDetailModal";
 import { LadderBookingsModal } from "../LadderBookingsModal";
 
@@ -97,7 +99,10 @@ export function Games() {
   return (
     <>
       <Head title="Games & Events" sub={loading ? "Loading…" : `${grandTotal} games across all organisers`} />
+      {/* Test server only — renders nothing on production (Test_Speedups_Plan.md). */}
+      <TestToolsPanel />
       <PlayerInvitePanel />
+      <SosAutoPanel />
       <SeatPricingPanel />
       <div className={TOOLBAR}>
         <input className={SEARCH_INPUT} placeholder="Search games, venue, organiser…" value={search} onChange={(e) => { setSearch(e.target.value); resetPage(); }} />

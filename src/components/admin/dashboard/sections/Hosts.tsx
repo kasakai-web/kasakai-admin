@@ -454,13 +454,13 @@ export function Hosts() {
               {decision.action === "scope" && (
                 <>
                   Organisers you add are told. If you remove an organiser,{" "}
-                  <strong>{decision.row.player?.name}</strong> loses their facilitator slots in that organiser&apos;s
+                  <strong>{decision.row.player?.name}</strong>{" "}loses their facilitator slots in that organiser&apos;s
                   upcoming games. Host spots they already booked stay theirs.
                 </>
               )}
               {decision.action === "reject" && (
                 <>
-                  <strong>{decision.row.organiser?.name}</strong> is told the recommendation was not approved.
+                  <strong>{decision.row.organiser?.name}</strong>{" "}is told the recommendation was not approved.
                   The player was never told they were recommended, and won&apos;t be.
                 </>
               )}

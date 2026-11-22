@@ -5,10 +5,12 @@
    drill-down), and importing it from a section would ship that whole section in
    the other's bundle. */
 
+import { useState } from "react";
 import {
-  SECTION_TITLE, STAT_LABEL, BADGE, BADGE_BLUE, BADGE_GRAY, TABLE_WRAP, TABLE, FORM_ERROR,
+  SECTION_TITLE, STAT_LABEL, BADGE, BADGE_GRAY, TABLE_WRAP, TABLE, FORM_ERROR,
   LOADING_STATE, MODAL_OVERLAY, MODAL, MODAL_LARGE, MODAL_HEAD, MODAL_CLOSE, GAME_INFO_GRID,
-  GAME_INFO_CELL, BLOCK_TITLE, BLOCK_TITLE_SUCCESS, SUMMARY_FOUR, SUMMARY_ITEM, SUMMARY_VALUE, PAY_SUB,
+  GAME_INFO_CELL, BLOCK_TITLE, SUMMARY_FOUR, SUMMARY_ITEM, SUMMARY_VALUE, PAY_SUB,
+  TAB_BAR, TAB, TAB_ACTIVE,
 } from "./styles";
 import { useAdminFetch } from "./useAdminFetch";
 import {
@@ -16,21 +18,20 @@ import {
   starRating, starValue,
 } from "./format";
 import { EntityTagPanel } from "../tags/EntityTagPanel";
+import { type GameFull } from "./gameDetail/common";
+import { ActionBar } from "./gameDetail/ActionBar";
+import { RosterTab } from "./gameDetail/RosterTab";
+import { TeamsTab } from "./gameDetail/TeamsTab";
+import { MoneyTab } from "./gameDetail/MoneyTab";
+import { TimelineTab } from "./gameDetail/TimelineTab";
+import { PeopleTab } from "./gameDetail/PeopleTab";
+import { PricingPanel } from "./gameDetail/PricingPanel";
 
-// Game detail
-type GameRegistration = {
-  _id: string;
-  player?: { _id?: string; name?: string; phone?: string; email?: string } | null;
-  plusOneName?: string | null; preferredPosition?: string; teamPreference?: string;
-  paymentStatus?: string; amountPaidPaise?: number; attended?: string;
-  signedUpAt?: string; assignedTeam?: string;
-};
-
-type GameWaitlistEntry = {
-  _id: string;
-  player?: { _id?: string; name?: string; phone?: string } | null;
-  joinedAt?: string; status?: string; preferredPosition?: string;
-};
+const TABS = [
+  ["overview", "Overview"], ["roster", "Roster"], ["teams", "Teams"],
+  ["money", "Money"], ["timeline", "Timeline"], ["people", "People"],
+] as const;
+type TabKey = (typeof TABS)[number][0];
 
 // What the players said about this game — the GameFeedback records for it, the
 // same ones the Feedback section lists platform-wide, narrowed to one game.
@@ -60,27 +61,25 @@ type GameFeedbackBlock = {
   entries: GameFeedbackEntry[];
 };
 
-type GameDetail = {
-  _id: string; title?: string; format?: string; status?: string;
-  scheduledAt?: string; durationMins?: number; feeInPaise?: number;
-  totalSlots?: number; minPlayers?: number; organiserIsPlaying?: boolean;
+type GameDetail = GameFull & {
   cancelReason?: string | null; cancelledAt?: string | null;
   completedAt?: string | null; attendanceMarked?: boolean;
-  organiser?: { name?: string; phone?: string; email?: string } | null;
-  turf?: { name?: string; address?: { area?: string; city?: string; state?: string } } | null;
-  registrations: GameRegistration[];
-  waitlist: GameWaitlistEntry[];
   feedback?: GameFeedbackBlock;
 };
 
 export function GameDetailModal({ gameId, onClose }: { gameId: string; onClose: () => void }) {
-  const { data, loading, error } = useAdminFetch<{ success?: boolean; data?: GameDetail; message?: string }>(
+  const { data, loading, error, refresh } = useAdminFetch<{ success?: boolean; data?: GameDetail; message?: string }>(
     `/admin/games/${gameId}`,
     { errorMessage: "Failed to load game." },
   );
   const game = data?.success ? data.data ?? null : null;
+  const [tab, setTab] = useState<TabKey>("overview");
+  const [flash, setFlash] = useState("");
+  // Every admin action re-reads the game, so the panels show what the server did.
+  const onChanged = (msg?: string) => { setFlash(msg || "Done."); refresh(); };
 
-  if (loading) {
+  // Only the first load blanks the modal; a refresh keeps the panels on screen.
+  if (loading && !game) {
     return (
       <div className={MODAL_OVERLAY} onClick={onClose}>
         <div className={`${MODAL} ${MODAL_LARGE}`} onClick={(e) => e.stopPropagation()}>
@@ -94,7 +93,7 @@ export function GameDetailModal({ gameId, onClose }: { gameId: string; onClose: 
     );
   }
 
-  if (error) {
+  if (error && !game) {
     return (
       <div className={MODAL_OVERLAY} onClick={onClose}>
         <div className={`${MODAL} ${MODAL_LARGE}`} onClick={(e) => e.stopPropagation()}>
@@ -147,12 +146,39 @@ export function GameDetailModal({ gameId, onClose }: { gameId: string; onClose: 
           <button className={MODAL_CLOSE} onClick={onClose} type="button">✕</button>
         </div>
 
-        {loading && <div className={LOADING_STATE}>Loading game data…</div>}
-        {error   && <div className={FORM_ERROR}>{error}</div>}
+        {error && <div className={`${FORM_ERROR} mb-3`}>{error}</div>}
 
         {game && (
           <div className="max-h-[calc(85vh-110px)] overflow-y-auto">
 
+            {game.canControl && <ActionBar game={game} onChanged={onChanged} />}
+            {flash && (
+              <div className="mb-3 flex items-center justify-between border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.07)] px-4 py-2 text-[13px] text-success">
+                {flash}
+                <button type="button" className="cursor-pointer text-muted" onClick={() => setFlash("")} aria-label="Dismiss">✕</button>
+              </div>
+            )}
+
+            <div className={TAB_BAR}>
+              {TABS.map(([key, label]) => (
+                <button key={key} type="button" className={`${TAB} ${tab === key ? TAB_ACTIVE : ""}`} onClick={() => setTab(key)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {tab === "roster" && <RosterTab game={game} onChanged={onChanged} />}
+            {tab === "teams" && <TeamsTab game={game} onChanged={onChanged} />}
+            {tab === "money" && (
+              <>
+                <MoneyTab gameId={gameId} />
+                <div className="mt-5"><PricingPanel key={JSON.stringify(game.pricing?.tiers || [])} game={game} onChanged={onChanged} /></div>
+              </>
+            )}
+            {tab === "timeline" && <TimelineTab key={flash} gameId={gameId} />}
+            {tab === "people" && <PeopleTab game={game} onChanged={onChanged} />}
+
+            {tab === "overview" && (<>
             {/* Info grid */}
             <div className={GAME_INFO_GRID}>
               <div className={GAME_INFO_CELL}><div className={STAT_LABEL}>Venue</div><div>{game.turf?.name || "—"}{game.turf?.address?.city ? `, ${game.turf.address.city}` : ""}</div></div>
@@ -264,61 +290,7 @@ export function GameDetailModal({ gameId, onClose }: { gameId: string; onClose: 
             </>
             )}
 
-            {/* Registrations */}
-            <div className={BLOCK_TITLE_SUCCESS}>Registrations ({regs.length})</div>
-            <div className={TABLE_WRAP}>
-              <table className={TABLE}>
-                <thead>
-                  <tr><th>#</th><th>Player / Guest</th><th>Type</th><th>Position</th><th>Team Pref</th><th>Payment</th><th>Amount Paid</th><th>Attended</th><th>Signed Up</th></tr>
-                </thead>
-                <tbody>
-                  {regs.length === 0 && <tr><td colSpan={9} className="p-6! text-center text-muted!">No registrations.</td></tr>}
-                  {regs.map((r, i) => (
-                    <tr key={r._id}>
-                      <td>{i + 1}</td>
-                      <td>
-                        {r.plusOneName
-                          ? <span>{r.plusOneName} <span className={`${BADGE} ${BADGE_GRAY}`}>Guest</span></span>
-                          : r.player?.name || "Unknown"
-                        }
-                        {!r.plusOneName && r.player?.phone && <div className="text-[11px] text-muted">{r.player.phone}</div>}
-                      </td>
-                      <td>{r.plusOneName ? <span className={`${BADGE} ${BADGE_GRAY}`}>Guest</span> : <span className={`${BADGE} ${BADGE_BLUE}`}>Player</span>}</td>
-                      <td>{formatStatusLabel(r.preferredPosition)}</td>
-                      <td>{formatStatusLabel(r.teamPreference)}</td>
-                      <td><span className={`${BADGE} ${badgeClassForStatus(r.paymentStatus)}`}>{formatStatusLabel(r.paymentStatus)}</span></td>
-                      <td>{formatCurrency(r.amountPaidPaise)}</td>
-                      <td><span className={`${BADGE} ${badgeClassForStatus(r.attended)}`}>{formatStatusLabel(r.attended)}</span></td>
-                      <td>{formatDate(r.signedUpAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Waitlist */}
-            {(game.waitlist?.length ?? 0) > 0 && (
-              <>
-                <div className={`${BLOCK_TITLE} mt-5!`}>Waitlist ({game.waitlist.length})</div>
-                <div className={TABLE_WRAP}>
-                  <table className={TABLE}>
-                    <thead><tr><th>#</th><th>Player</th><th>Phone</th><th>Position</th><th>Status</th><th>Joined</th></tr></thead>
-                    <tbody>
-                      {game.waitlist.map((w, i) => (
-                        <tr key={w._id}>
-                          <td>{i + 1}</td>
-                          <td>{w.player?.name || "Unknown"}</td>
-                          <td>{w.player?.phone || "—"}</td>
-                          <td>{formatStatusLabel(w.preferredPosition)}</td>
-                          <td><span className={`${BADGE} ${badgeClassForStatus(w.status)}`}>{formatStatusLabel(w.status)}</span></td>
-                          <td>{formatDate(w.joinedAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
+            </>)}
           </div>
         )}
       </div>
