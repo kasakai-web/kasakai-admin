@@ -42,7 +42,25 @@ type Settings = {
 type SourceStats = {
   messages: number; inApp: number; whatsapp: number; failed: number;
   heldBack: number; optedOut: number; tapped: number; booked: number; games: number;
+  // Newer servers: the WhatsApp count split by AiSensy campaign, and why the
+  // other rows never went to WhatsApp.
+  viaLink?: number; viaLegacy?: number; dryRun?: number; noNumber?: number;
+  alertsOff?: number; queued?: number; stopped?: number;
 };
+
+// Every SOS row is an in-app notification; only some of them went to WhatsApp.
+function notOnWhatsApp(r: SourceStats): { total: number; parts: string } {
+  const parts: [string, number][] = [
+    ["dry run", r.dryRun ?? 0], ["held back", r.heldBack], ["WhatsApp off", r.optedOut],
+    ["no number", r.noNumber ?? 0], ["alerts off", r.alertsOff ?? 0],
+    ["not sent, game filled", r.stopped ?? 0], ["still queued", r.queued ?? 0],
+  ];
+  const shown = parts.filter(([, n]) => n > 0);
+  return {
+    total: Math.max(0, r.messages - r.whatsapp - r.failed),
+    parts: shown.map(([k, n]) => `${n} ${k}`).join(" · "),
+  };
+}
 type Stats = { days: number; manual: SourceStats; auto: SourceStats; alertsOff: number };
 type Payload = { settings: Settings; stats: Stats };
 
@@ -269,12 +287,13 @@ export function SosAutoPanel() {
 
       {stats && (
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[560px] border-collapse text-[12px]">
+          <table className="w-full min-w-[640px] border-collapse text-[12px]">
             <thead>
               <tr className="text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
                 <th className="py-[6px] pr-3 font-normal">Last {stats.days} days</th>
-                <th className="py-[6px] pr-3 font-normal">Messages</th>
-                <th className="py-[6px] pr-3 font-normal">On WhatsApp</th>
+                <th className="py-[6px] pr-3 font-normal" title="Every SOS row: each one is an in-app notification. Not a WhatsApp count.">SOS (in-app)</th>
+                <th className="py-[6px] pr-3 font-normal" title="Accepted by AiSensy. Meta can still hold a message back after this.">WA accepted</th>
+                <th className="py-[6px] pr-3 font-normal" title="In-app only: never sent to AiSensy">Not on WA</th>
                 <th className="py-[6px] pr-3 font-normal">WA failed</th>
                 <th className="py-[6px] pr-3 font-normal">Tapped</th>
                 <th className="py-[6px] pr-3 font-normal">Booked</th>
@@ -282,20 +301,35 @@ export function SosAutoPanel() {
               </tr>
             </thead>
             <tbody>
-              {([["Automatic", stats.auto], ["Sent by organisers", stats.manual]] as const).map(([label, r]) => (
+              {([["Automatic", stats.auto], ["Sent by organisers", stats.manual]] as const).map(([label, r]) => {
+                const off = notOnWhatsApp(r);
+                const split = r.viaLink != null && r.whatsapp > 0
+                  ? `${r.viaLink} "kasakai sos book spot" · ${r.viaLegacy ?? 0} "sos to regular player"`
+                  : "";
+                return (
                 <tr key={label} className="border-t border-border font-mono text-fg">
                   <td className="py-[7px] pr-3 font-sans text-body">{label}</td>
                   <td className="py-[7px] pr-3">{r.messages}</td>
-                  <td className="py-[7px] pr-3">{r.whatsapp}</td>
+                  <td className="py-[7px] pr-3" title={split}>
+                    {r.whatsapp}
+                    {split && <div className="text-[10px] text-muted">{r.viaLink} link · {r.viaLegacy ?? 0} text-only</div>}
+                  </td>
+                  <td className="py-[7px] pr-3" title={off.parts}>
+                    {off.total}
+                    {off.parts && <div className="text-[10px] text-muted">{off.parts}</div>}
+                  </td>
                   <td className="py-[7px] pr-3">{r.failed} <span className="text-muted">{pct(r.failed, r.whatsapp + r.failed)}</span></td>
                   <td className="py-[7px] pr-3">{r.tapped} <span className="text-muted">{pct(r.tapped, r.messages)}</span></td>
                   <td className="py-[7px] pr-3">{r.booked} <span className="text-muted">{pct(r.booked, r.messages)}</span></td>
                   <td className="py-[7px] pr-3">{r.games}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           <div className="mt-[6px] text-[11px] text-muted">
+            {"SOS (in-app) counts every SOS a player was sent; only \u201cWA accepted\u201d reached AiSensy, split across "
+              + "two AiSensy campaigns (the link one and its text-only fallback), which AiSensy reports separately. "}
             {stats.alertsOff} player{stats.alertsOff === 1 ? " has" : "s have"} turned spot alerts off.
             A booking counts once the player takes a seat in the game they were sent an SOS for, through the link or not.
           </div>
