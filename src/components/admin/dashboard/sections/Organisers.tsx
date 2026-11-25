@@ -17,6 +17,9 @@ import {
   formatDate, formatCurrency, formatStatusLabel, badgeClassForStatus,
 } from "../shared/format";
 import { Head, Avatar } from "../shared/components";
+import {
+  OrganiserPermissionsModal, LevelsModal, BulkLevelModal, RiskBadges, LEVEL_LABEL, LEVEL_BADGE, type Level,
+} from "../shared/OrganiserPermissions";
 
 type AdminOrganiserRow = {
   id: string; name: string; phone: string; email?: string | null;
@@ -27,7 +30,9 @@ type AdminOrganiserRow = {
   rating?: number; totalRatingsReceived?: number; cancellationRate?: number;
   earningsPaise?: number; pendingPayoutPaise?: number;
   joinedAt?: string | null; location?: string | null; suspendReason?: string | null;
+  trustLevel?: Level; frozen?: boolean;
 };
+type RiskFlag = { key: string; label: string };
 
 /* ORow and OTable live at module scope on purpose. Declared inside Organisers
    they would be a fresh function identity on every render, and React tears down
@@ -39,18 +44,31 @@ type OrganiserActions = {
   onSuspend: (o: AdminOrganiserRow) => void;
   onViewDetails: (o: AdminOrganiserRow) => void;
   onDelete: (o: AdminOrganiserRow) => void;
+  onPermissions: (o: AdminOrganiserRow) => void;
+  risk: Record<string, RiskFlag[]>;
+  selected: Set<string>;
+  toggleSelected: (id: string) => void;
 };
 
 function ORow({ o, actions }: { o: AdminOrganiserRow; actions: OrganiserActions }) {
-  const { actionBusy, doAction, onSuspend, onViewDetails, onDelete } = actions;
+  const { actionBusy, doAction, onSuspend, onViewDetails, onDelete, onPermissions, risk, selected, toggleSelected } = actions;
   const busy = actionBusy !== null;
+  const level = o.trustLevel || "partner";
   return (
     <tr onClick={() => onViewDetails(o)} className="cursor-pointer">
+      <td onClick={(e) => e.stopPropagation()}>
+        <input type="checkbox" aria-label={`Select ${o.name}`} checked={selected.has(o.id)} onChange={() => toggleSelected(o.id)} />
+      </td>
       <td>
         <div className="flex items-center gap-[10px]">
           <Avatar name={o.name} src={o.profileImage} size={36} />
           <div>
             <div className="font-medium">{o.name}</div>
+            <div className="mt-[3px] flex flex-wrap gap-[4px]">
+              <span className={`${BADGE} ${LEVEL_BADGE[level]}`}>{LEVEL_LABEL[level]}</span>
+              {o.frozen && <span className={`${BADGE} ${badgeClassForStatus("suspended")}`}>Frozen</span>}
+            </div>
+            <RiskBadges flags={risk[o.id]} />
             {o.suspendReason && <div className="text-[11px] text-danger">{o.suspendReason}</div>}
           </div>
         </div>
@@ -94,6 +112,9 @@ function ORow({ o, actions }: { o: AdminOrganiserRow; actions: OrganiserActions 
         <div className={ACTIONS}>
           <button className={ACTION_BTN} type="button" onClick={() => onViewDetails(o)}>
             View Details
+          </button>
+          <button className={ACTION_BTN} type="button" onClick={() => onPermissions(o)}>
+            Permissions
           </button>
           {o.approvalStatus === "pending" && (
             <>
@@ -153,14 +174,14 @@ function OTable({ rows, emptyMsg, actions }: {
       <table className={TABLE}>
         <thead>
           <tr>
-            <th>Name</th><th>Phone / WhatsApp</th><th>Email</th><th>Location</th>
+            <th></th><th>Name</th><th>Phone / WhatsApp</th><th>Email</th><th>Location</th>
             <th>Joined</th><th>Games</th><th>Rating</th><th>Cancel Rate</th>
             <th>Earnings</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 && (
-            <tr><td colSpan={11} className="p-6! text-center text-muted!">{emptyMsg}</td></tr>
+            <tr><td colSpan={12} className="p-6! text-center text-muted!">{emptyMsg}</td></tr>
           )}
           {rows.map((o) => <ORow key={o.id} o={o} actions={actions} />)}
         </tbody>
@@ -178,6 +199,11 @@ export function Organisers() {
   const [detailId, setDetailId]           = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget]   = useState<AdminOrganiserRow | null>(null);
   const [toast, setToast]                 = useState<string | null>(null);
+  const [permsTarget, setPermsTarget]     = useState<AdminOrganiserRow | null>(null);
+  const [showLevels, setShowLevels]       = useState(false);
+  const [showBulk, setShowBulk]           = useState(false);
+  const [selected, setSelected]           = useState<Set<string>>(new Set());
+  const riskFetch = useAdminFetch<{ data?: Record<string, RiskFlag[]> }>("/admin/organisers/risk-flags", { cache: true });
 
   // Aliased: `doAction` below has its own local `data` for the mutation response.
   const { data: listBody, loading, error, refresh } = useAdminFetch<{ data?: AdminOrganiserRow[] }>(
@@ -255,7 +281,19 @@ export function Organisers() {
     onSuspend: (o) => { setSuspendTarget(o); setSuspendReason(""); },
     onViewDetails: (o) => setDetailId(o.id),
     onDelete: (o) => setDeleteTarget(o),
+    onPermissions: (o) => setPermsTarget(o),
+    risk: riskFetch.data?.data ?? {},
+    selected,
+    toggleSelected: (id) => setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    }),
   };
+  const transferCandidates = useMemo(
+    () => organisers.filter((o) => o.approvalStatus === "approved" && o.isActive !== false).map((o) => ({ id: o.id, name: o.name })),
+    [organisers],
+  );
 
   function onDeleted(name: string) {
     setDeleteTarget(null);
@@ -271,6 +309,10 @@ export function Organisers() {
       <div className={TOOLBAR}>
         <input className={SEARCH_INPUT} placeholder="Search by name, phone, WhatsApp, email, location…" value={search} onChange={(e) => setSearch(e.target.value)} />
         <button className={ACTION_BTN} type="button" onClick={refresh}>Refresh</button>
+        <button className={ACTION_BTN} type="button" disabled={selected.size === 0} onClick={() => setShowBulk(true)}>
+          Move {selected.size || ""} selected to level…
+        </button>
+        <button className={ACTION_BTN} type="button" onClick={() => setShowLevels(true)}>Levels &amp; kill switches</button>
       </div>
       {loading && <div className={LOADING_STATE}>Loading organisers…</div>}
       <div className={BLOCK_TITLE}>Pending Verification ({pendingPager.total})</div>
@@ -354,6 +396,16 @@ export function Organisers() {
           onClose={() => setDeleteTarget(null)}
           onDeleted={onDeleted}
         />
+      )}
+
+      {permsTarget && (
+        <OrganiserPermissionsModal organiser={permsTarget} candidates={transferCandidates}
+          onClose={() => setPermsTarget(null)} onChanged={refresh} />
+      )}
+      {showLevels && <LevelsModal onClose={() => setShowLevels(false)} />}
+      {showBulk && (
+        <BulkLevelModal ids={[...selected]} onClose={() => setShowBulk(false)}
+          onDone={() => { setShowBulk(false); setSelected(new Set()); refresh(); }} />
       )}
 
       {toast && <DeletedToast message={toast} />}
