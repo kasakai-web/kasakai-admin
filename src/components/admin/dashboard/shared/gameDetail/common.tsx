@@ -54,6 +54,8 @@ export type GameFull = {
   coOrganisers?: { _id: string; organiser?: Person; permission?: string }[];
   pricing?: { tiers?: LadderTier[]; highWaterPaise?: number; currentPricePaise?: number | null } | null;
   canControl?: boolean;
+  visibility?: string;
+  hiddenFromBrowse?: boolean;
 };
 
 // Same rule as backend utils/registration.js isActiveRegistration.

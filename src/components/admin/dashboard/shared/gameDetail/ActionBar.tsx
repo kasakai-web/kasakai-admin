@@ -16,7 +16,7 @@ import {
   ActionDialog, DANGER_BTN, INPUT, act, isActiveReg, toIstInput, fromIstInput, type GameFull,
 } from "./common";
 
-type Dialog = null | "edit" | "kickoff" | "format" | "open" | "confirm" | "complete" | "sos" | "invite" | "cancel";
+type Dialog = null | "edit" | "kickoff" | "format" | "open" | "confirm" | "complete" | "sos" | "invite" | "cancel" | "browse";
 const FORMATS = ["5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"];
 const LIVE = ["open", "tentative", "confirmed"];
 
@@ -45,6 +45,7 @@ export function ActionBar({ game, onChanged }: { game: GameFull; onChanged: (msg
         {btn("complete", "Mark complete", status === "confirmed" && started)}
         {btn("sos", "SOS", LIVE.includes(status) && !started)}
         {btn("invite", "Invite", LIVE.includes(status) && !started)}
+        {btn("browse", game.hiddenFromBrowse ? "Show in Browse" : "Hide from Browse", !final && game.visibility !== "private")}
         <span className="flex-1" />
         {btn("cancel", "Cancel game", !final, DANGER_BTN)}
       </div>
@@ -73,6 +74,17 @@ export function ActionBar({ game, onChanged }: { game: GameFull; onChanged: (msg
       {dialog === "sos" && <SosDialog game={game} onClose={close} onDone={done} />}
       {dialog === "invite" && <InviteDialog game={game} onClose={close} onDone={done} />}
       {dialog === "cancel" && <CancelDialog game={game} onClose={close} onDone={done} />}
+      {dialog === "browse" && (
+        <ActionDialog title={game.hiddenFromBrowse ? "Show in Browse" : "Hide from Browse"}
+          confirmLabel={game.hiddenFromBrowse ? "Show" : "Hide"} needsReason={false} onClose={close} onDone={done}
+          run={(reason) => adminFetch(`/admin/games/${game._id}/browse`, {
+            method: "PATCH", body: JSON.stringify({ hidden: !game.hiddenFromBrowse, reason }),
+          })}>
+          {game.hiddenFromBrowse
+            ? "Players will find this game in Browse again."
+            : "The game drops out of Browse. It is not cancelled: players already in it keep their seats, and anyone with the link can still join."}
+        </ActionDialog>
+      )}
     </>
   );
 }
