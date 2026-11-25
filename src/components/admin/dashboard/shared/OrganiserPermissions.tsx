@@ -10,7 +10,7 @@
 
 import { useState } from "react";
 import {
-  SECTION_TITLE, BADGE, BADGE_GREEN, BADGE_AMBER, BADGE_RED, BADGE_BLUE, ACTION_BTN,
+  SECTION_TITLE, BADGE, BADGE_GREEN, BADGE_AMBER, BADGE_RED, BADGE_BLUE, BADGE_VIOLET, BADGE_GRAY, ACTION_BTN,
   MODAL_OVERLAY, MODAL, MODAL_LARGE, MODAL_HEAD, MODAL_CLOSE, MODAL_ACTIONS, FORM_LABEL, FORM_ERROR,
   FILTER_SELECT, SEARCH_INPUT, LOADING_STATE,
 } from "./styles";
@@ -36,7 +36,9 @@ type LogRow = { _id: string; at: string; action: string; adminName?: string; adm
 const INPUT = `${SEARCH_INPUT} min-w-0! w-full`;
 const PRIMARY = `${ACTION_BTN} border-fg! bg-fg! text-black!`;
 const DANGER = `${ACTION_BTN} border-[rgba(239,68,68,0.5)]! text-danger!`;
-const TAB = (on: boolean) => `${ACTION_BTN} ${on ? "border-fg! text-fg!" : ""}`;
+const TAB = (on: boolean) => `${ACTION_BTN} ${on ? "border-accent! bg-[rgba(91,230,178,0.08)]! text-accent!" : ""}`;
+// One colour per feature group so the sections are easy to tell apart.
+const GROUP_COLOR: Record<string, string> = { Games: "#3b82f6", Messaging: "#8b5cf6", "Player data": "#06b6d4", Team: "#ec4899" };
 
 /** Is the signed-in admin a superadmin? (Edit controls are greyed otherwise.) */
 export function useIsSuperadmin() {
@@ -55,11 +57,12 @@ function ToggleRow({ f, value, onChange, badge, disabled, onReset }: {
   f: Feature; value: Entry; onChange: (v: Entry) => void; badge?: React.ReactNode; disabled?: boolean; onReset?: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-[10px] border-b border-border py-[8px] text-[13px]">
+    <div className={`flex flex-wrap items-center gap-[10px] border-b border-l-[3px] border-b-border px-[10px] py-[8px] text-[13px] ${value.source === "custom" ? "border-l-warning" : "border-l-transparent"} ${value.on ? "bg-[rgba(34,197,94,0.05)]" : "bg-[rgba(239,68,68,0.06)]"}`}>
       <label className="flex min-w-[260px] flex-1 cursor-pointer items-center gap-2 text-body">
-        <input type="checkbox" checked={value.on} disabled={disabled}
+        <input type="checkbox" className="h-4 w-4 accent-success" checked={value.on} disabled={disabled}
           onChange={(e) => onChange({ ...value, on: e.target.checked })} />
-        {f.label}
+        <span className={`${BADGE} ${value.on ? BADGE_GREEN : BADGE_RED} w-[38px] justify-center`}>{value.on ? "ON" : "OFF"}</span>
+        <span className={value.on ? "" : "text-muted"}>{f.label}</span>
       </label>
       {f.capUnit && (
         <label className="flex items-center gap-[6px] text-[12px] text-muted">
@@ -170,20 +173,31 @@ export function OrganiserPermissionsModal({ organiser, candidates, onClose, onCh
 
         {p && tab === "permissions" && (
           <>
-            <div className="mb-3 text-[12.5px] text-muted">
-              Qualifies to move up? {p.qualify.gamesCompleted} games completed · {p.qualify.cancellationRate}% cancelled ·
-              {" "}{p.qualify.ratings ? `★ ${p.qualify.averageRating} (${p.qualify.ratings})` : "no ratings yet"}
+            <div className="mb-3 flex flex-wrap items-center gap-[6px] text-[12.5px] text-muted">
+              Qualifies to move up?
+              <span className={`${BADGE} ${BADGE_BLUE}`}>{p.qualify.gamesCompleted} games completed</span>
+              <span className={`${BADGE} ${BADGE_GRAY}`}>{p.qualify.cancellationRate}% cancelled</span>
+              <span className={`${BADGE} ${BADGE_VIOLET}`}>{p.qualify.ratings ? `★ ${p.qualify.averageRating} (${p.qualify.ratings})` : "no ratings yet"}</span>
             </div>
-            <label className={`${FORM_LABEL} mb-3 max-w-[260px]`}>
-              Level
-              <select className={FILTER_SELECT} value={level} disabled={!isSuper} onChange={(e) => setLevel(e.target.value as Level)}>
-                {LEVELS.map((l) => <option key={l} value={l}>{LEVEL_LABEL[l]}</option>)}
-              </select>
-            </label>
-            <div className="mb-2 text-[12px] text-muted">Suspend / reactivate stays on the organiser list. Changing a toggle makes it <em>custom</em> for this organiser.</div>
+            <div className="mb-3">
+              <div className="mb-[6px] text-[12px] text-muted">Level</div>
+              <div className="flex gap-[6px]" role="radiogroup" aria-label="Level">
+                {LEVELS.map((l) => (
+                  <button key={l} type="button" role="radio" aria-checked={level === l} disabled={!isSuper} onClick={() => setLevel(l)}
+                    className={`${BADGE} ${LEVEL_BADGE[l]} cursor-pointer px-4! py-[6px]! text-[12px]! disabled:cursor-not-allowed ${level === l ? "ring-1 ring-current" : "opacity-45 hover:opacity-80"}`}>
+                    {LEVEL_LABEL[l]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mb-2 text-[12px] text-muted">Suspend / reactivate stays on the organiser list. Changing a toggle makes it <em>custom</em> for this organiser (amber edge).</div>
             {Object.entries(groupBy(features)).map(([group, list]) => (
-              <div key={group} className="mb-3">
-                <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.16em] text-muted">{group}</div>
+              <div key={group} className="mb-3 overflow-hidden rounded-[4px] border" style={{ borderColor: `${GROUP_COLOR[group] ?? "#888888"}55` }}>
+                <div className="flex items-center justify-between px-[10px] py-[6px] font-mono text-[11px] uppercase tracking-[0.16em]"
+                  style={{ color: GROUP_COLOR[group] ?? "#888888", background: `${GROUP_COLOR[group] ?? "#888888"}1a` }}>
+                  {group}
+                  <span>{list.filter((f) => shown(f.key).on).length}/{list.length} on</span>
+                </div>
                 {list.map((f) => {
                   const v = shown(f.key);
                   return (
