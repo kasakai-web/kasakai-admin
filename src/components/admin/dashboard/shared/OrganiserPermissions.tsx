@@ -1,7 +1,7 @@
 "use client";
 
 /* Organiser permissions (Organiser_Permissions_Plan.md §4).
-   - OrganiserPermissionsModal: one organiser — level, the 13 toggles with caps,
+   - OrganiserPermissionsModal: one organiser — level, the 14 toggles with caps,
      freeze, transfer games, pause series, and the change / risky-action log.
    - LevelsModal: the three presets + platform kill switches.
    Any admin may look; only a superadmin may save (the server enforces it too).
@@ -38,7 +38,7 @@ const PRIMARY = `${ACTION_BTN} border-fg! bg-fg! text-black!`;
 const DANGER = `${ACTION_BTN} border-[rgba(239,68,68,0.5)]! text-danger!`;
 const TAB = (on: boolean) => `${ACTION_BTN} ${on ? "border-accent! bg-[rgba(91,230,178,0.08)]! text-accent!" : ""}`;
 // One colour per feature group so the sections are easy to tell apart.
-const GROUP_COLOR: Record<string, string> = { Games: "#3b82f6", Messaging: "#8b5cf6", "Player data": "#06b6d4", Team: "#ec4899" };
+const GROUP_COLOR: Record<string, string> = { Games: "#3b82f6", Messaging: "#8b5cf6", "Player data": "#06b6d4", Team: "#ec4899", Finance: "#f59e0b" };
 
 /** Is the signed-in admin a superadmin? (Edit controls are greyed otherwise.) */
 export function useIsSuperadmin() {
